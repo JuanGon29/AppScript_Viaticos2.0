@@ -1,0 +1,337 @@
+<!-- ===================================================================== -->
+<!-- VISTA: View_Home.html (HOME PAGE Y SHELL DE NAVEGACIÓN SPA)           -->
+<!-- ===================================================================== -->
+<section id="view-home" class="vista-oculta bg-background h-screen w-full flex overflow-hidden">
+  
+  <!-- ===================================================================== -->
+  <!-- 1. SIDEBAR / PANEL LATERAL DE NAVEGACIÓN (Dark Theme)                 -->
+  <!-- ===================================================================== -->
+  <nav class="fixed left-0 top-0 h-full bg-primary flex flex-col py-lg z-40 sidebar-expanded" id="sidebar">
+    
+    <!-- Botón Flotante para Colapsar/Expandir -->
+    <button class="absolute -right-3 top-6 w-6 h-6 bg-secondary-container text-on-primary rounded-full flex items-center justify-center cursor-pointer shadow-md z-50 hover:bg-secondary transition-colors" onclick="toggleSidebar()" title="Colapsar/Expandir Menú">
+      <span class="material-symbols-outlined text-sm" id="toggle-icon">chevron_left</span>
+    </button>
+    
+    <!-- Encabezado del Sidebar con Perfil del Usuario -->
+    <div class="flex items-center gap-sm mb-lg px-md">
+      <div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex-shrink-0 mx-auto">
+        <img id="nav-profile-img" alt="Usuario" class="w-full h-full object-cover" src="">
+      </div>
+      <div class="nav-text whitespace-nowrap overflow-hidden">
+        <h2 class="font-headline-sm text-base font-bold text-on-primary truncate leading-tight">Portal Viáticos</h2>
+        <p class="font-body-sm text-xs text-primary-fixed-dim">Gestión Corporativa</p>
+      </div>
+    </div>
+    
+    <!-- Lista Dinámica de Opciones de Navegación -->
+    <ul class="flex flex-col gap-2 flex-grow px-2 overflow-y-auto min-h-0 scroll-sidebar">
+      
+      <!-- Opción 1: Inicio (Activo por Defecto) -->
+      <li>
+        <a id="nav-link-inicio" class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary font-bold border-l-4 border-secondary-container active:scale-95 duration-150" href="#" onclick="navegarSubmenu('view-inicio')">
+          <span class="material-symbols-outlined icon-fill">home</span>
+          <span class="font-label-lg text-label-lg nav-text">Inicio</span>
+        </a>
+      </li>
+      
+      <!-- Menú Desplegable: Solicitantes -->
+      <li class="rounded-lg overflow-hidden shrink-0" id="menu-solicitantes">
+        <button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium cursor-pointer" onclick="toggleSubmenu('menu-solicitantes')">
+          <div class="flex items-center gap-md">
+            <span class="material-symbols-outlined">person</span>
+            <span class="font-label-lg text-label-lg nav-text">Solicitantes</span>
+          </div>
+          <span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+        </button>
+        <!-- Submenús Solicitantes -->
+        <div class="submenu-content bg-primary-container/30">
+          <ul class="py-1 px-2 flex flex-col gap-1">
+            <li id="li-nueva-solicitud">
+              <a id="nav-link-nueva-solicitud" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-nueva-solicitud')">
+                <span class="material-symbols-outlined text-base">add_circle</span>
+                <span class="nav-text">Nueva Solicitud</span>
+              </a>
+            </li>
+            <li id="li-solicitudes-rechazadas">
+              <a id="nav-link-solicitudes-rechazadas" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-solicitudes-rechazadas')">
+                <span class="material-symbols-outlined text-base">cancel</span>
+                <span class="nav-text">Solicitudes Rechazadas</span>
+              </a>
+            </li>
+            <li id="li-cierre-solicitudes">
+              <a id="nav-link-cierre-solicitudes" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-s3-cierre')">
+                <span class="material-symbols-outlined text-base">task_alt</span>
+                <span class="nav-text">Cierre de solicitudes</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      
+      <!-- Menú Desplegable: Operaciones -->
+      <li class="rounded-lg overflow-hidden shrink-0" id="menu-operaciones">
+        <button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium cursor-pointer" onclick="toggleSubmenu('menu-operaciones')">
+          <div class="flex items-center gap-md">
+            <span class="material-symbols-outlined">edit_note</span>
+            <span class="font-label-lg text-label-lg nav-text">Operaciones</span>
+          </div>
+          <span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+        </button>
+        <!-- Submenús Operaciones -->
+        <div class="submenu-content bg-primary-container/30">
+          <ul class="py-1 px-2 flex flex-col gap-1">
+            <li id="li-provision-pagos">
+              <a id="nav-link-provision-pagos" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-e1-provision')">
+                <span class="material-symbols-outlined text-base">payments</span>
+                <span class="nav-text">Provisión de pagos</span>
+              </a>
+            </li>
+            <li id="li-procesamiento-pagos">
+              <a id="nav-link-procesamiento-pagos" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-e2-procesamiento')">
+                <span class="material-symbols-outlined text-base">credit_card</span>
+                <span class="nav-text">Procesamiento de pagos</span>
+              </a>
+            </li>
+            <li id="li-cierre-compras">
+              <a id="nav-link-cierre-compras" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-e3-cierre')">
+                <span class="material-symbols-outlined text-base">task_alt</span>
+                <span class="nav-text">Cierre de solicitudes</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      
+      <!-- Menú Desplegable: Autorizaciones -->
+      <li class="rounded-lg overflow-hidden shrink-0" id="menu-autorizadores">
+        <button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium cursor-pointer" onclick="toggleSubmenu('menu-autorizadores')">
+          <div class="flex items-center gap-md">
+            <span class="material-symbols-outlined">verified</span>
+            <span class="font-label-lg text-label-lg nav-text">Autorizaciones</span>
+          </div>
+          <span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+        </button>
+        <!-- Submenús Autorizaciones -->
+        <div class="submenu-content bg-primary-container/30">
+          <ul class="py-1 px-2 flex flex-col gap-1">
+            <li id="li-bandeja-autorizaciones">
+              <a id="nav-link-bandeja-autorizaciones" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-a1-autorizaciones')">
+                <span class="material-symbols-outlined text-base">inbox</span>
+                <span class="nav-text">Bandeja de Autorización</span>
+              </a>
+            </li>
+            <li id="li-catalogo-autorizantes">
+              <a id="nav-link-catalogo-autorizantes" class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#" onclick="navegarSubmenu('view-a2-catalogo')">
+                <span class="material-symbols-outlined text-base">rule</span>
+                <span class="nav-text">Niveles Autorizantes</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      
+      <!-- Enlaces Directos -->
+      <li class="shrink-0" id="menu-solicitudes-curso">
+        <a id="nav-link-solicitudes-curso" class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#" onclick="navegarSubmenu('view-en-curso'); cargarSolicitudesEnCurso();">
+          <span class="material-symbols-outlined">pending_actions</span>
+          <span class="font-label-lg text-label-lg nav-text">Solicitudes en curso</span>
+        </a>
+      </li>
+      
+      <li class="shrink-0" id="menu-historico">
+        <a id="nav-link-historico" class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#" onclick="navegarSubmenu('view-historico'); cargarSolicitudesHistorico();">
+          <span class="material-symbols-outlined">history</span>
+          <span class="font-label-lg text-label-lg nav-text">Histórico</span>
+        </a>
+      </li>
+      
+    </ul>
+    
+    <!-- Botón de Cerrar Sesión anclado al pie del Sidebar -->
+    <div class="px-2 mt-auto pt-2 border-t border-primary-container shrink-0">
+      <button onclick="cerrarSesion()" class="w-full flex items-center gap-md px-3 py-2 rounded-lg hover:bg-error-container hover:text-on-error-container text-on-primary/80 transition-colors font-medium cursor-pointer">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-label-lg text-label-lg nav-text">Cerrar Sesión</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- 2. CONTENEDOR PRINCIPAL Y ÁREA DE TRABAJO (WORKSPACE)                 -->
+  <!-- ===================================================================== -->
+  <div class="ml-[240px] flex-1 flex flex-col h-full bg-background overflow-y-auto relative w-[calc(100%-240px)]" id="main-content">
+    
+    <!-- Barra Superior (TopAppBar Docked) -->
+    <header class="docked full-width top-0 sticky z-30 bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-margin-desktop shrink-0">
+      <div class="flex items-center gap-sm">
+        <img alt="Banco Integral Logo" class="h-8 w-auto object-contain mr-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xJD1t15SJ-OElz4OulRz6eM7b-gNXdb3XH_fL8hayrSjkCuvGKMZ3WhBmBkUc_T51ARwFZvdK1-Wha25vWGbC28w5nk57WAwOP0xPywpFVRpyrY4fSxJiwWdwuXycGGTyusw07bKeeXOngUsO5rktajW1N9qYbkRbQXR2ZJHuCNJAN0QQNidIY-MSX0DBvN7UX2xvHXfvFqQysDSdbNhLRB_P2gxPDCjymXEooY2tF7PPqvqeVOBwvE5MNU_DYoeayU">
+        <h1 id="top-app-bar-title" class="font-headline-sm text-headline-sm font-black text-primary tracking-tight">Viáticos - Home Page</h1>
+      </div>
+      
+      <!-- Controles de Usuario, Notificaciones y Selector de Rol -->
+      <div class="flex items-center gap-md">
+        
+        <!-- Selector Rápido de Rol (Simulador / QA Sandbox) -->
+        <div class="hidden md:flex items-center gap-2 bg-surface-container px-2.5 py-1 rounded-lg border border-outline-variant text-xs">
+          <span class="material-symbols-outlined text-secondary-container text-sm">badge</span>
+          <span class="font-bold text-primary text-[11px] uppercase">Rol Activo:</span>
+          <select id="top-bar-role-selector" class="bg-transparent font-bold text-xs text-primary outline-none cursor-pointer" onchange="cambiarRolEnVivo(this.value)">
+            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+            <option value="SOLICITANTE">SOLICITANTE</option>
+            <option value="EDITOR-COMPRAS">EDITOR-COMPRAS</option>
+            <option value="EDITOR-TESORERIA">EDITOR-TESORERIA</option>
+            <option value="AUTORIZADOR">AUTORIZADOR</option>
+          </select>
+        </div>
+
+        <button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs cursor-pointer" title="Notificaciones">
+          <span class="material-symbols-outlined">notifications</span>
+        </button>
+        <button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs cursor-pointer" title="Centro de Ayuda">
+          <span class="material-symbols-outlined">help_outline</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant ml-sm overflow-hidden cursor-pointer" title="Mi Perfil">
+          <img id="top-profile-img" alt="Foto perfil" class="w-full h-full object-cover" src="">
+        </div>
+      </div>
+    </header>
+
+    <!-- Canvas Central de la Aplicación -->
+    <main class="flex-1 p-margin-desktop pb-24 bg-background flex flex-col gap-lg w-full">
+      
+      <!-- SUB-VISTA 1: INICIO / DASHBOARD PRINCIPAL -->
+      <div id="view-inicio" class="vista-activa flex flex-col gap-lg w-full">
+        
+        <!-- Banner Hero: Visual Editorial de Alto Impacto -->
+        <section class="w-full h-[320px] rounded-xl overflow-hidden relative shadow-sm" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCxaoDaqTg-lL7h0rl7z3fWoL-5ABCV0coQtjoJzpNlEGhEw-Bgq04L5gmNN-woqI45QvL_TY9AwQWsYmKVoL1aodufUlKZ0cY_qj3PcP9JZK9s8EyKm4opwaBLeDwU1F3BfmzvPCs0c9ZatkPtLYMOppjwFnD7M1ZQd-mwyHP8x8ElJMCEsGppyx7bWsso6iLnWBwejIU3_fsCzzlYu5TIgdGH1dJLX7A8ON0yQFr75toSU3ETPeyzZA'); background-size: cover; background-position: center;">
+          <div class="absolute inset-0 bg-gradient-to-r from-primary-container/90 to-primary-container/20 flex flex-col justify-center p-xl">
+            <h2 class="font-display-lg text-display-lg text-on-primary mb-sm max-w-2xl">Gestión de viáticos,<br>simplificada.</h2>
+            <p class="font-body-lg text-body-lg text-inverse-primary max-w-xl">Bienvenido al nuevo portal. Registra, aprueba y haz seguimiento de tus gastos corporativos con precisión y velocidad.</p>
+          </div>
+        </section>
+
+        <!-- Bento Grid Dashboard: Tarjeta de Notificaciones Recientes -->
+        <section class="card-level-1 rounded-xl overflow-hidden flex flex-col shadow-sm">
+          
+          <!-- Cabecera de Notificaciones -->
+          <div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+            <div class="flex items-center gap-sm">
+              <h3 class="font-headline-sm text-headline-sm text-primary">Notificaciones Recientes</h3>
+              <span class="bg-secondary-container text-on-primary text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+            </div>
+            <button class="text-primary font-label-md hover:underline transition-all cursor-pointer">Marcar como leídas</button>
+          </div>
+          
+          <!-- Lista de Notificaciones Bento -->
+          <div class="flex flex-col">
+            
+            <!-- Notificación 1: Solicitud Recibida -->
+            <div class="p-md flex gap-md hover:bg-surface-container transition-colors border-b border-outline-variant cursor-pointer">
+              <div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-on-tertiary-fixed">mail</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start mb-xs">
+                  <h4 class="font-label-lg text-primary">Nueva solicitud de viáticos recibida</h4>
+                  <span class="text-xs text-on-surface-variant">Hace 5 min</span>
+                </div>
+                <p class="text-body-sm text-on-surface-variant">El colaborador Juan Pérez ha enviado una nueva solicitud para el viaje a Bogotá.</p>
+              </div>
+            </div>
+
+            <!-- Notificación 2: Gasto Aprobado -->
+            <div class="p-md flex gap-md hover:bg-surface-container transition-colors border-b border-outline-variant cursor-pointer">
+              <div class="w-10 h-10 rounded-full bg-[#00ADEF]/10 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-primary-container">check_circle</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start mb-xs">
+                  <h4 class="font-label-lg text-primary">Gasto de transporte aprobado</h4>
+                  <span class="text-xs text-on-surface-variant">Hace 2 horas</span>
+                </div>
+                <p class="text-body-sm text-on-surface-variant">Tu comprobante de taxi del 15 de febrero ha sido validado exitosamente.</p>
+              </div>
+            </div>
+
+            <!-- Notificación 3: Recordatorio Pendiente -->
+            <div class="p-md flex gap-md hover:bg-surface-container transition-colors cursor-pointer">
+              <div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-on-error-container">warning</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start mb-xs">
+                  <h4 class="font-label-lg text-primary">Recordatorio: Informe mensual pendiente</h4>
+                  <span class="text-xs text-on-surface-variant">Ayer</span>
+                </div>
+                <p class="text-body-sm text-on-surface-variant">Faltan 2 días para el cierre del periodo. Por favor, completa tu informe de gastos.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Pie de la Tarjeta Bento -->
+          <div class="p-md bg-surface-container-low border-t border-outline-variant flex justify-center">
+            <button class="text-primary font-label-lg flex items-center gap-xs hover:gap-2 transition-all cursor-pointer">
+              Ver todas las notificaciones
+              <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- SUB-VISTA 2: NUEVA SOLICITUD (PÁGINA S1) -->
+      <div id="view-nueva-solicitud" class="vista-oculta flex flex-col w-full">
+        <?!= include('View_NuevaSolicitud'); ?>
+      </div>
+
+      <!-- SUB-VISTA 3: SOLICITUDES RECHAZADAS (PÁGINA S2) -->
+      <?!= include('View_S2'); ?>
+
+      <!-- SUB-VISTA 4: DETALLE Y JUSTIFICACIÓN DE SOLICITUD (PÁGINA S2.1) -->
+      <?!= include('View_S2_1'); ?>
+
+      <!-- SUB-VISTA 5: PROVISIÓN DE PAGOS (PÁGINA E1) -->
+      <?!= include('View_E1'); ?>
+
+      <!-- SUB-VISTA 6: DETALLE DE PROVISIÓN (PÁGINA E1.1) -->
+      <?!= include('View_E1_1'); ?>
+
+      <!-- SUB-VISTA 7: PROCESAMIENTO DE PAGOS (PÁGINA E2) -->
+      <?!= include('View_E2'); ?>
+
+      <!-- SUB-VISTA 8: DETALLE DE PROCESAMIENTO DE PAGO (PÁGINA E2.1) -->
+      <?!= include('View_E2_1'); ?>
+
+      <!-- SUB-VISTA 9: CIERRE DE SOLICITUDES (PÁGINA S3) -->
+      <?!= include('View_S3'); ?>
+
+      <!-- SUB-VISTA 10: DETALLE Y LIQUIDACIÓN (PÁGINA S3.1) -->
+      <?!= include('View_S3_1'); ?>
+
+      <!-- SUB-VISTA 11: CIERRE DE SOLICITUDES EN COMPRAS (PÁGINA E3) -->
+      <?!= include('View_E3'); ?>
+
+      <!-- SUB-VISTA 12: DETALLE Y RESOLUCIÓN DE CIERRE (PÁGINA E3.1) -->
+      <?!= include('View_E3_1'); ?>
+
+      <!-- SUB-VISTA 13: BANDEJA DE AUTORIZACIÓN DE SOLICITUDES (PÁGINA A1) -->
+      <?!= include('View_A1'); ?>
+
+      <!-- SUB-VISTA 14: DETALLE Y RESOLUCIÓN DE AUTORIZACIÓN (PÁGINA A1.1) -->
+      <?!= include('View_A1_1'); ?>
+
+      <!-- SUB-VISTA 15: CATÁLOGO DE NIVELES AUTORIZANTES (PÁGINA A2) -->
+      <?!= include('View_A2'); ?>
+
+      <!-- SUB-VISTA 16: VISOR "SOLICITUDES EN CURSO" -->
+      <?!= include('View_EnCurso'); ?>
+
+      <!-- SUB-VISTA 17: REPOSITORIO HISTÓRICO Y AUDITORÍA -->
+      <?!= include('View_Historico'); ?>
+
+    </main>
+
+  </div>
+</section>

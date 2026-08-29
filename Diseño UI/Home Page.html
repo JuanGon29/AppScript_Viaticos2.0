@@ -1,0 +1,478 @@
+<!DOCTYPE html><html lang="es" class="h-full"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Viáticos Banco Integral</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@100..900&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config from Design System -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#465c9a",
+                    "on-primary-fixed-variant": "#2d4481",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#541100",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#ebeef0",
+                    "tertiary-fixed": "#bdedd2",
+                    "surface": "#f7fafc",
+                    "surface-container-highest": "#e0e3e5",
+                    "inverse-surface": "#2d3133",
+                    "tertiary-fixed-dim": "#a2d1b7",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#7389cb",
+                    "on-secondary-fixed-variant": "#862200",
+                    "surface-bright": "#f7fafc",
+                    "on-tertiary-container": "#68947d",
+                    "inverse-primary": "#b3c5ff",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#ffb5a0",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "secondary-fixed": "#ffdbd1",
+                    "primary": "#000c2f",
+                    "on-tertiary-fixed-variant": "#234f3b",
+                    "inverse-on-surface": "#eef1f3",
+                    "surface-container-high": "#e5e9eb",
+                    "surface-container-low": "#f1f4f6",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary-container": "#002a1a",
+                    "surface-dim": "#d7dadc",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e0e3e5",
+                    "outline-variant": "#c5c6d1",
+                    "on-tertiary-fixed": "#002113",
+                    "on-surface-variant": "#444650",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary": "#ffffff",
+                    "outline": "#757681",
+                    "secondary": "#b02f00",
+                    "tertiary": "#001209",
+                    "secondary-container": "#ff5722",
+                    "on-surface": "#181c1e",
+                    "on-secondary-fixed": "#3b0900",
+                    "primary-container": "#001f5c",
+                    "on-background": "#181c1e",
+                    "background": "#f7fafc",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "base": "8px",
+                    "lg": "48px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "xl": "80px",
+                    "gutter": "24px",
+                    "xs": "4px",
+                    "md": "24px"
+            },
+            "fontFamily": {
+                    "headline-sm": [
+                            "Segoe UI"
+                    ],
+                    "body-md": [
+                            "Segoe UI"
+                    ],
+                    "body-lg": [
+                            "Segoe UI"
+                    ],
+                    "headline-lg": [
+                            "Segoe UI"
+                    ],
+                    "body-sm": [
+                            "Segoe UI"
+                    ],
+                    "label-md": [
+                            "Segoe UI"
+                    ],
+                    "label-lg": [
+                            "Segoe UI"
+                    ],
+                    "headline-lg-mobile": [
+                            "Segoe UI"
+                    ],
+                    "display-lg": [
+                            "Segoe UI"
+                    ],
+                    "headline-md": [
+                            "Segoe UI"
+                    ]
+            },
+            "fontSize": {
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-md": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.04em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-lg": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "28px",
+                            {
+                                    "lineHeight": "36px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Level 1 Card styling based on guidance */
+        .card-level-1 {
+            background-color: theme('colors.surface-container-lowest');
+            border: 1px solid rgba(0, 31, 92, 0.1); /* Navy 10% */
+        }
+        .card-level-2:hover {
+            box-shadow: 0px 4px 12px rgba(0, 31, 92, 0.05);
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+
+        /* Sidebar toggle functionality */
+        .sidebar-collapsed {
+            width: 80px;
+        }
+        .sidebar-expanded {
+            width: 240px;
+        }
+        
+        .sidebar-collapsed .nav-text {
+            display: none;
+        }
+        
+        .sidebar-collapsed .logo-expanded {
+            display: none;
+        }
+        .sidebar-collapsed .logo-collapsed {
+            display: block;
+        }
+        .sidebar-expanded .logo-collapsed {
+            display: none;
+        }
+        
+        .submenu-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .submenu-open .submenu-content {
+            max-height: 200px;
+        }
+        
+        .sidebar-collapsed .submenu-content {
+            display: none;
+        }
+        
+        .sidebar-collapsed .dropdown-icon {
+            display: none;
+        }
+        
+        /* Layout transition */
+        #sidebar, #main-content {
+            transition: width 0.3s ease, margin-left 0.3s ease;
+        }
+    </style>
+<script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            if (sidebar.classList.contains('sidebar-expanded')) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.style.marginLeft = '80px';
+                mainContent.style.width = 'calc(100% - 80px)';
+                toggleIcon.textContent = 'chevron_right';
+                
+                // Close any open submenus
+                document.querySelectorAll('.submenu-open').forEach(el => {
+                    el.classList.remove('submenu-open');
+                });
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                mainContent.style.marginLeft = '240px';
+                mainContent.style.width = 'calc(100% - 240px)';
+                toggleIcon.textContent = 'chevron_left';
+            }
+        }
+
+        function toggleSubmenu(id) {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                toggleSidebar(); // Expand sidebar first if collapsed
+            }
+            const el = document.getElementById(id);
+            el.classList.toggle('submenu-open');
+            
+            const icon = el.querySelector('.dropdown-icon');
+            if (el.classList.contains('submenu-open')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0)';
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex overflow-y-auto">
+<!-- SideNavBar (Shared Component) - Dark Theme -->
+<nav class="fixed left-0 top-0 h-full bg-primary flex flex-col py-lg z-40 sidebar-expanded" id="sidebar">
+<!-- Toggle Button -->
+<button class="absolute -right-3 top-6 w-6 h-6 bg-secondary-container text-on-primary rounded-full flex items-center justify-center cursor-pointer shadow-md z-50 hover:bg-secondary transition-colors" onclick="toggleSidebar()">
+<span class="material-symbols-outlined text-sm" id="toggle-icon">chevron_left</span>
+</button>
+<!-- Header Info -->
+<div class="flex items-center gap-sm mb-lg px-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex-shrink-0 mx-auto">
+<img alt="Usuario de Banco Integral" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate employee in a bright, modern office setting, representing an avatar for a banking application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2l_t_Cc-AFfOw8mXPuf0V4bPzNco1f3t0vwllZ7tNo_Dk-f4Xsj8sM039HFDBBCnt05wcbqbAeBjLOoMoOKjb-g-o1DVhhEL-iGegF4vzEDxadGGX_WvTwfCIbPrId4pbqnSUZec7LJyyxRwAiRUSoHlCH9phkJawp1IBPCe7y1jKYXDZpJ3gEcMKgapL9tnhd37vEhiAneKpSi7FzD8SrbbuKXgrOkzg7oDVQFrEzQXdrB6-wYGg1w">
+</div>
+<div class="nav-text whitespace-nowrap overflow-hidden">
+<h2 class="font-headline-sm text-base font-bold text-on-primary truncate leading-tight">Portal Viáticos</h2>
+<p class="font-body-sm text-xs text-primary-fixed-dim">Gestión Corporativa</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-2 flex-grow px-2"><!-- Inicio -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary font-bold border-l-4 border-secondary-container active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-lg text-label-lg nav-text">Inicio</span>
+</a>
+</li>
+<!-- Solicitantes -->
+<li class="rounded-lg overflow-hidden submenu-open" id="menu-solicitantes">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-solicitantes')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-lg text-label-lg nav-text">Solicitantes</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300" style="transform: rotate(180deg);">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Nueva Solicitud</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Solicitudes Rechazadas</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Editores -->
+<li class="rounded-lg overflow-hidden submenu-open" id="menu-editores">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-editores')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-label-lg text-label-lg nav-text">Editores</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300" style="transform: rotate(180deg);">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Conciliacion de Pagos</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Procesamiento de Pagos</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Autorizadores -->
+<li class="rounded-lg overflow-hidden submenu-open" id="menu-autorizadores">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-autorizadores')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-label-lg text-label-lg nav-text">Autorizadores</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300" style="transform: rotate(180deg);">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Autorizacion de Solicitudes</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Niveles Autorizantes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Solicitudes en curso -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">pending_actions</span>
+<span class="font-label-lg text-label-lg nav-text">Solicitudes en curso</span>
+</a>
+</li>
+<!-- Historico -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-lg text-label-lg nav-text">Historico</span>
+</a>
+</li></ul>
+<!-- Bottom Logo -->
+</nav>
+<!-- Main Content Wrapper -->
+<div class="ml-[240px] flex-1 flex flex-col min-h-screen relative w-[calc(100%-240px)]" id="main-content">
+<!-- TopAppBar (Shared Component) -->
+<header class="docked full-width top-0 sticky z-30 bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-margin-desktop">
+<div class="flex items-center gap-sm"><img alt="Banco Integral Logo" class="h-8 w-auto object-contain mr-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xJD1t15SJ-OElz4OulRz6eM7b-gNXdb3XH_fL8hayrSjkCuvGKMZ3WhBmBkUc_T51ARwFZvdK1-Wha25vWGbC28w5nk57WAwOP0xPywpFVRpyrY4fSxJiwWdwuXycGGTyusw07bKeeXOngUsO5rktajW1N9qYbkRbQXR2ZJHuCNJAN0QQNidIY-MSX0DBvN7UX2xvHXfvFqQysDSdbNhLRB_P2gxPDCjymXEooY2tF7PPqvqeVOBwvE5MNU_DYoeayU">
+<h1 class="font-headline-sm text-headline-sm font-black text-primary tracking-tight">Viáticos - Home Page</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant ml-sm overflow-hidden cursor-pointer">
+<img alt="Foto de perfil del empleado" class="w-full h-full object-cover" data-alt="A small, professional headshot of an employee, representing a profile picture in a corporate application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEa48FRDnoifXRjLsqelzlMl0VpDdzmmB_LB7M7mIDow0Wgh503bHM78JkIU-2bkwhjz_HmgfRQiMuV2PbD2xs1NbU6dbBSZdzCljpEtDydcdCVNeZOm0lN_ad57QZk_U0kZQ0PhXExeelImIiCuXc3xlqvm_7RbJYBFOw2hZHS4g98X4kC-x52cc-hXRB3BZttGUmQ10LbwRK4XmOlJnS0OJ1QOpYWV_PbhIUtORt0SZ9ohH-WSYtbg">
+</div>
+</div>
+</header>
+<!-- Workspace Canvas -->
+<main class="flex-1 p-margin-desktop bg-background flex flex-col gap-lg">
+<!-- Hero / Default State Background -->
+<section class="w-full h-[320px] rounded-xl overflow-hidden relative shadow-sm" data-alt="A wide, high-quality photograph of a modern airport terminal interior, brightly lit with natural light, showcasing a sleek architectural design, perfect for representing corporate travel and high-velocity banking." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCxaoDaqTg-lL7h0rl7z3fWoL-5ABCV0coQtjoJzpNlEGhEw-Bgq04L5gmNN-woqI45QvL_TY9AwQWsYmKVoL1aodufUlKZ0cY_qj3PcP9JZK9s8EyKm4opwaBLeDwU1F3BfmzvPCs0c9ZatkPtLYMOppjwFnD7M1ZQd-mwyHP8x8ElJMCEsGppyx7bWsso6iLnWBwejIU3_fsCzzlYu5TIgdGH1dJLX7A8ON0yQFr75toSU3ETPeyzZA')">
+<div class="absolute inset-0 bg-gradient-to-r from-primary-container/90 to-primary-container/20 flex flex-col justify-center p-xl">
+<h2 class="font-display-lg text-display-lg text-on-primary mb-sm max-w-2xl">Gestión de viáticos,<br>simplificada.</h2>
+<p class="font-body-lg text-body-lg text-inverse-primary max-w-xl">Bienvenido al nuevo portal. Registra, aprueba y haz seguimiento de tus gastos corporativos con precisión y velocidad.</p>
+</div>
+</section>
+<!-- Bento Grid Dashboard -->
+<section class="card-level-1 rounded-xl overflow-hidden flex flex-col">
+<!-- Notification Header -->
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-sm">
+<h3 class="font-headline-sm text-headline-sm text-primary">Notificaciones Recientes</h3>
+<span class="bg-secondary-container text-on-primary text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+</div>
+<button class="text-primary font-label-md hover:underline transition-all">Marcar como leídas</button>
+</div>
+<!-- Notification List -->
+<div class="flex flex-col">
+<!-- Notification 1 -->
+<div class="p-md flex gap-md hover:bg-surface-container transition-colors border-b border-outline-variant cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-tertiary-fixed">mail</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-primary">Nueva solicitud de viáticos recibida</h4>
+<span class="text-xs text-on-surface-variant">Hace 5 min</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">El colaborador Juan Pérez ha enviado una nueva solicitud para el viaje a Bogotá.</p>
+</div>
+</div>
+<!-- Notification 2 -->
+<div class="p-md flex gap-md hover:bg-surface-container transition-colors border-b border-outline-variant cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-[#00ADEF]/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary-container">check_circle</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-primary">Gasto de transporte aprobado</h4>
+<span class="text-xs text-on-surface-variant">Hace 2 horas</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Tu comprobante de taxi del 15 de febrero ha sido validado exitosamente.</p>
+</div>
+</div>
+<!-- Notification 3 -->
+<div class="p-md flex gap-md hover:bg-surface-container transition-colors cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-error-container">warning</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-primary">Recordatorio: Informe mensual pendiente</h4>
+<span class="text-xs text-on-surface-variant">Ayer</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Faltan 2 días para el cierre del periodo. Por favor, completa tu informe de gastos.</p>
+</div>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="p-md bg-surface-container-low border-t border-outline-variant flex justify-center">
+<button class="text-primary font-label-lg flex items-center gap-xs hover:gap-2 transition-all">
+      Ver todas las notificaciones
+      <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</section>
+</main>
+</div>
+<div id="snapdom-sandbox" data-snapdom-sandbox="true" aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px; width: 0px; height: 0px; overflow: hidden;"></div>
+
+</body></html>

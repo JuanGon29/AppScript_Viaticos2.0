@@ -1,0 +1,815 @@
+<script>
+/**
+ * =================================================================
+ * CONTROLADOR JAVASCRIPT: JS_NuevaSolicitud.html (Página S1)
+ * =================================================================
+ * Maneja la interacción del formulario S1, semáforo visual de validación,
+ * autocompletado de delegados, edición bancaria protegida y envío a GAS.
+ */
+
+// Estado local de la vista S1
+var S1_STATE = {
+  archivos: [],
+  datosOriginalesBanco: { banco: "", tipoCuenta: "", numeroCuenta: "" },
+  colaboradoresCentroCosto: [],
+  usuarioActivo: null,
+  eventosConfigurados: false,
+  guardando: false,
+  _arrastrando: false
+};
+
+// --------------------------------------------------------------------------
+// 1. INICIALIZACIÓN Y PRECARGA DE DATOS DE SESIÓN
+// --------------------------------------------------------------------------
+function inicializarVistaNuevaSolicitud() {
+  // Obtener datos del usuario desde el estado global de la aplicación
+  var user = (window.APP_STATE && window.APP_STATE.usuarioActivo) 
+             ? window.APP_STATE.usuarioActivo 
+             : JSON.parse(sessionStorage.getItem('viaticos_user_data') || '{}');
+             
+  S1_STATE.usuarioActivo = user;
+
+  // Precargar Sección 1: Datos del Solicitante
+  document.getElementById('s1_nombre_solicitante').value = user.NombreUsuario || user.NombreGoogle || "Colaborador";
+  document.getElementById('s1_correo_solicitante').value = user.CorreoUsuario || user.CorreoGoogle || "";
+  document.getElementById('s1_cargo_solicitante').value = user.Plaza || "Colaborador";
+  document.getElementById('s1_gerencia_solicitante').value = user.NombreGerencia || "";
+  document.getElementById('s1_centro_costo').value = user.CentroCosto || "";
+  document.getElementById('s1_agencia').value = user.NombreAgencia || "Oficina Central";
+  document.getElementById('s1_region_solicitante').value = user.NombreRegion || "";
+  document.getElementById('s1_es_movil').value = user.EsMovil || "No";
+  document.getElementById('s1_es_editado').value = "No";
+
+  // Control de visibilidad de viático móvil (Operativos Móviles)
+  var optMovil = document.getElementById('opt_viatico_movil');
+  if (optMovil) {
+    if (user.EsMovil === "Si" || user.EsMovil === "SI") {
+      optMovil.classList.remove('hidden');
+    } else {
+      optMovil.classList.add('hidden');
+    }
+  }
+
+  // Precargar datos bancarios por defecto para solicitud Personal
+  establecerDestinatarioPersonal(user);
+
+  // Vincular eventos de formulario
+  configurarEventosS1();
+
+  // Resetear estados visuales
+  validarTodosLosCamposS1();
+
+  // Verificar regla de bloqueo de 15 días
+  var correoSol = user.CorreoUsuario || user.CorreoGoogle || "";
+  verificarBloqueoUsuarioS1(correoSol);
+}
+
+/**
+ * Establece el destinatario personal con los datos bancarios del solicitante
+ */
+function establecerDestinatarioPersonal(user) {
+  document.getElementById('s1_destinatario_nombre').value = user.NombreUsuario || user.NombreGoogle || "";
+  document.getElementById('s1_destinatario_correo').value = user.CorreoUsuario || user.CorreoGoogle || "";
+  document.getElementById('s1_banco').value = user.NombreBanco || "";
+  document.getElementById('s1_tipo_cuenta').value = user.TipoCuenta || "";
+  document.getElementById('s1_numero_cuenta').value = user.NumeroCuenta || "";
+
+  S1_STATE.datosOriginalesBanco = {
+    banco: user.NombreBanco || "",
+    tipoCuenta: user.TipoCuenta || "",
+    numeroCuenta: user.NumeroCuenta || ""
+  };
+
+  bloquearCamposBanco();
+  document.getElementById('btnEditarBanco').disabled = false;
+  document.getElementById('s1_es_editado').value = "No";
+}
+
+// --------------------------------------------------------------------------
+// 2. CONFIGURACIÓN DE EVENTOS REACTIVOS Y VALIDACIÓN
+// --------------------------------------------------------------------------
+function configurarEventosS1() {
+  if (S1_STATE.eventosConfigurados) {
+    return;
+  }
+  S1_STATE.eventosConfigurados = true;
+
+  // 1. Duración de la actividad
+  var duracionSelect = document.getElementById('s1_duracion_actividad');
+  var fechaInicioInput = document.getElementById('s1_fecha_inicio');
+  var fechaFinInput = document.getElementById('s1_fecha_fin');
+
+  duracionSelect.addEventListener('change', function() {
+    var val = this.value;
+    if (!val) {
+      fechaInicioInput.disabled = true;
+      fechaFinInput.disabled = true;
+      fechaInicioInput.value = '';
+      fechaFinInput.value = '';
+    } else if (val === 'Día único') {
+      fechaInicioInput.disabled = false;
+      fechaFinInput.disabled = true;
+      if (fechaInicioInput.value) {
+        fechaFinInput.value = fechaInicioInput.value;
+      }
+    } else if (val === 'Rango de días') {
+      fechaInicioInput.disabled = false;
+      fechaFinInput.disabled = false;
+    }
+    evaluarReglaAnticipacionArchivos();
+    validarCampoVisualS1(duracionSelect);
+    validarCampoVisualS1(fechaInicioInput);
+    validarCampoVisualS1(fechaFinInput);
+  });
+
+  // 2. Fechas de Inicio y Fin
+  fechaInicioInput.addEventListener('change', function() {
+    if (duracionSelect.value === 'Día único') {
+      fechaFinInput.value = this.value;
+    } else if (duracionSelect.value === 'Rango de días' && fechaFinInput.value) {
+      if (new Date(fechaFinInput.value) < new Date(this.value)) {
+        fechaFinInput.value = '';
+      }
+    }
+    evaluarReglaAnticipacionArchivos();
+    validarCampoVisualS1(fechaInicioInput);
+    validarCampoVisualS1(fechaFinInput);
+  });
+
+  fechaFinInput.addEventListener('change', function() {
+    if (duracionSelect.value === 'Rango de días' && fechaInicioInput.value) {
+      if (new Date(this.value) <= new Date(fechaInicioInput.value)) {
+        mostrarModalFeedback('Fecha Fin Inválida', 'La fecha de fin debe ser posterior a la fecha de inicio.', 'ERROR');
+        this.value = '';
+      }
+    }
+    validarCampoVisualS1(fechaFinInput);
+  });
+
+  // 3. Tipo de Viático y Rubro Contable
+  var tipoViaticoSelect = document.getElementById('s1_tipo_viatico');
+  var horaEventoSelect = document.getElementById('s1_hora_evento');
+  var rubroContableHidden = document.getElementById('s1_rubro_contable');
+  var rubroCodigoHidden = document.getElementById('s1_rubro_codigo');
+
+  tipoViaticoSelect.addEventListener('change', function() {
+    var selectedOption = this.options[this.selectedIndex];
+    var rubroId = selectedOption.getAttribute('data-rubro') || '2';
+    var rubroCodigo = selectedOption.getAttribute('data-codigo') || '8110050400000';
+    
+    rubroCodigoHidden.value = rubroCodigo;
+    rubroContableHidden.value = rubroId === '1' ? '8110029900000-OTRAS PRESTACIONES AL PERSONAL' : '8110050400000-VIATICOS Y TRANSPORTE';
+
+    if (this.value === 'Reunión/Trabajo fuera de horario laboral') {
+      horaEventoSelect.disabled = false;
+      horaEventoSelect.required = true;
+      horaEventoSelect.classList.remove('border-gray');
+      validarCampoVisualS1(horaEventoSelect);
+    } else {
+      horaEventoSelect.disabled = true;
+      horaEventoSelect.required = false;
+      horaEventoSelect.value = '';
+      horaEventoSelect.classList.remove('border-red', 'border-green');
+      horaEventoSelect.classList.add('border-gray');
+    }
+    validarCampoVisualS1(tipoViaticoSelect);
+  });
+
+  horaEventoSelect.addEventListener('change', function() {
+    validarCampoVisualS1(this);
+  });
+
+  // 4. Tipo de Solicitud (Personal vs Delegado)
+  var tipoSolicitudSelect = document.getElementById('s1_tipo_solicitud');
+  var containerDelegado = document.getElementById('container_destinatario_delegado');
+  var selectDelegado = document.getElementById('s1_select_destinatario');
+
+  tipoSolicitudSelect.addEventListener('change', function() {
+    if (this.value === 'Personal') {
+      containerDelegado.classList.add('hidden');
+      selectDelegado.required = false;
+      establecerDestinatarioPersonal(S1_STATE.usuarioActivo);
+    } else {
+      containerDelegado.classList.remove('hidden');
+      selectDelegado.required = true;
+      cargarColaboradoresCentroCosto();
+    }
+    validarCampoVisualS1(tipoSolicitudSelect);
+  });
+
+  selectDelegado.addEventListener('change', function() {
+    var idSeleccionado = this.value;
+    if (!idSeleccionado) {
+      document.getElementById('s1_destinatario_nombre').value = '';
+      document.getElementById('s1_destinatario_correo').value = '';
+      document.getElementById('s1_banco').value = '';
+      document.getElementById('s1_tipo_cuenta').value = '';
+      document.getElementById('s1_numero_cuenta').value = '';
+      document.getElementById('btnEditarBanco').disabled = true;
+    } else {
+      var colab = S1_STATE.colaboradoresCentroCosto.find(function(c) { return c.id.toString() === idSeleccionado.toString(); });
+      if (colab) {
+        document.getElementById('s1_destinatario_nombre').value = colab.nombre;
+        document.getElementById('s1_destinatario_correo').value = colab.correo;
+        document.getElementById('s1_banco').value = colab.banco || '';
+        document.getElementById('s1_tipo_cuenta').value = colab.tipoCuenta || '';
+        document.getElementById('s1_numero_cuenta').value = colab.numeroCuenta || '';
+
+        S1_STATE.datosOriginalesBanco = {
+          banco: colab.banco || '',
+          tipoCuenta: colab.tipoCuenta || '',
+          numeroCuenta: colab.numeroCuenta || ''
+        };
+        bloquearCamposBanco();
+        document.getElementById('btnEditarBanco').disabled = false;
+        document.getElementById('s1_es_editado').value = 'No';
+      }
+    }
+    validarCampoVisualS1(selectDelegado);
+  });
+
+  // 5. Monto y Motivo
+  var montoInput = document.getElementById('s1_monto');
+  montoInput.addEventListener('blur', function() {
+    var val = parseFloat(this.value);
+    if (!isNaN(val) && val > 0) {
+      this.value = val.toFixed(2);
+    }
+    validarCampoVisualS1(this);
+  });
+  montoInput.addEventListener('input', function() {
+    validarCampoVisualS1(this);
+  });
+
+  var motivoInput = document.getElementById('s1_motivo_viatico');
+  motivoInput.addEventListener('input', function() {
+    validarCampoVisualS1(this);
+  });
+
+  // 6. Botones de Edición Bancaria
+  document.getElementById('btnEditarBanco').addEventListener('click', function() {
+    var destinatario = document.getElementById('s1_destinatario_nombre').value.trim();
+    if (!destinatario) {
+      mostrarModalFeedback('Destinatario Requerido', 'Debe seleccionar o tener un destinatario antes de editar los datos bancarios.', 'ERROR');
+      return;
+    }
+    document.getElementById('modalConfirmarEdicionBanco').classList.remove('hidden');
+  });
+
+  document.getElementById('btnCancelarEdicionBanco').addEventListener('click', function() {
+    document.getElementById('modalConfirmarEdicionBanco').classList.add('hidden');
+  });
+
+  document.getElementById('btnProseguirEdicionBanco').addEventListener('click', function() {
+    document.getElementById('modalConfirmarEdicionBanco').classList.add('hidden');
+    desbloquearCamposBanco();
+    document.getElementById('s1_es_editado').value = 'Si';
+    document.getElementById('btnRegresarBanco').classList.remove('hidden');
+  });
+
+  document.getElementById('btnRegresarBanco').addEventListener('click', function() {
+    document.getElementById('s1_banco').value = S1_STATE.datosOriginalesBanco.banco;
+    document.getElementById('s1_tipo_cuenta').value = S1_STATE.datosOriginalesBanco.tipoCuenta;
+    document.getElementById('s1_numero_cuenta').value = S1_STATE.datosOriginalesBanco.numeroCuenta;
+    bloquearCamposBanco();
+    document.getElementById('s1_es_editado').value = 'No';
+    this.classList.add('hidden');
+  });
+
+  // 7. Configuración de Zona de Archivos Drag & Drop
+  configurarArrastreArchivosS1();
+
+  // 8. Botones de Acción (Limpiar y Guardar)
+  document.getElementById('s1_btnLimpiar').addEventListener('click', function() {
+    resetearFormularioS1();
+  });
+
+  document.getElementById('s1_btnGuardar').addEventListener('click', function() {
+    ejecutarGuardadoSolicitudS1();
+  });
+
+  document.getElementById('modalFeedbackBtnCerrar').addEventListener('click', function() {
+    document.getElementById('modalFeedbackS1').classList.add('hidden');
+  });
+}
+
+// --------------------------------------------------------------------------
+// 3. REGLAS DE VALIDACIÓN VISUAL (SEMÁFORO DE CONTORNOS)
+// --------------------------------------------------------------------------
+function validarCampoVisualS1(campo) {
+  if (!campo) return false;
+  
+  if (campo.disabled || campo.readOnly && !campo.classList.contains('editable-field')) {
+    return true;
+  }
+
+  var esValido = false;
+  var valor = (campo.value || '').trim();
+
+  if (campo.type === 'number') {
+    esValido = !isNaN(parseFloat(valor)) && parseFloat(valor) > 0;
+  } else if (campo.id === 's1_fileContainer') {
+    var reqArchivos = !document.getElementById('s1_req_archivos').classList.contains('hidden');
+    esValido = !reqArchivos || S1_STATE.archivos.length > 0;
+  } else {
+    esValido = valor !== '';
+  }
+
+  if (campo.required || campo.id === 's1_fileContainer') {
+    if (esValido) {
+      campo.classList.remove('border-red');
+      campo.classList.add('border-green');
+    } else {
+      campo.classList.remove('border-green');
+      campo.classList.add('border-red');
+    }
+  }
+  return esValido;
+}
+
+function validarTodosLosCamposS1() {
+  var campos = document.querySelectorAll('#formNuevaSolicitud .editable-field');
+  campos.forEach(function(c) {
+    validarCampoVisualS1(c);
+  });
+}
+
+function evaluarReglaAnticipacionArchivos() {
+  var fechaInicioVal = document.getElementById('s1_fecha_inicio').value;
+  var reqArchivosSpan = document.getElementById('s1_req_archivos');
+  var fileContainer = document.getElementById('s1_fileContainer');
+
+  if (!fechaInicioVal) {
+    reqArchivosSpan.classList.add('hidden');
+    fileContainer.classList.remove('border-red', 'border-green');
+    fileContainer.classList.add('border-gray');
+    return;
+  }
+
+  var hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  var fechaInicio = new Date(fechaInicioVal + 'T00:00:00');
+  
+  var diffDias = Math.floor((fechaInicio - hoy) / (1000 * 60 * 60 * 24));
+
+  if (diffDias <= 2) {
+    reqArchivosSpan.classList.remove('hidden');
+    if (S1_STATE.archivos.length === 0) {
+      fileContainer.classList.remove('border-gray', 'border-green');
+      fileContainer.classList.add('border-red');
+    } else {
+      fileContainer.classList.remove('border-gray', 'border-red');
+      fileContainer.classList.add('border-green');
+    }
+  } else {
+    reqArchivosSpan.classList.add('hidden');
+    fileContainer.classList.remove('border-red');
+    if (S1_STATE.archivos.length > 0) {
+      fileContainer.classList.add('border-green');
+    } else {
+      fileContainer.classList.add('border-gray');
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// 4. EDICIÓN BANCARIA Y DELEGADOS
+// --------------------------------------------------------------------------
+function bloquearCamposBanco() {
+  var campos = document.querySelectorAll('.bank-field');
+  campos.forEach(function(c) {
+    c.readOnly = true;
+    c.classList.remove('editable-field', 'border-green', 'border-red');
+    c.classList.add('border-gray');
+  });
+}
+
+function desbloquearCamposBanco() {
+  var campos = document.querySelectorAll('.bank-field');
+  campos.forEach(function(c) {
+    c.readOnly = false;
+    c.classList.remove('border-gray');
+    c.classList.add('editable-field', 'border-green');
+    c.addEventListener('input', function() { validarCampoVisualS1(this); });
+  });
+}
+
+function cargarColaboradoresCentroCosto() {
+  var cc = document.getElementById('s1_centro_costo').value;
+  var selectDelegado = document.getElementById('s1_select_destinatario');
+  selectDelegado.innerHTML = '<option value="">Cargando colaboradores...</option>';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.status === 'OK') {
+          S1_STATE.colaboradoresCentroCosto = res.usuarios || [];
+          renderizarOptionsDelegados();
+        } else {
+          selectDelegado.innerHTML = '<option value="">Error al cargar colaboradores</option>';
+        }
+      })
+      .withFailureHandler(function(err) {
+        selectDelegado.innerHTML = '<option value="">Error de conexión</option>';
+      })
+      .obtenerUsuariosPorCentroCosto(cc);
+  } else {
+    // Modo Mock Local
+    S1_STATE.colaboradoresCentroCosto = [
+      { id: 101, nombre: "Carlos Ruiz", correo: "cruiz@bancointegral.com", plaza: "Analista de Sistemas", banco: "Banco Integral", tipoCuenta: "Ahorro", numeroCuenta: "1234567890" },
+      { id: 102, nombre: "Ana Morales", correo: "amorales@bancointegral.com", plaza: "Especialista QA", banco: "Banco Agrícola", tipoCuenta: "Corriente", numeroCuenta: "0987654321" },
+      { id: 103, nombre: "Roberto Gómez", correo: "rgomez@bancointegral.com", plaza: "Desarrollador Core", banco: "Banco Cuscatlán", tipoCuenta: "Ahorro", numeroCuenta: "5544332211" }
+    ];
+    renderizarOptionsDelegados();
+  }
+}
+
+function renderizarOptionsDelegados() {
+  var selectDelegado = document.getElementById('s1_select_destinatario');
+  selectDelegado.innerHTML = '<option value="">Seleccione el colaborador beneficiario...</option>';
+  
+  S1_STATE.colaboradoresCentroCosto.forEach(function(colab) {
+    var opt = document.createElement('option');
+    opt.value = colab.id;
+    opt.textContent = colab.nombre + " (" + colab.plaza + ")";
+    selectDelegado.appendChild(opt);
+  });
+  validarCampoVisualS1(selectDelegado);
+}
+
+// --------------------------------------------------------------------------
+// 5. GESTIÓN DE ARCHIVOS ADJUNTOS (DRAG & DROP Y BASE64)
+// --------------------------------------------------------------------------
+function configurarArrastreArchivosS1() {
+  var fileInput = document.getElementById('s1_fileInput');
+  var fileContainer = document.getElementById('s1_fileContainer');
+  if (!fileContainer || !fileInput) return;
+
+  var arrastrandoActivo = false;
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+    fileContainer.addEventListener(eventName, function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
+  });
+
+  ['dragenter', 'dragover'].forEach(function(eventName) {
+    fileContainer.addEventListener(eventName, function() {
+      arrastrandoActivo = true;
+      S1_STATE._arrastrando = true;
+      fileContainer.classList.add('bg-primary-fixed/20');
+    }, false);
+  });
+
+  ['dragleave'].forEach(function(eventName) {
+    fileContainer.addEventListener(eventName, function() {
+      arrastrandoActivo = false;
+      fileContainer.classList.remove('bg-primary-fixed/20');
+    }, false);
+  });
+
+  fileContainer.addEventListener('drop', function(e) {
+    fileContainer.classList.remove('bg-primary-fixed/20');
+    arrastrandoActivo = true;
+    S1_STATE._arrastrando = true;
+    
+    // Evitar que el clic nativo que sucede al soltar el ratón abra el explorador de archivos
+    setTimeout(function() {
+      arrastrandoActivo = false;
+      S1_STATE._arrastrando = false;
+    }, 400);
+
+    var dt = e.dataTransfer;
+    var files = dt ? dt.files : null;
+    procesarArchivosSeleccionados(files);
+  });
+
+  fileContainer.addEventListener('click', function(e) {
+    if (arrastrandoActivo || S1_STATE._arrastrando) {
+      return;
+    }
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', function(e) {
+    procesarArchivosSeleccionados(this.files);
+    this.value = '';
+  });
+}
+
+function procesarArchivosSeleccionados(files) {
+  if (!files || files.length === 0) return;
+
+  Array.from(files).forEach(function(file) {
+    if (file.size > 10 * 1024 * 1024) {
+      mostrarModalFeedback('Archivo muy grande', 'El archivo "' + file.name + '" supera el límite de 10 MB.', 'ERROR');
+      return;
+    }
+
+    // Deduplicación: no permitir duplicados por mismo nombre y tamaño
+    var yaExiste = S1_STATE.archivos.some(function(a) {
+      var n = a.nombre || a.NombreArchivo;
+      var s = a.tamano || a.TamanoBytes;
+      return n === file.name && s === file.size;
+    });
+    if (yaExiste) {
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      // Re-validar existencia antes de pushear
+      var existeAlTerminar = S1_STATE.archivos.some(function(a) {
+        var n = a.nombre || a.NombreArchivo;
+        var s = a.tamano || a.TamanoBytes;
+        return n === file.name && s === file.size;
+      });
+      if (!existeAlTerminar) {
+        S1_STATE.archivos.push({
+          nombre: file.name,
+          NombreArchivo: file.name,
+          tipo: file.type || 'application/octet-stream',
+          TipoArchivo: file.type || 'application/octet-stream',
+          tamano: file.size,
+          TamanoBytes: file.size,
+          contenidoBase64: e.target.result,
+          ContenidoBase64: e.target.result
+        });
+        renderizarGaleriaArchivosS1();
+        evaluarReglaAnticipacionArchivos();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderizarGaleriaArchivosS1() {
+  var gallery = document.getElementById('s1_fileGallery');
+  gallery.innerHTML = '';
+
+  S1_STATE.archivos.forEach(function(file, index) {
+    var card = document.createElement('div');
+    card.className = 'flex items-center justify-between p-3 bg-white border border-outline-variant rounded-xl shadow-xs';
+    
+    var fNombre = file.nombre || file.NombreArchivo || 'Adjunto';
+    var fTamano = file.tamano || file.TamanoBytes || 0;
+    var iconClass = 'fa-file-alt text-gray-500';
+    if (fNombre.endsWith('.pdf')) iconClass = 'fa-file-pdf text-red-500';
+    else if (/\.(jpg|jpeg|png)$/i.test(fNombre)) iconClass = 'fa-file-image text-purple-500';
+
+    card.innerHTML = 
+      '<div class="flex items-center overflow-hidden w-full">' +
+        '<i class="fas ' + iconClass + ' text-2xl mr-3 flex-shrink-0"></i>' +
+        '<div class="flex flex-col overflow-hidden w-full pr-2">' +
+          '<span class="text-xs font-bold text-primary truncate" title="' + fNombre + '">' + fNombre + '</span>' +
+          '<span class="text-[10px] text-on-surface-variant">' + formatBytes(fTamano) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<button type="button" class="text-outline hover:text-error transition-colors p-1 flex-shrink-0 cursor-pointer" onclick="eliminarArchivoS1(' + index + ')" title="Eliminar">' +
+        '<i class="fas fa-times-circle text-lg"></i>' +
+      '</button>';
+    gallery.appendChild(card);
+  });
+}
+
+function eliminarArchivoS1(index) {
+  S1_STATE.archivos.splice(index, 1);
+  renderizarGaleriaArchivosS1();
+  evaluarReglaAnticipacionArchivos();
+}
+
+function formatBytes(bytes) {
+  if (!+bytes) return '0 Bytes';
+  var k = 1024;
+  var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  var i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function ejecutarGuardadoSolicitudS1() {
+  if (S1_STATE.guardando) {
+    return;
+  }
+
+  // 1. Validaciones
+  var duracion = document.getElementById('s1_duracion_actividad').value;
+  var fInicio = document.getElementById('s1_fecha_inicio').value;
+  var fFin = document.getElementById('s1_fecha_fin').value;
+  var tipoViatico = document.getElementById('s1_tipo_viatico').value;
+  var horaEvento = document.getElementById('s1_hora_evento').value;
+  var monto = parseFloat(document.getElementById('s1_monto').value);
+  var motivo = document.getElementById('s1_motivo_viatico').value.trim();
+  var destinatario = document.getElementById('s1_destinatario_nombre').value.trim();
+
+  if (!duracion) {
+    mostrarModalFeedback('Campo Requerido', 'Por favor seleccione la duración de la actividad.', 'ERROR');
+    return;
+  }
+  if (!fInicio) {
+    mostrarModalFeedback('Campo Requerido', 'Por favor ingrese la fecha de inicio.', 'ERROR');
+    return;
+  }
+  if (duracion === 'Rango de días' && !fFin) {
+    mostrarModalFeedback('Campo Requerido', 'Por favor ingrese la fecha de fin.', 'ERROR');
+    return;
+  }
+  if (!tipoViatico) {
+    mostrarModalFeedback('Campo Requerido', 'Por favor seleccione el tipo de viático.', 'ERROR');
+    return;
+  }
+  if (tipoViatico === 'Reunión/Trabajo fuera de horario laboral' && !horaEvento) {
+    mostrarModalFeedback('Campo Requerido', 'Debe seleccionar la franja horaria del evento.', 'ERROR');
+    return;
+  }
+  if (!destinatario) {
+    mostrarModalFeedback('Campo Requerido', 'Debe contar con un colaborador destinatario.', 'ERROR');
+    return;
+  }
+  if (isNaN(monto) || monto <= 0) {
+    mostrarModalFeedback('Monto Inválido', 'Por favor ingrese un monto válido mayor a $0.00.', 'ERROR');
+    return;
+  }
+  if (!motivo) {
+    mostrarModalFeedback('Campo Requerido', 'Por favor describa el motivo detallado del viático.', 'ERROR');
+    return;
+  }
+
+  // Validar obligatoriedad de archivos si anticipación <= 2 días
+  var reqArchivos = !document.getElementById('s1_req_archivos').classList.contains('hidden');
+  if (reqArchivos && S1_STATE.archivos.length === 0) {
+    mostrarModalFeedback('Archivos Obligatorios', 'Por solicitar viático con anticipación menor o igual a 2 días, es obligatorio adjuntar comprobantes o justificación.', 'ERROR');
+    return;
+  }
+
+  // 2. Empaquetar Datos
+  var datosEmpaquetados = {
+    nombre_solicitante: document.getElementById('s1_nombre_solicitante').value,
+    correo_solicitante: document.getElementById('s1_correo_solicitante').value,
+    cargo_solicitante: document.getElementById('s1_cargo_solicitante').value,
+    gerencia_solicitante: document.getElementById('s1_gerencia_solicitante').value,
+    centro_costo: document.getElementById('s1_centro_costo').value,
+    centro_costo_num: (document.getElementById('s1_centro_costo').value || '').split('-')[0].trim(),
+    agencia: document.getElementById('s1_agencia').value,
+    region_solicitante: document.getElementById('s1_region_solicitante').value,
+    duracion_actividad: duracion,
+    fecha_inicio: fInicio,
+    fecha_fin: fFin || fInicio,
+    tipo_viatico: tipoViatico,
+    rubro_contable: document.getElementById('s1_rubro_contable').value,
+    rubro_codigo: document.getElementById('s1_rubro_codigo').value,
+    hora_evento: horaEvento,
+    tipo_solicitud: document.getElementById('s1_tipo_solicitud').value,
+    destinatario: destinatario,
+    correo_destinatario: document.getElementById('s1_destinatario_correo').value,
+    monto: monto,
+    monto_total: monto,
+    banco: document.getElementById('s1_banco').value,
+    tipo_cuenta: document.getElementById('s1_tipo_cuenta').value,
+    numero_cuenta: document.getElementById('s1_numero_cuenta').value,
+    es_editado: document.getElementById('s1_es_editado').value,
+    motivo_viatico: motivo,
+    archivos: S1_STATE.archivos
+  };
+
+  // 3. UI Loading Feedback y Bloqueo Atómico
+  S1_STATE.guardando = true;
+  var btnGuardar = document.getElementById('s1_btnGuardar');
+  var iconGuardar = document.getElementById('s1_iconGuardar');
+  var textGuardar = document.getElementById('s1_textGuardar');
+
+  btnGuardar.disabled = true;
+  iconGuardar.className = 'loader';
+  textGuardar.textContent = 'Procesando Solicitud...';
+
+  // 4. Llamada a Google Apps Script
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        S1_STATE.guardando = false;
+        btnGuardar.disabled = false;
+        iconGuardar.className = 'fas fa-save text-lg';
+        textGuardar.textContent = 'Guardar Solicitud';
+
+        if (res && res.status === 'OK') {
+          mostrarModalFeedback('¡Solicitud Guardada!', 'Su solicitud ha sido generada exitosamente con el ID: ' + res.idSolicitud + '. Estado: ' + res.estado, 'SUCCESS');
+          resetearFormularioS1();
+        } else {
+          mostrarModalFeedback('Error al Guardar', (res && res.mensaje) ? res.mensaje : 'Ocurrió un error inesperado.', 'ERROR');
+        }
+      })
+      .withFailureHandler(function(err) {
+        S1_STATE.guardando = false;
+        btnGuardar.disabled = false;
+        iconGuardar.className = 'fas fa-save text-lg';
+        textGuardar.textContent = 'Guardar Solicitud';
+        mostrarModalFeedback('Error del Servidor', err.toString(), 'ERROR');
+      })
+      .guardarNuevaSolicitudS1(datosEmpaquetados);
+  } else {
+    // Modo Mock Local
+    setTimeout(function() {
+      S1_STATE.guardando = false;
+      btnGuardar.disabled = false;
+      iconGuardar.className = 'fas fa-save text-lg';
+      textGuardar.textContent = 'Guardar Solicitud';
+      var correlativoMock = 'SOL-' + new Date().getFullYear() + '-0001';
+      mostrarModalFeedback('¡Solicitud Guardada (Mock)!', 'Solicitud generada con éxito con código: ' + correlativoMock + '. Estado inicial: INICIADO.', 'SUCCESS');
+      resetearFormularioS1();
+    }, 1200);
+  }
+}
+
+function resetearFormularioS1() {
+  S1_STATE.guardando = false;
+  document.getElementById('s1_duracion_actividad').value = '';
+  document.getElementById('s1_fecha_inicio').value = '';
+  document.getElementById('s1_fecha_inicio').disabled = true;
+  document.getElementById('s1_fecha_fin').value = '';
+  document.getElementById('s1_fecha_fin').disabled = true;
+  document.getElementById('s1_tipo_viatico').value = '';
+  document.getElementById('s1_hora_evento').value = '';
+  document.getElementById('s1_hora_evento').disabled = true;
+  document.getElementById('s1_tipo_solicitud').value = 'Personal';
+  document.getElementById('container_destinatario_delegado').classList.add('hidden');
+  document.getElementById('s1_monto').value = '';
+  document.getElementById('s1_motivo_viatico').value = '';
+  
+  S1_STATE.archivos = [];
+  renderizarGaleriaArchivosS1();
+  evaluarReglaAnticipacionArchivos();
+
+  if (S1_STATE.usuarioActivo) {
+    establecerDestinatarioPersonal(S1_STATE.usuarioActivo);
+  }
+  validarTodosLosCamposS1();
+}
+
+function mostrarModalFeedback(titulo, mensaje, tipo) {
+  var modal = document.getElementById('modalFeedbackS1');
+  var icon = document.getElementById('modalFeedbackIcon');
+  var tit = document.getElementById('modalFeedbackTitulo');
+  var msg = document.getElementById('modalFeedbackMensaje');
+
+  tit.textContent = titulo;
+  msg.textContent = mensaje;
+
+  if (tipo === 'SUCCESS') {
+    icon.className = 'w-16 h-16 rounded-full flex items-center justify-center text-3xl bg-green-100 text-green-700';
+    icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+  } else {
+    icon.className = 'w-16 h-16 rounded-full flex items-center justify-center text-3xl bg-red-100 text-red-600';
+    icon.innerHTML = '<i class="fas fa-times-circle"></i>';
+  }
+
+  modal.classList.remove('hidden');
+}
+
+// --------------------------------------------------------------------------
+// 7. VERIFICACIÓN DE BLOQUEO POR REGLA DE 15 DÍAS
+// --------------------------------------------------------------------------
+function verificarBloqueoUsuarioS1(correo) {
+  var correoSol = correo || (S1_STATE.usuarioActivo && (S1_STATE.usuarioActivo.CorreoUsuario || S1_STATE.usuarioActivo.CorreoGoogle)) || "";
+  
+  function manejarResultadoBloqueo(resp) {
+    if (resp && resp.bloqueado) {
+      mostrarModalBloqueoS1(resp.motivo, resp.solicitudesBloqueantes);
+    }
+  }
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(manejarResultadoBloqueo)
+      .withFailureHandler(function(err) {
+        console.error("Error verificando bloqueo S1:", err);
+      })
+      .verificarBloqueoSolicitudS1(correoSol);
+  } else if (typeof window.mock_verificarBloqueoSolicitudS1 === 'function') {
+    var resMock = window.mock_verificarBloqueoSolicitudS1(correoSol);
+    manejarResultadoBloqueo(resMock);
+  }
+}
+
+function mostrarModalBloqueoS1(motivo, solicitudes) {
+  var modal = document.getElementById('modal-bloqueo-15dias');
+  var listaDiv = document.getElementById('lista-solicitudes-bloqueantes');
+  if (listaDiv && solicitudes && solicitudes.length > 0) {
+    listaDiv.innerHTML = '<p class="font-bold text-red-600 mb-1">Solicitudes causantes del bloqueo:</p>';
+    solicitudes.forEach(function(s) {
+      listaDiv.innerHTML += '<div class="p-1.5 bg-red-50 rounded border border-red-100 mb-1">' +
+        '<b>' + s.idSolicitud + '</b> (' + s.estado + ' - ' + s.clasificacion + ') - Antigüedad: <b>' + s.diasTranscurridos + ' días</b> (Ref: ' + s.fechaReferencia + ')' +
+        '</div>';
+    });
+  }
+  
+  if (modal) {
+    modal.classList.remove('hidden');
+  }
+
+  var btnGuardar = document.getElementById('btnGuardarSolicitud');
+  if (btnGuardar) {
+    btnGuardar.disabled = true;
+    btnGuardar.classList.add('opacity-50', 'cursor-not-allowed');
+  }
+}
+</script>

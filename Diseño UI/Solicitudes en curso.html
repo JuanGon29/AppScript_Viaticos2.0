@@ -1,0 +1,900 @@
+<!DOCTYPE html><html class="h-full" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Solicitudes en curso - Biatic 2.0</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#234f3b",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#ffdbd1",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-container": "#7389cb",
+                      "tertiary-fixed-dim": "#a2d1b7",
+                      "surface-dim": "#d7dadc",
+                      "surface-container-low": "#f1f4f6",
+                      "surface-container-highest": "#e0e3e5",
+                      "surface-container-high": "#e5e9eb",
+                      "on-primary-fixed-variant": "#2d4481",
+                      "on-surface-variant": "#444650",
+                      "on-background": "#181c1e",
+                      "secondary-container": "#ff5722",
+                      "primary-fixed-dim": "#b3c5ff",
+                      "on-secondary-fixed-variant": "#862200",
+                      "background": "#f7fafc",
+                      "tertiary-fixed": "#bdedd2",
+                      "secondary": "#b02f00",
+                      "outline-variant": "#c5c6d1",
+                      "on-secondary-container": "#541100",
+                      "inverse-surface": "#2d3133",
+                      "surface": "#f7fafc",
+                      "primary-container": "#001f5c",
+                      "outline": "#757681",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#dbe1ff",
+                      "on-tertiary-fixed": "#002113",
+                      "surface-bright": "#f7fafc",
+                      "tertiary": "#001209",
+                      "inverse-on-surface": "#eef1f3",
+                      "surface-container": "#ebeef0",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#ffb5a0",
+                      "tertiary-container": "#002a1a",
+                      "on-secondary-fixed": "#3b0900",
+                      "inverse-primary": "#b3c5ff",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#465c9a",
+                      "on-surface": "#181c1e",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e0e3e5",
+                      "primary": "#000c2f",
+                      "on-tertiary-container": "#68947d",
+                      "on-primary-fixed": "#00174a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "12px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "xl": "80px",
+                      "lg": "48px",
+                      "base": "8px",
+                      "margin-desktop": "40px",
+                      "md": "24px",
+                      "xs": "4px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "Segoe UI"
+                      ],
+                      "body-md": [
+                              "Segoe UI"
+                      ],
+                      "headline-lg": [
+                              "Segoe UI"
+                      ],
+                      "headline-lg-mobile": [
+                              "Segoe UI"
+                      ],
+                      "body-sm": [
+                              "Segoe UI"
+                      ],
+                      "label-lg": [
+                              "Segoe UI"
+                      ],
+                      "headline-md": [
+                              "Segoe UI"
+                      ],
+                      "headline-sm": [
+                              "Segoe UI"
+                      ],
+                      "body-lg": [
+                              "Segoe UI"
+                      ],
+                      "display-lg": [
+                              "Segoe UI"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+  /* Sidebar Transition and Collapse Styles */
+  #sidebar {
+    transition: width 0.3s ease;
+    overflow-x: hidden;
+  }
+  .sidebar-expanded {
+    width: 240px;
+  }
+  .sidebar-collapsed {
+    width: 80px;
+  }
+  .sidebar-collapsed .nav-text {
+    opacity: 0;
+    width: 0;
+    display: none;
+  }
+  .sidebar-collapsed .dropdown-icon {
+    display: none;
+  }
+  .sidebar-collapsed .submenu-content {
+    display: none !important;
+  }
+  
+  #main-content {
+    transition: margin-left 0.3s ease, width 0.3s ease;
+  }
+  .sidebar-expanded + #main-content {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+  }
+  .sidebar-collapsed + #main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+  }
+
+  .submenu-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    max-height: 0;
+  }
+  .submenu-open .submenu-content {
+    max-height: 500px;
+  }
+  
+  /* Scrollbar personalizado para la barra lateral */
+  .custom-sidebar-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+  .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+  .custom-sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+</style>
+</head>
+<body class="bg-background text-on-background h-full font-body-md flex overflow-hidden">
+<!-- SideNavBar (Shared Component) - Dark Theme -->
+<nav class="fixed left-0 top-0 h-full bg-primary flex flex-col z-40 sidebar-expanded" id="sidebar" style="overflow: visible;">
+<!-- Toggle Button -->
+<button class="absolute top-6 w-6 h-6 bg-secondary-container text-on-primary rounded-full flex items-center justify-center cursor-pointer shadow-md z-50 hover:bg-secondary transition-colors -right-4" onclick="toggleSidebar()">
+<span class="material-symbols-outlined text-sm" id="toggle-icon">chevron_left</span>
+</button>
+<!-- Contenedor scrollable interno -->
+<div class="flex flex-col flex-1 overflow-y-auto overflow-x-hidden w-full py-lg custom-sidebar-scroll">
+<!-- Header Info -->
+<div class="flex items-center gap-sm mb-lg px-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex-shrink-0 mx-auto">
+<img alt="Usuario de Banco Integral" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate employee in a bright, modern office setting, representing an avatar for a banking application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2l_t_Cc-AFfOw8mXPuf0V4bPzNco1f3t0vwllZ7tNo_Dk-f4Xsj8sM039HFDBBCnt05wcbqbAeBjLOoMoOKjb-g-o1DVhhEL-iGegF4vzEDxadGGX_WvTwfCIbPrId4pbqnSUZec7LJyyxRwAiRUSoHlCH9phkJawp1IBPCe7y1jKYXDZpJ3gEcMKgapL9tnhd37vEhiAneKpSi7FzD8SrbbuKXgrOkzg7oDVQFrEzQXdrB6-wYGg1w">
+</div>
+<div class="nav-text whitespace-nowrap overflow-hidden">
+<h2 class="font-headline-sm text-base font-bold text-on-primary truncate leading-tight">Portal Viáticos</h2>
+<p class="font-body-sm text-xs text-primary-fixed-dim">Gestión Corporativa</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-2 flex-grow px-2"><!-- Inicio -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-lg text-label-lg nav-text">Inicio</span>
+</a>
+</li>
+<!-- Solicitantes -->
+<li class="rounded-lg overflow-hidden" id="menu-solicitantes">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-solicitantes')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-lg text-label-lg nav-text">Solicitantes</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Nueva solicitud</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Solicitudes Rechazadas</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Editores -->
+<li class="rounded-lg overflow-hidden" id="menu-editores">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-editores')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-label-lg text-label-lg nav-text">Editores</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30"><ul class="py-1 px-2 flex flex-col gap-1"><li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Conciliacion de Pagos</span></a></li><li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Procesamiento de Pagos</span></a></li><li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li></ul></div>
+</li>
+<!-- Autorizadores -->
+<li class="rounded-lg overflow-hidden" id="menu-autorizadores">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-autorizadores')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-label-lg text-label-lg nav-text">Autorizadores</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Autorizacion de Solicitudes</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Niveles Autorizantes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Solicitudes en curso -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg bg-primary-container text-on-primary font-bold border-l-4 border-secondary-container transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">pending_actions</span>
+<span class="font-label-lg text-label-lg nav-text">Solicitudes en curso</span>
+</a>
+</li>
+<!-- Historico -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-lg text-label-lg nav-text">Historico</span>
+</a>
+</li></ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full bg-background overflow-y-auto" id="main-content">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 sticky z-30 bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-margin-desktop"><div class="flex items-center gap-sm"><img alt="Banco Integral Logo" class="h-8 w-auto object-contain mr-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xJD1t15SJ-OElz4OulRz6eM7b-gNXdb3XH_fL8hayrSjkCuvGKMZ3WhBmBkUc_T51ARwFZvdK1-Wha25vWGbC28w5nk57WAwOP0xPywpFVRpyrY4fSxJiwWdwuXycGGTyusw07bKeeXOngUsO5rktajW1N9qYbkRbQXR2ZJHuCNJAN0QQNidIY-MSX0DBvN7UX2xvHXfvFqQysDSdbNhLRB_P2gxPDCjymXEooY2tF7PPqvqeVOBwvE5MNU_DYoeayU"><h1 class="font-headline-sm text-headline-sm font-black text-primary tracking-tight">Viáticos - Nueva Solicitud</h1></div><div class="flex items-center gap-md"><button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs"><span class="material-symbols-outlined">notifications</span></button><button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs"><span class="material-symbols-outlined">help_outline</span></button><div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant ml-sm overflow-hidden cursor-pointer"><img alt="Foto de perfil del empleado" class="w-full h-full object-cover" data-alt="A small, professional headshot of an employee, representing a profile picture in a corporate application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEa48FRDnoifXRjLsqelzlMl0VpDdzmmB_LB7M7mIDow0Wgh503bHM78JkIU-2bkwhjz_HmgfRQiMuV2PbD2xs1NbU6dbBSZdzCljpEtDydcdCVNeZOm0lN_ad57QZk_U0kZQ0PhXExeelImIiCuXc3xlqvm_7RbJYBFOw2hZHS4g98X4kC-x52cc-hXRB3BZttGUmQ10LbwRK4XmOlJnS0OJ1QOpYWV_PbhIUtORt0SZ9ohH-WSYtbg"></div></div></header>
+<!-- Page Content -->
+<main class="flex-1 p-margin-desktop">
+<div class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-xs">Solicitudes en curso</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gestione y revise el estado de las solicitudes de viáticos activas.</p>
+</div>
+<!-- Filter Bar -->
+<div class="bg-surface border border-outline-variant rounded-lg p-md mb-lg shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-6 gap-md" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+<!-- ID Solicitud -->
+<div class="flex flex-col relative" id="filter-id-wrapper">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-id">ID Solicitud</label>
+<div class="relative">
+<input class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors" id="filter-id" placeholder="Buscar ID..." type="text" autocomplete="off">
+<span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-md pointer-events-none">search</span>
+</div>
+<!-- Sugerencias -->
+<ul class="hidden absolute top-16 left-0 w-full max-h-48 overflow-y-auto bg-white border border-outline-variant rounded-lg shadow-lg z-50 text-xs" id="filter-id-suggestions"></ul>
+</div>
+<!-- Fechas -->
+<div class="flex flex-col relative" id="filter-date-wrapper">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-date">Fechas</label>
+<div class="relative cursor-pointer" onclick="toggleDateDropdown()">
+<input class="w-full h-10 pl-sm pr-8 border border-outline-variant rounded bg-surface outline-none font-body-sm text-body-sm text-on-surface cursor-pointer" id="filter-date" placeholder="Seleccione rango" readonly type="text">
+<span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-md pointer-events-none">calendar_month</span>
+</div>
+<!-- Dropdown de Rango de Fechas -->
+<div class="hidden absolute top-16 left-0 w-64 p-sm bg-white border border-outline-variant rounded-lg shadow-lg z-50 flex flex-col gap-2" id="filter-date-dropdown">
+<div class="flex flex-col">
+<label class="font-label-md text-[10px] text-on-surface-variant uppercase mb-1">Fecha Inicio</label>
+<input class="w-full h-8 px-2 border border-outline-variant rounded text-xs bg-surface" id="filter-date-start" type="date">
+</div>
+<div class="flex flex-col">
+<label class="font-label-md text-[10px] text-on-surface-variant uppercase mb-1">Fecha Fin</label>
+<input class="w-full h-8 px-2 border border-outline-variant rounded text-xs bg-surface" id="filter-date-end" type="date">
+</div>
+<div class="flex gap-2 mt-2">
+<button class="flex-1 h-8 text-xs bg-primary text-on-primary rounded font-bold cursor-pointer" onclick="aplicarRangoFechas()" type="button">Aplicar</button>
+<button class="flex-1 h-8 text-xs border border-outline-variant rounded cursor-pointer" onclick="limpiarRangoFechas()" type="button">Limpiar</button>
+</div>
+</div>
+</div>
+<!-- Solicitante -->
+<div class="flex flex-col relative" id="filter-applicant-wrapper">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-applicant">Solicitante</label>
+<div class="relative">
+<input class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors" id="filter-applicant" placeholder="Buscar solicitante..." type="text" autocomplete="off">
+<span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-md pointer-events-none">search</span>
+</div>
+<!-- Sugerencias -->
+<ul class="hidden absolute top-16 left-0 w-full max-h-48 overflow-y-auto bg-white border border-outline-variant rounded-lg shadow-lg z-50 text-xs" id="filter-applicant-suggestions"></ul>
+</div>
+<!-- Estado Solicitud -->
+<div class="flex flex-col">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-status">Estado Solicitud</label>
+<select class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors appearance-none" id="filter-status">
+<option value="">Todos los estados</option>
+<option value="INICIADO">INICIADO</option>
+<option value="RECHAZADO POR SISTEMA">RECHAZADO POR SISTEMA</option>
+<option value="AUTORIZADO">AUTORIZADO</option>
+<option value="ENVIADO A PAGO">ENVIADO A PAGO</option>
+<option value="RECHAZADO POR COMPRAS">RECHAZADO POR COMPRAS</option>
+<option value="PAGADO">PAGADO</option>
+<option value="RECHAZADO POR TESORERIA">RECHAZADO POR TESORERIA</option>
+<option value="LIQUIDADO">LIQUIDADO</option>
+<option value="CIERRE RECHAZADO">CIERRE RECHAZADO</option>
+</select>
+</div>
+<!-- Tipo de Viático (Filtro Reemplazado) -->
+<div class="flex flex-col">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-type">Tipo de Viático</label>
+<select class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors appearance-none" id="filter-type">
+<option value="">Todos los tipos</option>
+<option value="Alimentación">Alimentación</option>
+<option value="Transporte">Transporte</option>
+<option value="Hospedaje">Hospedaje</option>
+<option value="Imprevistos">Imprevistos</option>
+</select>
+</div>
+<!-- Clasificación Solicitud -->
+<div class="flex flex-col">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-classification">Clasificación Solicitud</label>
+<select class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors appearance-none" id="filter-classification">
+<option value="">Todos los tipos</option>
+<option value="Anticipo">Anticipo</option>
+<option value="Reintegracion">Reintegración</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Data Table -->
+<div class="bg-surface border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-primary border-b border-outline-variant text-on-primary">
+<tr>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">ID Solicitud</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle cursor-pointer select-none hover:bg-primary-container transition-colors" onclick="toggleSortDate()">
+  <div class="flex items-center justify-center gap-1">
+    <span>Fechas</span>
+    <span class="material-symbols-outlined text-sm font-normal" id="sort-icon">arrow_upward</span>
+  </div>
+</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Solicitante</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Tipo de viático</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Monto Total</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Estado Solicitud</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Actor Actual</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Clasificación<br>Solicitud</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant" id="tabla-solicitudes-body">
+<!-- Se renderiza dinámicamente en JS -->
+</tbody>
+<tbody id="no-results-row" class="hidden border-t-0">
+  <tr>
+    <td colspan="9" class="py-12 text-center align-middle bg-surface">
+      <div class="flex flex-col items-center justify-center gap-3">
+        <span class="material-symbols-outlined text-outline text-5xl">search_off</span>
+        <h3 class="text-on-surface font-semibold text-lg">No se encontraron solicitudes</h3>
+        <p class="text-on-surface-variant text-sm max-w-sm">No hay solicitudes que coincidan con los filtros aplicados. Intenta modificando los criterios de búsqueda.</p>
+        <button class="mt-2 bg-transparent border border-primary-container text-primary-container hover:bg-primary-container hover:text-on-primary rounded px-sm py-2 font-label-lg text-label-lg transition-colors cursor-pointer" onclick="limpiarTodosLosFiltros()" type="button">Limpiar filtros</button>
+      </div>
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="mt-md flex justify-between items-center text-on-surface-variant font-body-sm">
+<span id="solicitudes-count">Mostrando 6 de 24 solicitudes</span>
+<div class="flex gap-sm">
+<button class="px-sm py-1 border border-outline-variant rounded hover:bg-surface-container-low transition-colors disabled:opacity-50">Anterior</button>
+<button class="px-sm py-1 border border-outline-variant rounded hover:bg-surface-container-low transition-colors bg-primary-container text-on-primary border-primary-container">1</button>
+<button class="px-sm py-1 border border-outline-variant rounded hover:bg-surface-container-low transition-colors">2</button>
+<button class="px-sm py-1 border border-outline-variant rounded hover:bg-surface-container-low transition-colors">Siguiente</button>
+</div>
+</div>
+</main>
+</div>
+<script>
+    const solicitudes = [
+      {
+        id: "V-9001",
+        creacion: "10/09/2023",
+        solicitante: "Carlos Mendoza",
+        tipoViatico: "Alimentación",
+        monto: 15400.00,
+        montoFormatted: "$ 15,400.00",
+        estado: "INICIADO",
+        actor: "Autorizador nvl 2",
+        clasificacion: "Reintegracion",
+        edicion: "10/09/2023"
+      },
+      {
+        id: "V-9002",
+        creacion: "15/09/2023",
+        solicitante: "Laura Torres",
+        tipoViatico: "Hospedaje",
+        monto: 89000.00,
+        montoFormatted: "$ 89,000.00",
+        estado: "RECHAZADO POR TESORERIA",
+        actor: "Compras",
+        clasificacion: "Anticipo",
+        edicion: "17/09/2023"
+      },
+      {
+        id: "V-9004",
+        creacion: "20/09/2023",
+        solicitante: "Jorge Valenzuela",
+        tipoViatico: "Transporte",
+        monto: 25000.00,
+        montoFormatted: "$ 25,000.00",
+        estado: "CIERRE RECHAZADO",
+        actor: "Solicitante",
+        clasificacion: "Anticipo",
+        edicion: "22/09/2023"
+      },
+      {
+        id: "V-9006",
+        creacion: "22/09/2023",
+        solicitante: "Sofía Medina",
+        tipoViatico: "Imprevistos",
+        monto: 5000.00,
+        montoFormatted: "$ 5,000.00",
+        estado: "AUTORIZADO",
+        actor: "Compras",
+        clasificacion: "Anticipo",
+        edicion: "23/09/2023"
+      },
+      {
+        id: "V-9008",
+        creacion: "25/09/2023",
+        solicitante: "Fernando Gil",
+        tipoViatico: "Transporte",
+        monto: 22100.00,
+        montoFormatted: "$ 22,100.00",
+        estado: "RECHAZADO POR COMPRAS",
+        actor: "Solicitante",
+        clasificacion: "Reintegracion",
+        edicion: "26/09/2023"
+      },
+      {
+        id: "V-9010",
+        creacion: "28/09/2023",
+        solicitante: "Claudia Méndez",
+        tipoViatico: "Imprevistos",
+        monto: 8900.00,
+        montoFormatted: "$ 8,900.00",
+        estado: "LIQUIDADO",
+        actor: "Compras",
+        clasificacion: "Anticipo",
+        edicion: "29/09/2023"
+      },
+      {
+        id: "V-9012",
+        creacion: "01/10/2023",
+        solicitante: "Roberto Sosa",
+        tipoViatico: "Alimentación",
+        monto: 12450.00,
+        montoFormatted: "$ 12,450.00",
+        estado: "PAGADO",
+        actor: "Solicitante",
+        clasificacion: "Anticipo",
+        edicion: "02/10/2023"
+      },
+      {
+        id: "V-9015",
+        creacion: "05/10/2023",
+        solicitante: "María López",
+        tipoViatico: "Transporte",
+        monto: 18200.00,
+        montoFormatted: "$ 18,200.00",
+        estado: "ENVIADO A PAGO",
+        actor: "Tesorería",
+        clasificacion: "Anticipo",
+        edicion: "06/10/2023"
+      },
+      {
+        id: "V-9018",
+        creacion: "08/10/2023",
+        solicitante: "Luis Hernández",
+        tipoViatico: "Hospedaje",
+        monto: 120500.00,
+        montoFormatted: "$ 120,500.00",
+        estado: "RECHAZADO POR SISTEMA",
+        actor: "Solicitante",
+        clasificacion: "Reintegracion",
+        edicion: "09/10/2023"
+      },
+      {
+        id: "V-9021",
+        creacion: "12/10/2023",
+        solicitante: "Ana García",
+        tipoViatico: "Alimentación",
+        monto: 45000.00,
+        montoFormatted: "$ 45,000.00",
+        estado: "INICIADO",
+        actor: "Autorizador nvl 1",
+        clasificacion: "Anticipo",
+        edicion: "12/10/2023"
+      }
+    ];
+
+    let sortDirection = 'asc'; // Por defecto los más antiguos primero
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleIcon = document.getElementById('toggle-icon');
+      
+      if (sidebar.classList.contains('sidebar-expanded')) {
+        sidebar.classList.remove('sidebar-expanded');
+        sidebar.classList.add('sidebar-collapsed');
+        toggleIcon.textContent = 'chevron_right';
+      } else {
+        sidebar.classList.remove('sidebar-collapsed');
+        sidebar.classList.add('sidebar-expanded');
+        toggleIcon.textContent = 'chevron_left';
+      }
+    }
+
+    function toggleSubmenu(id) {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('sidebar-collapsed')) {
+          toggleSidebar();
+      }
+      
+      const el = document.getElementById(id);
+      const icon = el.querySelector('.dropdown-icon');
+      
+      if (el.classList.contains('submenu-open')) {
+        el.classList.remove('submenu-open');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        el.classList.add('submenu-open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // --- Sistema de Filtros y Renderizado Dinámico ---
+    function parseDateStr(str) {
+      const parts = str.split('/');
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+
+    function verDetalles(id) {
+      window.location.href = 'Detalles de solicitud (Solicitud en curso).html';
+    }
+
+    function filtrarYRenderizar() {
+      const idVal = document.getElementById('filter-id').value.toLowerCase().trim();
+      const applicantVal = document.getElementById('filter-applicant').value.toLowerCase().trim();
+      const statusVal = document.getElementById('filter-status').value;
+      const typeVal = document.getElementById('filter-type').value;
+      const classificationVal = document.getElementById('filter-classification').value;
+      
+      const dateStartInput = document.getElementById('filter-date-start').value;
+      const dateEndInput = document.getElementById('filter-date-end').value;
+      
+      let dateStart = dateStartInput ? new Date(dateStartInput + "T00:00:00") : null;
+      let dateEnd = dateEndInput ? new Date(dateEndInput + "T23:59:59") : null;
+      
+      let filtradas = solicitudes.filter(sol => {
+        if (idVal && !sol.id.toLowerCase().includes(idVal)) return false;
+        if (applicantVal && !sol.solicitante.toLowerCase().includes(applicantVal)) return false;
+        if (statusVal && sol.estado !== statusVal) return false;
+        if (typeVal && sol.tipoViatico !== typeVal) return false;
+        if (classificationVal && sol.clasificacion !== classificationVal) return false;
+        
+        if (dateStart || dateEnd) {
+          const creacionDate = parseDateStr(sol.creacion);
+          if (dateStart && creacionDate < dateStart) return false;
+          if (dateEnd && creacionDate > dateEnd) return false;
+        }
+        return true;
+      });
+      
+      // Ordenamiento por fecha
+      filtradas.sort((a, b) => {
+        const dateA = parseDateStr(a.creacion);
+        const dateB = parseDateStr(b.creacion);
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+      
+      const tbody = document.getElementById('tabla-solicitudes-body');
+      tbody.innerHTML = '';
+      
+      // Actualizar contador
+      document.getElementById('solicitudes-count').textContent = `Mostrando ${filtradas.length} de ${solicitudes.length} solicitudes`;
+      
+      if (filtradas.length === 0) {
+        document.getElementById('no-results-row').classList.remove('hidden');
+        return;
+      }
+      
+      document.getElementById('no-results-row').classList.add('hidden');
+      
+      filtradas.forEach(sol => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-surface-container-lowest transition-colors group';
+        
+        let badgeStyle = '';
+        if (sol.estado === 'INICIADO') badgeStyle = 'background-color: #2D4481; color: #FFFFFF;';
+        else if (sol.estado === 'AUTORIZADO') badgeStyle = 'background-color: #00ADEF; color: #000C2F;';
+        else if (sol.estado === 'ENVIADO A PAGO') badgeStyle = 'background-color: #001F5C; color: #FFFFFF;';
+        else if (sol.estado === 'PAGADO') badgeStyle = 'background-color: #013220; color: #FFFFFF;';
+        else if (sol.estado === 'LIQUIDADO') badgeStyle = 'background-color: #1A5C3A; color: #FFFFFF;';
+        else if (sol.estado === 'FINALIZADO') badgeStyle = 'background-color: #0D3B26; color: #FFFFFF;';
+        else if (sol.estado === 'RECHAZADO POR SISTEMA') badgeStyle = 'background-color: #C84B00; color: #FFFFFF;';
+        else if (sol.estado === 'RECHAZADO POR COMPRAS') badgeStyle = 'background-color: #E8450A; color: #FFFFFF;';
+        else if (sol.estado === 'RECHAZADO POR TESORERIA') badgeStyle = 'background-color: #B02F00; color: #FFFFFF;';
+        else if (sol.estado === 'CIERRE RECHAZADO') badgeStyle = 'background-color: #C46200; color: #FFFFFF;';
+        else if (sol.estado === 'RECHAZADO POR AUTORIZADOR') badgeStyle = 'background-color: #BA1A1A; color: #FFFFFF;';
+        
+        const fechaEdicionHtml = `
+          <div class="flex items-center justify-center gap-1 font-body-sm text-body-sm text-on-surface-variant opacity-75">
+            <span class="material-symbols-outlined text-[16px]">edit</span><span>${sol.edicion}</span>
+          </div>
+        `;
+          
+        tr.innerHTML = `
+          <td class="py-md px-md font-body-md text-body-md text-primary font-medium text-center align-middle">${sol.id}</td>
+          <td class="py-md px-md text-center align-middle">
+            <div class="flex flex-col gap-1 items-center justify-center mx-auto">
+              <div class="flex items-center justify-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+                <span class="material-symbols-outlined text-[16px]">add</span><span>${sol.creacion}</span>
+              </div>
+              ${fechaEdicionHtml}
+            </div>
+          </td>
+          <td class="py-md px-md font-body-md text-body-md text-on-surface text-center align-middle">${sol.solicitante}</td>
+          <td class="py-md px-md font-body-md text-body-md text-on-surface-variant text-center align-middle">${sol.tipoViatico}</td>
+          <td class="py-md px-md font-body-md text-body-md text-on-surface font-semibold text-center align-middle">${sol.montoFormatted}</td>
+          <td class="py-md px-md text-center align-middle">
+            <span class="inline-flex items-center justify-center px-2 py-1 rounded-[12px] font-label-md text-label-md" style="${badgeStyle}">${sol.estado}</span>
+          </td>
+          <td class="py-md px-md font-body-md text-body-md text-on-surface text-center align-middle">${sol.actor}</td>
+          <td class="py-md px-md font-body-md text-body-md text-on-surface text-center align-middle">${sol.clasificacion}</td>
+          <td class="py-md px-md text-center align-middle">
+            <button class="bg-transparent border border-primary-container text-primary-container hover:bg-primary-container hover:text-on-primary rounded px-sm py-1 font-label-md text-label-md transition-colors flex flex-col items-center justify-center mx-auto cursor-pointer" onclick="verDetalles('${sol.id}')">
+              <span>Ver</span><span>detalles</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Ordenamiento ---
+    function toggleSortDate() {
+      const icon = document.getElementById('sort-icon');
+      if (sortDirection === 'asc') {
+        sortDirection = 'desc';
+        icon.textContent = 'arrow_downward';
+      } else {
+        sortDirection = 'asc';
+        icon.textContent = 'arrow_upward';
+      }
+      filtrarYRenderizar();
+    }
+
+    // --- Rango de Fechas ---
+    function toggleDateDropdown(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('filter-date-dropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    function aplicarRangoFechas() {
+      const start = document.getElementById('filter-date-start').value;
+      const end = document.getElementById('filter-date-end').value;
+      const input = document.getElementById('filter-date');
+      
+      if (start && end) {
+        const sDate = new Date(start + "T00:00:00");
+        const eDate = new Date(end + "T00:00:00");
+        if (sDate > eDate) {
+          alert("La fecha de inicio no puede ser posterior a la fecha de fin.");
+          return;
+        }
+        input.value = `${formatDateToShow(start)} - ${formatDateToShow(end)}`;
+      } else if (start) {
+        input.value = `Desde ${formatDateToShow(start)}`;
+      } else if (end) {
+        input.value = `Hasta ${formatDateToShow(end)}`;
+      } else {
+        input.value = '';
+      }
+      
+      document.getElementById('filter-date-dropdown').classList.add('hidden');
+      filtrarYRenderizar();
+    }
+
+    function formatDateToShow(dateStr) {
+      const parts = dateStr.split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function limpiarRangoFechas() {
+      document.getElementById('filter-date-start').value = '';
+      document.getElementById('filter-date-end').value = '';
+      document.getElementById('filter-date').value = '';
+      document.getElementById('filter-date-dropdown').classList.add('hidden');
+      filtrarYRenderizar();
+    }
+
+    // --- Limpiar todo ---
+    function limpiarTodosLosFiltros() {
+      document.getElementById('filter-id').value = '';
+      document.getElementById('filter-applicant').value = '';
+      document.getElementById('filter-status').value = '';
+      document.getElementById('filter-type').value = '';
+      document.getElementById('filter-classification').value = '';
+      document.getElementById('filter-date-start').value = '';
+      document.getElementById('filter-date-end').value = '';
+      document.getElementById('filter-date').value = '';
+      filtrarYRenderizar();
+    }
+
+    // --- Buscador con Sugerencias ---
+    function setupSuggestions(inputId, suggestionsId, fieldName) {
+      const input = document.getElementById(inputId);
+      const suggestions = document.getElementById(suggestionsId);
+      
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        suggestions.innerHTML = '';
+        
+        if (val === '') {
+          suggestions.classList.add('hidden');
+          filtrarYRenderizar();
+          return;
+        }
+        
+        const matches = [...new Set(solicitudes.map(s => s[fieldName]))]
+          .filter(item => item.toLowerCase().includes(val));
+          
+        if (matches.length === 0) {
+          suggestions.classList.add('hidden');
+        } else {
+          suggestions.classList.remove('hidden');
+          matches.forEach(match => {
+            const li = document.createElement('li');
+            li.className = 'px-3 py-2 hover:bg-surface-container cursor-pointer transition-colors';
+            li.textContent = match;
+            li.addEventListener('mousedown', () => {
+              input.value = match;
+              suggestions.classList.add('hidden');
+              filtrarYRenderizar();
+            });
+            suggestions.appendChild(li);
+          });
+        }
+        filtrarYRenderizar();
+      });
+      
+      input.addEventListener('focus', () => {
+        const val = input.value.toLowerCase().trim();
+        if (val !== '') {
+          input.dispatchEvent(new Event('input'));
+        }
+      });
+      
+      input.addEventListener('blur', () => {
+        setTimeout(() => {
+          suggestions.classList.add('hidden');
+        }, 200);
+      });
+    }
+
+    // --- Inicialización ---
+    document.addEventListener('DOMContentLoaded', () => {
+      filtrarYRenderizar();
+      
+      setupSuggestions('filter-id', 'filter-id-suggestions', 'id');
+      setupSuggestions('filter-applicant', 'filter-applicant-suggestions', 'solicitante');
+      
+      // Selects estándar
+      document.getElementById('filter-status').addEventListener('change', filtrarYRenderizar);
+      document.getElementById('filter-type').addEventListener('change', filtrarYRenderizar);
+      document.getElementById('filter-classification').addEventListener('change', filtrarYRenderizar);
+      
+      // Cerrar dropdown de fecha al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        const dateDropdown = document.getElementById('filter-date-dropdown');
+        const dateWrapper = document.getElementById('filter-date-wrapper');
+        if (dateDropdown && !dateWrapper.contains(e.target)) {
+          dateDropdown.classList.add('hidden');
+        }
+      });
+    });
+</script>
+</body></html>

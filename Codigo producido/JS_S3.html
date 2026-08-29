@@ -1,0 +1,712 @@
+<script>
+/**
+ * =====================================================================
+ * JS_S3.html - CONTROLADOR DE CIERRE DE SOLICITUDES (S3 & S3.1)
+ * =====================================================================
+ */
+
+let s3_solicitudes = [];
+let s3_filtradas = [];
+let s3_page = 1;
+let s3_page_size = 10;
+let s3_sort_desc = true;
+let s3_rango_fechas = { start: '', end: '' };
+let s3_solicitud_actual = null;
+let s3_archivos_liquidacion = [];
+
+/**
+ * Carga las solicitudes en estado 'PAGADO' para cierre por el solicitante.
+ */
+function cargarSolicitudesCierreS3() {
+  const tbody = document.getElementById('tabla-s3-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="py-10 text-center align-middle bg-surface">
+        <div class="flex items-center justify-center gap-2 text-primary font-medium text-sm">
+          <span class="material-symbols-outlined animate-spin text-xl text-secondary-container">progress_activity</span>
+          Cargando solicitudes pendientes de cierre...
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const correoUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.CorreoGoogle) ? window.DATOS_USUARIO.CorreoGoogle : '';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          s3_solicitudes = resp.solicitudes || [];
+          filtrarTablaS3();
+        } else {
+          mostrarErrorTablaS3((resp && resp.mensaje) || 'No se pudieron cargar las solicitudes.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarErrorTablaS3('Error de comunicación: ' + err.toString());
+      })
+      .obtenerSolicitudesCierreS3(correoUsuario);
+  } else {
+    // Mock local
+    s3_solicitudes = [
+      {
+        idSolicitud: 'SOL-2026-0002',
+        solicitante: 'Carlos Mendoza',
+        correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+        monto: 220.00,
+        montoFormatted: '$ 220.00',
+        centroCosto: '406 - Compras y Provisiones',
+        codigoCC: '406',
+        fechaSolicitud: '14/08/2026 11:20',
+        fechaModificacion: '14/08/2026 16:30',
+        estadoSolicitud: 'PAGADO',
+        actorActual: 'Solicitante',
+        tipoViatico: 'Transporte',
+        clasificacionSolicitud: 'Anticipo'
+      }
+    ];
+    filtrarTablaS3();
+  }
+}
+
+function mostrarErrorTablaS3(mensaje) {
+  const tbody = document.getElementById('tabla-s3-body');
+  if (!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="py-8 text-center text-error bg-error-container/20 text-sm font-semibold">
+        ${mensaje}
+      </td>
+    </tr>
+  `;
+}
+
+/**
+ * Filtra reactivamente la lista de cierre.
+ */
+function filtrarTablaS3() {
+  const filterId = (document.getElementById('filter-s3-id')?.value || '').toLowerCase().trim();
+  const filterType = (document.getElementById('filter-s3-type')?.value || '').toLowerCase().trim();
+  const filterClassification = (document.getElementById('filter-s3-classification')?.value || '').toLowerCase().trim();
+
+  s3_filtradas = s3_solicitudes.filter(item => {
+    if (filterId && !(item.idSolicitud || '').toLowerCase().includes(filterId)) return false;
+    if (filterType && !(item.tipoViatico || '').toLowerCase().includes(filterType)) return false;
+    if (filterClassification && (item.clasificacionSolicitud || '').toLowerCase() !== filterClassification) return false;
+
+    if (s3_rango_fechas.start || s3_rango_fechas.end) {
+      const fechaItem = parseFechaS3(item.fechaSolicitud);
+      if (fechaItem) {
+        if (s3_rango_fechas.start) {
+          const dtStart = new Date(s3_rango_fechas.start + 'T00:00:00');
+          if (fechaItem < dtStart) return false;
+        }
+        if (s3_rango_fechas.end) {
+          const dtEnd = new Date(s3_rango_fechas.end + 'T23:59:59');
+          if (fechaItem > dtEnd) return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
+  s3_filtradas.sort((a, b) => {
+    const fA = parseFechaS3(a.fechaSolicitud) || new Date(0);
+    const fB = parseFechaS3(b.fechaSolicitud) || new Date(0);
+    return s3_sort_desc ? (fB - fA) : (fA - fB);
+  });
+
+  s3_page = 1;
+  renderTablaS3();
+}
+
+function formatearFechaS3(fechaStr) {
+  if (!fechaStr) return '-';
+  const str = fechaStr.toString().trim();
+  if (str.includes('/')) {
+    const parts = str.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      const d = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const y = parts[2].length === 2 ? ('20' + parts[2]) : parts[2];
+      return `${d}/${m}/${y}`;
+    }
+  }
+  const dt = new Date(str);
+  if (!isNaN(dt.getTime())) {
+    const d = String(dt.getDate()).padStart(2, '0');
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const y = dt.getFullYear();
+    return `${d}/${m}/${y}`;
+  }
+  return str;
+}
+
+function parseFechaS3(str) {
+  if (!str) return null;
+  if (str.includes('/')) {
+    const parts = str.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Renderiza filas en el DOM para S3.
+ */
+function renderTablaS3() {
+  const tbody = document.getElementById('tabla-s3-body');
+  const noResults = document.getElementById('s3-no-results-row');
+  const countLabel = document.getElementById('s3-solicitudes-count');
+  const paginationControls = document.getElementById('s3-pagination-controls');
+
+  if (!tbody) return;
+
+  if (s3_filtradas.length === 0) {
+    tbody.innerHTML = '';
+    noResults?.classList.remove('hidden');
+    if (countLabel) countLabel.textContent = 'Mostrando 0 de 0 solicitudes';
+    if (paginationControls) paginationControls.innerHTML = '';
+    return;
+  }
+
+  noResults?.classList.add('hidden');
+
+  const total = s3_filtradas.length;
+  const totalPages = Math.ceil(total / s3_page_size) || 1;
+  if (s3_page > totalPages) s3_page = totalPages;
+
+  const startIdx = (s3_page - 1) * s3_page_size;
+  const endIdx = Math.min(startIdx + s3_page_size, total);
+  const itemsPagina = s3_filtradas.slice(startIdx, endIdx);
+
+  if (countLabel) {
+    countLabel.textContent = `Mostrando ${startIdx + 1}-${endIdx} de ${total} solicitudes`;
+  }
+
+  tbody.innerHTML = itemsPagina.map(item => {
+    const badgeEstado = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>PAGADO</span>';
+
+    const badgeClasif = item.clasificacionSolicitud === 'Reintegro'
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800">Reintegro</span>'
+      : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">Anticipo</span>';
+
+    const fechaSolFmt = formatearFechaS3(item.fechaSolicitud);
+    const fechaModFmt = formatearFechaS3(item.fechaModificacion);
+
+    return `
+      <tr class="hover:bg-surface-container-low transition-colors">
+        <td class="py-3 px-3 text-center font-bold text-primary text-xs align-middle">
+          ${item.idSolicitud}
+        </td>
+        <td class="py-3 px-3 text-center text-xs text-on-surface-variant align-middle">
+          <div class="font-medium text-on-surface">${fechaSolFmt}</div>
+          ${fechaModFmt && fechaModFmt !== fechaSolFmt && fechaModFmt !== '-' ? `<div class="text-[10px] text-outline">Mod: ${fechaModFmt}</div>` : ''}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.tipoViatico}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-bold text-primary align-middle">
+          ${item.montoFormatted || ('$ ' + parseFloat(item.monto || 0).toFixed(2))}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeEstado}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-bold text-secondary-container align-middle">
+          ${item.actorActual || 'Solicitante'}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeClasif}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          <button onclick="verDetalleCierreS3('${item.idSolicitud}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-container text-on-primary hover:bg-primary text-xs font-bold transition-colors cursor-pointer shadow-xs">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Ver detalles
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginacionS3(totalPages);
+}
+
+function renderPaginacionS3(totalPages) {
+  const container = document.getElementById('s3-pagination-controls');
+  if (!container) return;
+
+  let html = '';
+  html += `
+    <button onclick="cambiarPaginaS3(${s3_page - 1})" ${s3_page === 1 ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Anterior
+    </button>
+  `;
+
+  for (let p = 1; p <= totalPages; p++) {
+    if (totalPages > 6 && Math.abs(p - s3_page) > 2 && p !== 1 && p !== totalPages) {
+      if (p === 2 || p === totalPages - 1) html += `<span class="px-1 text-xs text-outline">...</span>`;
+      continue;
+    }
+    const isActive = (p === s3_page);
+    html += `
+      <button onclick="cambiarPaginaS3(${p})" class="px-3 py-1 border ${isActive ? 'bg-primary-container text-on-primary border-primary-container font-bold' : 'border-outline-variant hover:bg-surface-container text-on-surface'} rounded text-xs transition-colors cursor-pointer">
+        ${p}
+      </button>
+    `;
+  }
+
+  html += `
+    <button onclick="cambiarPaginaS3(${s3_page + 1})" ${s3_page === totalPages ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Siguiente
+    </button>
+  `;
+
+  container.innerHTML = html;
+}
+
+function cambiarPaginaS3(p) {
+  s3_page = p;
+  renderTablaS3();
+}
+
+function cambiarPageSizeS3(size) {
+  s3_page_size = parseInt(size) || 10;
+  s3_page = 1;
+  renderTablaS3();
+}
+
+function toggleSortDateS3() {
+  s3_sort_desc = !s3_sort_desc;
+  const icon = document.getElementById('sort-icon-s3');
+  if (icon) icon.textContent = s3_sort_desc ? 'arrow_downward' : 'arrow_upward';
+  filtrarTablaS3();
+}
+
+function limpiarFiltrosS3() {
+  const fields = ['filter-s3-id', 'filter-s3-type', 'filter-s3-classification', 'filter-s3-date'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  limpiarRangoFechasS3();
+}
+
+function toggleDateDropdownS3() {
+  const dropdown = document.getElementById('filter-s3-date-dropdown');
+  dropdown?.classList.toggle('hidden');
+}
+
+function aplicarRangoFechasS3() {
+  const start = document.getElementById('filter-s3-date-start')?.value;
+  const end = document.getElementById('filter-s3-date-end')?.value;
+  const textInput = document.getElementById('filter-s3-date');
+
+  s3_rango_fechas = { start: start || '', end: end || '' };
+
+  if (start && end) {
+    textInput.value = `${start} - ${end}`;
+  } else if (start) {
+    textInput.value = `>= ${start}`;
+  } else if (end) {
+    textInput.value = `<= ${end}`;
+  } else {
+    textInput.value = '';
+  }
+
+  document.getElementById('filter-s3-date-dropdown')?.classList.add('hidden');
+  filtrarTablaS3();
+}
+
+function limpiarRangoFechasS3() {
+  const start = document.getElementById('filter-s3-date-start');
+  const end = document.getElementById('filter-s3-date-end');
+  const textInput = document.getElementById('filter-s3-date');
+
+  if (start) start.value = '';
+  if (end) end.value = '';
+  if (textInput) textInput.value = '';
+
+  s3_rango_fechas = { start: '', end: '' };
+  document.getElementById('filter-s3-date-dropdown')?.classList.add('hidden');
+  filtrarTablaS3();
+}
+
+// ---------------------------------------------------------------------
+// DETALLE Y LIQUIDACIÓN DE SOLICITUD (S3.1)
+// ---------------------------------------------------------------------
+
+function verDetalleCierreS3(idSolicitud) {
+  mostrarSubvista('view-s3-1-cierre', `Liquidación - ${idSolicitud}`);
+
+  document.getElementById('s3-1-id-badge').textContent = idSolicitud;
+  document.getElementById('s3-1-status-badge').innerHTML = '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>PAGADO</span>';
+  
+  // Ocultar sección responder por defecto
+  document.getElementById('s3-1-seccion-responder')?.classList.add('hidden');
+  document.getElementById('s3-1-btn-responder')?.classList.remove('hidden');
+  document.getElementById('s3-1-btn-imprimir')?.classList.remove('hidden');
+  document.getElementById('s3-1-btn-guardar')?.classList.add('hidden');
+  document.getElementById('s3-1-campos-reintegro')?.classList.add('hidden');
+  document.getElementById('s3-1-tipo-cierre-select').value = '';
+  document.getElementById('s3-1-monto-reintegro-input').value = '';
+  document.getElementById('s3-1-fecha-reintegro-input').value = '';
+  document.getElementById('s3-1-archivo-input').value = '';
+  document.getElementById('s3-1-archivos-previews').innerHTML = '';
+  s3_archivos_liquidacion = [];
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          poblarFormularioS3_1(resp);
+        } else {
+          alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo cargar el detalle.'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Error de conexión: ' + err.toString());
+      })
+      .obtenerDetalleCierreS3_1(idSolicitud);
+  } else {
+    // Mock local
+    const mock = {
+      idSolicitud: idSolicitud,
+      nombreSolicitante: 'Carlos Mendoza',
+      correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+      cargoSolicitante: 'Analista de Operaciones',
+      gerencia: 'GERENCIA DE OPERACIONES',
+      centroCosto: '406 - Compras y Provisiones',
+      agencia: 'Oficina Central',
+      duracionActividad: 'Día único',
+      fechaInicio: '14/08/2026',
+      fechaFin: '14/08/2026',
+      tipoViatico: 'Transporte',
+      horaEvento: '',
+      tipoSolicitud: 'Personal',
+      destinatario: 'Carlos Mendoza',
+      monto: 220.00,
+      montoFormatted: '$ 220.00',
+      banco: 'Banco Cuscatlán',
+      tipoCuenta: 'Corriente',
+      numeroCuenta: '0981234567',
+      motivoViatico: 'Traslado a agencias regionales de Santa Ana para arqueo de caja.',
+      rubroContable: '8110050400000 - Viáticos y Movilidad',
+      clasificacionSolicitud: 'Anticipo',
+      esEditado: 'No',
+      estadoSolicitud: 'PAGADO',
+      fechaSolicitud: '14/08/2026 11:20',
+      fechaModificacion: '14/08/2026 16:30',
+      archivosAdjuntos: [
+        { NombreArchivo: 'Itinerario_Visita.pdf', LinkArchivo: '#' },
+        { NombreArchivo: 'Comprobante_Pago_Banco.pdf', LinkArchivo: '#' }
+      ],
+      datosAutorizacion: [
+        { nivel: 1, nombre: 'Jefe Inmediato', fecha: '14/08/2026 12:00', resolucion: 'APROBADO', comentario: 'Aprobado itinerario.' }
+      ],
+      nombreProvision: 'Mario López (Compras)',
+      fechaProvision: '14/08/2026 13:45',
+      comentarioProvision: 'Provisión contable aprobada.',
+      nombreProcesamiento: 'Silvia Santos (Tesorería)',
+      fechaProcesamiento: '14/08/2026 16:30',
+      comentarioProcesamiento: 'Desembolso bancario realizado vía transferencia.'
+    };
+    poblarFormularioS3_1(mock);
+  }
+}
+
+function poblarFormularioS3_1(det) {
+  s3_solicitud_actual = det;
+
+  document.getElementById('s3-1-id-badge').textContent = det.idSolicitud;
+
+  // Bloque 1: Solicitante (Inputs limpios bg-white)
+  if (document.getElementById('s3-1-sol-nombre')) document.getElementById('s3-1-sol-nombre').value = det.nombreSolicitante || '';
+  if (document.getElementById('s3-1-sol-correo')) document.getElementById('s3-1-sol-correo').value = det.correoSolicitante || '';
+  if (document.getElementById('s3-1-sol-cargo')) document.getElementById('s3-1-sol-cargo').value = det.cargoSolicitante || '';
+  if (document.getElementById('s3-1-sol-gerencia')) document.getElementById('s3-1-sol-gerencia').value = det.gerencia || '';
+  if (document.getElementById('s3-1-sol-cc')) document.getElementById('s3-1-sol-cc').value = det.centroCosto || '';
+  if (document.getElementById('s3-1-sol-agencia')) document.getElementById('s3-1-sol-agencia').value = det.agencia || '';
+
+  // Bloque 2: Detalle Viático (Spans de Texto)
+  if (document.getElementById('s3-1-viatico-duracion')) document.getElementById('s3-1-viatico-duracion').textContent = det.duracionActividad || 'Día único';
+  if (document.getElementById('s3-1-viatico-fecha-ini')) document.getElementById('s3-1-viatico-fecha-ini').textContent = formatearFechaS3(det.fechaInicio) || '-';
+  if (document.getElementById('s3-1-viatico-fecha-fin')) document.getElementById('s3-1-viatico-fecha-fin').textContent = formatearFechaS3(det.fechaFin || det.fechaInicio) || '-';
+  if (document.getElementById('s3-1-viatico-tipo')) document.getElementById('s3-1-viatico-tipo').textContent = det.tipoViatico || '-';
+  
+  const horaCont = document.getElementById('s3-1-hora-container');
+  if (det.horaEvento) {
+    horaCont?.classList.remove('hidden');
+    if (document.getElementById('s3-1-viatico-hora')) document.getElementById('s3-1-viatico-hora').textContent = det.horaEvento;
+  } else {
+    horaCont?.classList.add('hidden');
+  }
+
+  if (document.getElementById('s3-1-viatico-tipo-sol')) document.getElementById('s3-1-viatico-tipo-sol').textContent = det.tipoSolicitud || 'Personal';
+  if (document.getElementById('s3-1-viatico-destinatario')) document.getElementById('s3-1-viatico-destinatario').textContent = det.destinatario || det.nombreSolicitante || '-';
+  if (document.getElementById('s3-1-viatico-monto')) document.getElementById('s3-1-viatico-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('s3-1-viatico-clasificacion')) document.getElementById('s3-1-viatico-clasificacion').textContent = det.clasificacionSolicitud || 'Anticipo';
+  
+  // Tabla de Destinatarios y Pagos
+  if (document.getElementById('s3-1-tb-destinatario')) document.getElementById('s3-1-tb-destinatario').textContent = det.destinatario || det.nombreSolicitante || '-';
+  if (document.getElementById('s3-1-tb-monto')) document.getElementById('s3-1-tb-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('s3-1-banco')) document.getElementById('s3-1-banco').textContent = det.banco || '-';
+  if (document.getElementById('s3-1-tipo-cuenta')) document.getElementById('s3-1-tipo-cuenta').textContent = det.tipoCuenta || '-';
+  if (document.getElementById('s3-1-num-cuenta')) document.getElementById('s3-1-num-cuenta').textContent = det.numeroCuenta || '-';
+  if (document.getElementById('s3-1-motivo')) document.getElementById('s3-1-motivo').textContent = det.motivoViatico || '-';
+
+  // Bloque 3: Info Solicitud (Tarjetas de Métricas)
+  if (document.getElementById('s3-1-info-id')) document.getElementById('s3-1-info-id').textContent = det.idSolicitud || '-';
+  if (document.getElementById('s3-1-info-monto')) document.getElementById('s3-1-info-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('s3-1-info-fecha-creacion')) document.getElementById('s3-1-info-fecha-creacion').textContent = formatearFechaS3(det.fechaSolicitud) || '-';
+  if (document.getElementById('s3-1-info-rubro')) document.getElementById('s3-1-info-rubro').textContent = det.rubroContable || '8110050400000 - Viáticos y Movilidad';
+  if (document.getElementById('s3-1-info-clasificacion')) document.getElementById('s3-1-info-clasificacion').textContent = det.clasificacionSolicitud || 'Anticipo';
+
+  const esEdit = (det.esEditado === 'Si' || det.esEditado === 'SI' || det.es_editado === 'Si');
+  const badgeEdit = document.getElementById('s3-1-es-editado-badge');
+  if (badgeEdit) {
+    if (esEdit) {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1';
+      badgeEdit.innerHTML = '<span class="material-symbols-outlined text-xs text-amber-700">warning</span> Modificado manualmente';
+    } else {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300';
+      badgeEdit.textContent = 'Normal';
+    }
+  }
+
+  // Archivos
+  const listaArch = document.getElementById('s3-1-archivos-lista');
+  if (listaArch) {
+    if (det.archivosAdjuntos && det.archivosAdjuntos.length > 0) {
+      listaArch.innerHTML = det.archivosAdjuntos.map(arch => `
+        <a href="${arch.LinkArchivo || '#'}" target="_blank" class="flex items-center gap-2 p-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors shadow-xs">
+          <i class="fas fa-paperclip text-primary text-base"></i>
+          <span class="text-xs font-semibold text-primary truncate flex-1">${arch.NombreArchivo || 'Archivo adjunto'}</span>
+          <span class="material-symbols-outlined text-xs text-outline">open_in_new</span>
+        </a>
+      `).join('');
+    } else {
+      listaArch.innerHTML = '<span class="text-xs text-outline italic col-span-full">No hay archivos adjuntos.</span>';
+    }
+  }
+
+  // Bloque 4: Tabla Autorizaciones
+  const tablaAut = document.getElementById('s3-1-tabla-autorizaciones');
+  if (tablaAut) {
+    if (det.datosAutorizacion && det.datosAutorizacion.length > 0) {
+      tablaAut.innerHTML = det.datosAutorizacion.map(aut => `
+        <tr class="hover:bg-surface-container-low transition-colors">
+          <td class="py-2.5 px-4 text-center font-semibold text-primary">${aut.nombre || ('Nivel ' + aut.nivel)}</td>
+          <td class="py-2.5 px-4 text-center text-on-surface-variant">${aut.fecha || '-'}</td>
+          <td class="py-2.5 px-4 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${aut.resolucion === 'APROBADO' ? 'bg-emerald-100 text-emerald-800' : aut.resolucion === 'JUSTIFICADO' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+              ${aut.resolucion || 'REGISTRADO'}
+            </span>
+          </td>
+          <td class="py-2.5 px-4 text-left text-on-surface leading-relaxed">${aut.comentario || '-'}</td>
+        </tr>
+      `).join('');
+    } else {
+      tablaAut.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-outline italic">Sin registros de autorización previa.</td></tr>`;
+    }
+  }
+
+  // Bloque 5: Tabla Provisión Compras
+  if (document.getElementById('s3-1-prov-nombre')) document.getElementById('s3-1-prov-nombre').textContent = det.nombreProvision || 'Compras';
+  if (document.getElementById('s3-1-prov-fecha')) document.getElementById('s3-1-prov-fecha').textContent = formatearFechaS3(det.fechaProvision) || '-';
+  if (document.getElementById('s3-1-prov-comentario')) document.getElementById('s3-1-prov-comentario').textContent = det.comentarioProvision || 'Provisión contable aprobada.';
+
+  // Bloque 6: Tabla Procesamiento Tesorería
+  if (document.getElementById('s3-1-proc-nombre')) document.getElementById('s3-1-proc-nombre').textContent = det.nombreProcesamiento || 'Tesorería';
+  if (document.getElementById('s3-1-proc-fecha')) document.getElementById('s3-1-proc-fecha').textContent = formatearFechaS3(det.fechaProcesamiento) || '-';
+  if (document.getElementById('s3-1-proc-comentario')) document.getElementById('s3-1-proc-comentario').textContent = det.comentarioProcesamiento || 'Desembolso bancario realizado vía transferencia.';
+}
+
+function activarSeccionResponderS3_1() {
+  document.getElementById('s3-1-seccion-responder')?.classList.remove('hidden');
+  document.getElementById('s3-1-btn-responder')?.classList.add('hidden');
+  document.getElementById('s3-1-btn-imprimir')?.classList.add('hidden');
+  document.getElementById('s3-1-btn-guardar')?.classList.remove('hidden');
+  document.getElementById('s3-1-tipo-cierre-select')?.focus();
+}
+
+function handleCambioTipoCierreS3_1(val) {
+  const containerReintegro = document.getElementById('s3-1-campos-reintegro');
+  if (val === 'Reintegro y cierre') {
+    containerReintegro?.classList.remove('hidden');
+  } else {
+    containerReintegro?.classList.add('hidden');
+    document.getElementById('s3-1-monto-reintegro-input').value = '';
+    document.getElementById('s3-1-fecha-reintegro-input').value = '';
+  }
+}
+
+function handleArchivosLiquidacionS3_1(input) {
+  const files = input.files;
+  const previewCont = document.getElementById('s3-1-archivos-previews');
+  s3_archivos_liquidacion = [];
+  if (previewCont) previewCont.innerHTML = '';
+
+  if (!files || files.length === 0) return;
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      s3_archivos_liquidacion.push({
+        NombreArchivo: file.name,
+        TipoArchivo: file.type || 'application/pdf',
+        ContenidoBase64: e.target.result
+      });
+
+      if (previewCont) {
+        const tag = document.createElement('span');
+        tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-container text-on-primary';
+        tag.innerHTML = `<span class="material-symbols-outlined text-xs">attach_file</span> ${file.name}`;
+        previewCont.appendChild(tag);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function abrirModalConfirmarCierreS3_1() {
+  const tipoCierre = document.getElementById('s3-1-tipo-cierre-select')?.value;
+  const montoReintegro = document.getElementById('s3-1-monto-reintegro-input')?.value;
+  const fechaReintegro = document.getElementById('s3-1-fecha-reintegro-input')?.value;
+
+  if (!tipoCierre) {
+    alert('Debe seleccionar el Tipo de Cierre de Solicitud.');
+    document.getElementById('s3-1-tipo-cierre-select')?.focus();
+    return;
+  }
+
+  if (s3_archivos_liquidacion.length === 0) {
+    alert('Debe adjuntar al menos un comprobante o factura de liquidación.');
+    document.getElementById('s3-1-archivo-input')?.focus();
+    return;
+  }
+
+  if (tipoCierre === 'Reintegro y cierre') {
+    if (!montoReintegro || parseFloat(montoReintegro) <= 0) {
+      alert('Debe ingresar un monto válido a reintegrar.');
+      document.getElementById('s3-1-monto-reintegro-input')?.focus();
+      return;
+    }
+    if (!fechaReintegro) {
+      alert('Debe ingresar la fecha del reintegro efectuado.');
+      document.getElementById('s3-1-fecha-reintegro-input')?.focus();
+      return;
+    }
+  }
+
+  const modalTxt = document.getElementById('s3-1-modal-confirmar-text');
+  if (modalTxt) {
+    modalTxt.innerHTML = `¿Está seguro que desea registrar el cierre tipo <b>${tipoCierre}</b> para la solicitud <b>${s3_solicitud_actual?.idSolicitud}</b> con ${s3_archivos_liquidacion.length} archivo(s) de liquidación?`;
+  }
+
+  document.getElementById('s3-1-modal-confirmar')?.classList.remove('hidden');
+}
+
+function cerrarModalConfirmarCierreS3_1() {
+  document.getElementById('s3-1-modal-confirmar')?.classList.add('hidden');
+}
+
+function confirmarGuardarCierreS3_1() {
+  const btn = document.getElementById('s3-1-btn-modal-ejecutar');
+  const idSolicitud = s3_solicitud_actual?.idSolicitud;
+  const tipoCierre = document.getElementById('s3-1-tipo-cierre-select')?.value;
+  const montoReintegro = document.getElementById('s3-1-monto-reintegro-input')?.value;
+  const fechaReintegroRaw = document.getElementById('s3-1-fecha-reintegro-input')?.value;
+  
+  let fechaReintegroFmt = '';
+  if (fechaReintegroRaw) {
+    const parts = fechaReintegroRaw.split('-');
+    fechaReintegroFmt = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  const datosCierre = {
+    tipoCierre: tipoCierre,
+    montoReintegro: montoReintegro || '',
+    fechaReintegro: fechaReintegroFmt
+  };
+
+  const nombreUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.NombreGoogle) ? window.DATOS_USUARIO.NombreGoogle : 'Solicitante';
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Enviando liquidación...`;
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Enviar`;
+        cerrarModalConfirmarCierreS3_1();
+
+        if (resp && resp.status === 'OK') {
+          mostrarAlertaS3_1(resp.mensaje || 'Liquidación enviada exitosamente.', 'success');
+          setTimeout(() => {
+            navegarSubmenu('view-s3-cierre');
+            cargarSolicitudesCierreS3();
+          }, 1800);
+        } else {
+          mostrarAlertaS3_1((resp && resp.mensaje) || 'Error al procesar la liquidación.', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Enviar`;
+        cerrarModalConfirmarCierreS3_1();
+        mostrarAlertaS3_1('Error de servidor: ' + err.toString(), 'error');
+      })
+      .guardarCierreSolicitudS3_1(idSolicitud, datosCierre, s3_archivos_liquidacion, nombreUsuario);
+  } else {
+    // Simulación local en preview_local.html
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Enviar`;
+      cerrarModalConfirmarCierreS3_1();
+
+      // Mutar solicitud en array local
+      const idx = s3_solicitudes.findIndex(s => s.idSolicitud === idSolicitud);
+      if (idx !== -1) {
+        s3_solicitudes[idx].estadoSolicitud = 'LIQUIDADO';
+        s3_solicitudes[idx].actorActual = 'Compras';
+        s3_solicitudes[idx].tipoCierre = tipoCierre;
+        s3_solicitudes[idx].montoReintegro = montoReintegro;
+        s3_solicitudes[idx].fechaReintegro = fechaReintegroFmt;
+      }
+      filtrarTablaS3();
+
+      mostrarAlertaS3_1('Liquidación enviada exitosamente (Modo Local). La solicitud pasó a estado LIQUIDADO.', 'success');
+      setTimeout(() => {
+        navegarSubmenu('view-s3-cierre');
+      }, 1500);
+    }, 800);
+  }
+}
+
+function mostrarAlertaS3_1(mensaje, tipo) {
+  const box = document.getElementById('s3-1-alert-box');
+  const txt = document.getElementById('s3-1-alert-text');
+  if (!box || !txt) return;
+
+  txt.textContent = mensaje;
+  box.classList.remove('hidden', 'bg-emerald-600', 'bg-error');
+
+  if (tipo === 'success') {
+    box.classList.add('bg-emerald-600');
+  } else {
+    box.classList.add('bg-error');
+  }
+
+  box.style.display = 'block';
+  setTimeout(() => {
+    box.style.display = 'none';
+  }, 4000);
+}
+</script>

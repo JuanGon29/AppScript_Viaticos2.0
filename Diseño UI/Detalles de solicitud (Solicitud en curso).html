@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html class="h-full" data-lt-installed="true" lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Detalles de solicitud (Solicitud en curso) - Biatic 2.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@100..900&amp;display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script id="tailwind-config">
+    try {
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "surface-tint": "#465c9a",
+              "on-primary-fixed-variant": "#2d4481",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-container": "#541100",
+              "on-error": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "surface-container": "#ebeef0",
+              "tertiary-fixed": "#bdedd2",
+              "surface": "#f7fafc",
+              "surface-container-highest": "#e0e3e5",
+              "inverse-surface": "#2d3133",
+              "tertiary-fixed-dim": "#a2d1b7",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#7389cb",
+              "on-secondary-fixed-variant": "#862200",
+              "surface-bright": "#f7fafc",
+              "on-tertiary-container": "#68947d",
+              "inverse-primary": "#b3c5ff",
+              "error": "#ba1a1a",
+              "secondary-fixed-dim": "#ffb5a0",
+              "primary-fixed-dim": "#b3c5ff",
+              "secondary-fixed": "#ffdbd1",
+              "primary": "#000c2f",
+              "on-tertiary-fixed-variant": "#234f3b",
+              "inverse-on-surface": "#eef1f3",
+              "surface-container-high": "#e5e9eb",
+              "surface-container-low": "#f1f4f6",
+              "primary-fixed": "#dbe1ff",
+              "tertiary-container": "#002a1a",
+              "surface-dim": "#d7dadc",
+              "on-error-container": "#93000a",
+              "surface-variant": "#e0e3e5",
+              "outline-variant": "#c5c6d1",
+              "on-tertiary-fixed": "#002113",
+              "on-surface-variant": "#444650",
+              "on-primary-fixed": "#00174a",
+              "on-primary": "#ffffff",
+              "outline": "#757681",
+              "secondary": "#b02f00",
+              "tertiary": "#001209",
+              "secondary-container": "#ff5722",
+              "on-surface": "#181c1e",
+              "on-secondary-fixed": "#3b0900",
+              "primary-container": "#001f5c",
+              "on-background": "#181c1e",
+              "background": "#f7fafc",
+              "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+              "DEFAULT": "0.125rem",
+              "lg": "0.25rem",
+              "xl": "0.5rem",
+              "full": "0.75rem"
+            },
+            "spacing": {
+              "sm": "12px",
+              "base": "8px",
+              "lg": "48px",
+              "margin-mobile": "16px",
+              "margin-desktop": "40px",
+              "xl": "80px",
+              "gutter": "24px",
+              "xs": "4px",
+              "md": "24px"
+            },
+            "fontFamily": {
+              "headline-sm": ["Segoe UI"],
+              "body-md": ["Segoe UI"],
+              "body-lg": ["Segoe UI"],
+              "headline-lg": ["Segoe UI"],
+              "body-sm": ["Segoe UI"],
+              "label-md": ["Segoe UI"],
+              "label-lg": ["Segoe UI"],
+              "headline-lg-mobile": ["Segoe UI"],
+              "display-lg": ["Segoe UI"],
+              "headline-md": ["Segoe UI"]
+            }
+          }
+        }
+      }
+    } catch (_e) {}
+  </script>
+  <style>
+    :root {
+      --orange-primary: #ff5722;
+      --navy-primary: #001f5c;
+      --theme-red: #da3b33;      
+      --theme-green: #409132;    
+      --theme-gray: #8d9499;
+      --theme-celeste: #00adef;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.375rem; 
+      border-width: 2px !important; 
+      border-style: solid;
+      background-color: #ffffff;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .border-gray { border-color: var(--theme-gray) !important; background-color: #e2e8f0; pointer-events: none; }
+    
+    .input-label { font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 8px; }
+    .input-label i { color: var(--navy-primary); font-size: 1.1rem; width: 18px; text-align: center; }
+    .btn-action { transition: all 0.3s ease; cursor: pointer; }
+    .btn-action:active { transform: translateY(2px); }
+    .btn-outline-navy { background-color: transparent; border: 2px solid var(--navy-primary); color: var(--navy-primary); }
+    .btn-outline-navy:hover { background-color: #001133; border-color: #001133; color: white; }
+
+    /* Sidebar Transition and Collapse Styles */
+    #sidebar {
+      transition: width 0.3s ease;
+      overflow-x: hidden;
+    }
+    .sidebar-expanded {
+      width: 240px;
+    }
+    .sidebar-collapsed {
+      width: 80px;
+    }
+    .sidebar-collapsed .nav-text {
+      opacity: 0;
+      width: 0;
+      display: none;
+    }
+    .sidebar-collapsed .dropdown-icon {
+      display: none;
+    }
+    .sidebar-collapsed .submenu-content {
+      display: none !important;
+    }
+    
+    #main-content {
+      transition: margin-left 0.3s ease, width 0.3s ease;
+    }
+    .sidebar-expanded + #main-content {
+      margin-left: 240px;
+      width: calc(100% - 240px);
+    }
+    .sidebar-collapsed + #main-content {
+      margin-left: 80px;
+      width: calc(100% - 80px);
+    }
+
+    .submenu-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      max-height: 0;
+    }
+    .submenu-open .submenu-content {
+      max-height: 500px;
+    }
+    
+    /* Scrollbar personalizado para la barra lateral */
+    .custom-sidebar-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-sidebar-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+    }
+    .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .custom-sidebar-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    }
+
+    @media print {
+      #sidebar, header, .btn-action {
+        display: none !important;
+      }
+      #main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+      }
+      .bg-background {
+        background-color: white !important;
+      }
+    }
+    
+    .pdf-print-mode {
+      width: 790px !important;
+      background-color: white !important;
+      padding: 15px !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-print-mode * {
+      font-size: 12px !important;
+      line-height: 1.2 !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-print-mode h3, 
+    .pdf-print-mode h3 * {
+      font-size: 14px !important;
+      font-weight: bold !important;
+    }
+    .pdf-print-mode .material-symbols-outlined,
+    .pdf-print-mode .fas,
+    .pdf-print-mode .far,
+    .pdf-print-mode .fa {
+      font-size: 14px !important;
+    }
+    .pdf-print-mode .text-3xl,
+    .pdf-print-mode .text-3xl * {
+      font-size: 18px !important;
+    }
+    .pdf-print-mode .text-2xl,
+    .pdf-print-mode .text-2xl * {
+      font-size: 16px !important;
+    }
+    .pdf-print-mode .text-xl,
+    .pdf-print-mode .text-xl * {
+      font-size: 14px !important;
+    }
+    .pdf-print-mode input, 
+    .pdf-print-mode select, 
+    .pdf-print-mode textarea {
+      font-size: 11px !important;
+      height: 26px !important;
+      padding: 2px 6px !important;
+    }
+    .pdf-print-mode textarea {
+      height: 44px !important;
+    }
+    .pdf-print-mode table {
+      width: 100% !important;
+    }
+    .pdf-print-mode table * {
+      font-size: 10px !important;
+    }
+    .pdf-print-mode table th, 
+    .pdf-print-mode table td {
+      padding: 4px 6px !important;
+    }
+    .pdf-print-mode div[class*="p-6"], 
+    .pdf-print-mode div[class*="p-8"], 
+    .pdf-print-mode div[class*="p-md"],
+    .pdf-print-mode div[class*="p-lg"],
+    .pdf-print-mode div[class*="p-4"] {
+      padding: 10px !important;
+    }
+    .pdf-print-mode div[class*="mb-10"],
+    .pdf-print-mode div[class*="mb-lg"],
+    .pdf-print-mode div[class*="mb-6"] {
+      margin-bottom: 8px !important;
+    }
+    .pdf-print-mode div[class*="gap-y-6"],
+    .pdf-print-mode div[class*="gap-6"],
+    .pdf-print-mode div[class*="gap-x-8"] {
+      gap: 6px !important;
+    }
+    .pdf-print-mode .space-y-6 > * {
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased h-full flex overflow-hidden">
+
+  <!-- SideNavBar (Shared Component) - Dark Theme -->
+  <nav class="fixed left-0 top-0 h-full bg-primary flex flex-col z-40 sidebar-expanded" id="sidebar" style="overflow: visible;">
+    <!-- Toggle Button -->
+    <button class="absolute top-6 w-6 h-6 bg-secondary-container text-on-primary rounded-full flex items-center justify-center cursor-pointer shadow-md z-50 hover:bg-secondary transition-colors -right-4" onclick="toggleSidebar()">
+      <span class="material-symbols-outlined text-sm" data-original-icon="chevron_left" id="toggle-icon">chevron_left</span>
+    </button>
+    
+    <!-- Contenedor scrollable interno -->
+    <div class="flex flex-col flex-1 overflow-y-auto overflow-x-hidden w-full py-lg custom-sidebar-scroll">
+      <!-- Header Info -->
+      <div class="flex items-center gap-sm mb-lg px-md">
+        <div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex-shrink-0 mx-auto">
+          <img alt="Usuario de Banco Integral" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate employee in a bright, modern office setting, representing an avatar for a banking application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2l_t_Cc-AFfOw8mXPuf0V4bPzNco1f3t0vwllZ7tNo_Dk-f4Xsj8sM039HFDBBCnt05wcbqbAeBjLOoMoOKjb-g-o1DVhhEL-iGegF4vzEDxadGGX_WvTwfCIbPrId4pbqnSUZec7LJyyxRwAiRUSoHlCH9phkJawp1IBPCe7y1jKYXDZpJ3gEcMKgapL9tnhd37vEhiAneKpSi7FzD8SrbbuKXgrOkzg7oDVQFrEzQXdrB6-wYGg1w"/>
+        </div>
+        <div class="nav-text whitespace-nowrap overflow-hidden">
+          <h2 class="font-headline-sm text-base font-bold text-on-primary truncate leading-tight">Portal Viáticos</h2>
+          <p class="font-body-sm text-xs text-primary-fixed-dim">Gestión Corporativa</p>
+        </div>
+      </div>
+      
+      <!-- Navigation Links -->
+      <ul class="flex flex-col gap-2 flex-grow px-2">
+        <!-- Inicio -->
+        <li class="">
+          <a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 font-medium active:scale-95 duration-150" href="#">
+            <span class="material-symbols-outlined">home</span>
+            <span class="font-label-lg text-label-lg nav-text">Inicio</span>
+          </a>
+        </li>
+        <!-- Solicitantes -->
+        <li class="rounded-lg overflow-hidden" id="menu-solicitantes">
+          <button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-solicitantes')">
+            <div class="flex items-center gap-md">
+              <span class="material-symbols-outlined">person</span>
+              <span class="font-label-lg text-label-lg nav-text">Solicitantes</span>
+            </div>
+            <span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+          </button>
+          <div class="submenu-content bg-primary-container/30">
+            <ul class="py-1 px-2 flex flex-col gap-1">
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Nueva Solicitud</span></a></li>
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Solicitudes Rechazadas</span></a></li>
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+            </ul>
+          </div>
+        </li>
+        <!-- Editores -->
+        <li class="rounded-lg overflow-hidden" id="menu-editores">
+          <button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-editores')">
+            <div class="flex items-center gap-md">
+              <span class="material-symbols-outlined">edit_note</span>
+              <span class="font-label-lg text-label-lg nav-text">Editores</span>
+            </div>
+            <span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+          </button>
+          <div class="submenu-content bg-primary-container/30">
+            <ul class="py-1 px-2 flex flex-col gap-1">
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Conciliacion de Pagos</span></a></li>
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Procesamiento de Pagos</span></a></li>
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+            </ul>
+          </div>
+        </li>
+        <!-- Autorizadores -->
+        <li class="rounded-lg overflow-hidden" id="menu-autorizadores">
+          <button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-autorizadores')">
+            <div class="flex items-center gap-md">
+              <span class="material-symbols-outlined">rule</span>
+              <span class="font-label-lg text-label-lg nav-text">Autorizadores</span>
+            </div>
+            <span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+          </button>
+          <div class="submenu-content bg-primary-container/30">
+            <ul class="py-1 px-2 flex flex-col gap-1">
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Autorizacion de Solicitudes</span></a></li>
+              <li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Niveles Autorizantes</span></a></li>
+            </ul>
+          </div>
+        </li>
+        <!-- Solicitudes en curso (Activo) -->
+        <li class="">
+          <a class="flex items-center gap-md px-3 py-2 rounded-lg bg-primary-container text-on-primary font-bold border-l-4 border-secondary-container transition-colors active:scale-95 duration-150" href="Solicitudes en curso.html">
+            <span class="material-symbols-outlined">pending_actions</span>
+            <span class="font-label-lg text-label-lg nav-text">Solicitudes en curso</span>
+          </a>
+        </li>
+        <!-- Historico -->
+        <li class="">
+          <a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="Historico.html">
+            <span class="material-symbols-outlined">history</span>
+            <span class="font-label-lg text-label-lg nav-text">Historico</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col h-full bg-background overflow-y-auto" id="main-content">
+    <!-- TopAppBar (Shared Component) -->
+    <header class="docked full-width top-0 sticky z-30 bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-margin-desktop">
+      <div class="flex items-center gap-sm">
+        <img alt="Banco Integral Logo" class="h-8 w-auto object-contain mr-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xJD1t15SJ-OElz4OulRz6eM7b-gNXdb3XH_fL8hayrSjkCuvGKMZ3WhBmBkUc_T51ARwFZvdK1-Wha25vWGbC28w5nk57WAwOP0xPywpFVRpyrY4fSxJiwWdwuXycGGTyusw07bKeeXOngUsO5rktajW1N9qYbkRbQXR2ZJHuCNJAN0QQNidIY-MSX0DBvN7UX2xvHXfvFqQysDSdbNhLRB_P2gxPDCjymXEooY2tF7PPqvqeVOBwvE5MNU_DYoeayU"/>
+        <h1 class="font-headline-sm text-headline-sm font-black text-primary tracking-tight">Viáticos - Solicitudes en curso</h1>
+      </div>
+      <div class="flex items-center gap-md">
+        <button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs">
+          <span class="material-symbols-outlined">notifications</span>
+        </button>
+        <button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs">
+          <span class="material-symbols-outlined">help_outline</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant ml-sm overflow-hidden cursor-pointer">
+          <img alt="Foto de perfil del empleado" class="w-full h-full object-cover" data-alt="A small, professional headshot of an employee, representing a profile picture in a corporate application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEa48FRDnoifXRjLsqelzlMl0VpDdzmmB_LB7M7mIDow0Wgh503bHM78JkIU-2bkwhjz_HmgfRQiMuV2PbD2xs1NbU6dbBSZdzCljpEtDydcdCVNeZOm0lN_ad57QZk_U0kZQ0PhXExeelImIiCuXc3xlqvm_7RbJYBFOw2hZHS4g98X4kC-x52cc-hXRB3BZttGUmQ10LbwRK4XmOlJnS0OJ1QOpYWV_PbhIUtORt0SZ9ohH-WSYtbg"/>
+        </div>
+      </div>
+    </header>
+
+    <!-- Form Workspace Canvas -->
+    <main class="flex-1 p-margin-desktop bg-background relative">
+      <div class="w-full max-w-7xl mx-auto">
+        <div class="w-full mb-6">
+          <h2 class="text-3xl font-extrabold mb-1 flex items-center gap-3" style="color: var(--orange-primary, #ff5722);">
+            <i class="fas fa-file-signature text-4xl"></i>Detalles de solicitud (Solicitud en curso)
+          </h2>
+          <p class="text-on-surface-variant font-body-md mb-3">Consulta y seguimiento del estado actual de la solicitud de viáticos en flujo de trabajo.</p>
+          <hr class="border-t-2 border-outline-variant w-full rounded"/>
+        </div>
+
+        <!-- Contenedor del Formulario Estructura Vertical (Solo Lectura) -->
+        <div class="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant mb-10 overflow-hidden flex flex-col">
+          <form class="w-full flex flex-col" id="solicitudForm">
+            
+            <!-- Sección 1: Info Solicitante (Solo Lectura) -->
+            <div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+              <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-primary"></i> Información del Solicitante
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-user-circle"></i> Nombre</label>
+                  <input class="form-input border-gray" name="nombre_solicitante" readonly="" type="text" value="Juan Pérez"/>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-envelope"></i> Correo</label>
+                  <input class="form-input border-gray" name="correo_solicitante" readonly="" type="email" value="jperez@bancointegral.com"/>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-id-badge"></i> Cargo</label>
+                  <input class="form-input border-gray" name="cargo_solicitante" readonly="" type="text" value="Especialista de Sistemas"/>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-sitemap"></i> Gerencia</label>
+                  <input class="form-input border-gray" name="gerencia_solicitante" readonly="" type="text" value="Tecnología de la Información"/>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-building"></i> Área</label>
+                  <input class="form-input border-gray" name="area_solicitante" readonly="" type="text" value="Desarrollo Core"/>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-file-invoice-dollar"></i> Rubro Contable Base</label>
+                  <input class="form-input border-gray" name="rubro_contable" readonly="" type="text" value="701 - Viáticos Locales"/>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-map-marked-alt"></i> Región</label>
+                  <input class="form-input border-gray" name="region_solicitante" readonly="" type="text" value="Metropolitana"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección 2: Detalle de Gastos (Solo Lectura con No. de Cuenta) -->
+            <div class="w-full bg-surface-bright p-6 md:p-8 border-b border-outline-variant">
+              <h3 class="text-lg font-bold mb-6 text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+                <i class="fas fa-list mr-2 text-primary"></i> Detalle de Gastos
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-user-tie"></i> Correo Jefe Regional</label>
+                  <span class="font-body-md text-on-surface py-2">jefe.centro@banco.com</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-plane-departure"></i> Tipo de Viático</label>
+                  <span class="font-body-md text-on-surface py-2">Alimentación</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-clock"></i> Hora del Evento</label>
+                  <span class="font-body-md text-on-surface py-2">Tarde (13:00 - 17:00)</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-calendar-plus"></i> Fecha Inicio</label>
+                  <span class="font-body-md text-on-surface py-2">15/10/2023</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label"><i class="fas fa-calendar-check"></i> Fecha Fin</label>
+                  <span class="font-body-md text-on-surface py-2">16/10/2023</span>
+                </div>
+                <div class="flex flex-col sm:col-span-2 lg:col-span-3">
+                  <label class="input-label"><i class="fas fa-comment-dots"></i> Motivo de la Solicitud</label>
+                  <span class="font-body-md text-on-surface py-2">Reunión extraordinaria con el equipo de Desarrollo Core para revisión de arquitectura del nuevo módulo de pagos.</span>
+                </div>
+                
+                <!-- Tabla de Destinatarios con No. de Cuenta -->
+                <div class="flex flex-col sm:col-span-2 lg:col-span-3 mt-4">
+                  <label class="input-label mb-2"><i class="fas fa-users"></i> Destinatarios y Pagos</label>
+                  <div class="overflow-x-auto border border-outline-variant rounded-lg">
+                    <table class="w-full text-left border-collapse">
+                      <thead class="bg-surface-container text-primary font-bold text-sm">
+                        <tr>
+                          <th class="p-3 border-b border-outline-variant">Destinatario</th>
+                          <th class="p-3 border-b border-outline-variant">Monto ($)</th>
+                          <th class="p-3 border-b border-outline-variant">Banco</th>
+                          <th class="p-3 border-b border-outline-variant">Tipo de cuenta</th>
+                          <th class="p-3 border-b border-outline-variant">No. Cuenta</th>
+                        </tr>
+                      </thead>
+                      <tbody class="text-sm">
+                        <tr class="border-b border-outline-variant">
+                          <td class="p-3">Carlos Ruiz</td>
+                          <td class="p-3">125.00</td>
+                          <td class="p-3">Banco Integral</td>
+                          <td class="p-3">Ahorro</td>
+                          <td class="p-3">1234567890</td>
+                        </tr>
+                        <tr class="">
+                          <td class="p-3">Ana Morales</td>
+                          <td class="p-3">125.00</td>
+                          <td class="p-3">Banco Nacional</td>
+                          <td class="p-3">Corriente</td>
+                          <td class="p-3">0987654321</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección 3: Información de la Solicitud (Solo Lectura con Campos E3.1) -->
+            <div class="w-full bg-[#E2E8F0] p-6 md:p-8 flex flex-col gap-6">
+              <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+                <i class="fas fa-folder-open mr-2 text-primary"></i> Información de la Solicitud
+              </h3>
+              
+              <!-- Fila superior de metadatos incluyendo todos los campos completados en Cierre (E3.1) -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">ID Solicitud</label>
+                  <span class="font-bold text-lg text-primary">SOL-2023-1089</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Monto total</label>
+                  <span class="font-bold text-lg text-green-600">$250.00</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Fecha de ingreso</label>
+                  <span class="font-semibold text-on-surface">12/10/2023</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Autorizadores</label>
+                  <span class="font-semibold text-on-surface">Jefe Centro, Gte. Admon</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Fecha de autorización</label>
+                  <span class="font-semibold text-on-surface">14/10/2023</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Actor en conciliación de pagos</label>
+                  <span class="font-semibold text-on-surface">Carlos Ruiz (Compras)</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Fecha de conciliación de pagos</label>
+                  <span class="font-semibold text-on-surface">15/10/2023</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Actor en procesamiento de pagos</label>
+                  <span class="font-semibold text-on-surface">María López (Tesorería)</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Fecha de procesamiento de pagos</label>
+                  <span class="font-semibold text-on-surface">16/10/2023</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Tipo de cierre de solicitud</label>
+                  <span class="font-semibold text-on-surface">Reintegro y cierre</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Monto a reintegrar</label>
+                  <span class="font-semibold text-on-surface">$50.00</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Fecha de reingreso</label>
+                  <span class="font-semibold text-on-surface">18/10/2023</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Actor actual</label>
+                  <span class="font-semibold text-on-surface">Carlos Ruiz (Compras)</span>
+                </div>
+                <div class="flex flex-col">
+                  <label class="input-label text-sm text-on-surface-variant">Estado solicitud</label>
+                  <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-[12px] text-xs font-bold bg-[#1A5C3A] text-white w-max">LIQUIDADO</span>
+                </div>
+              </div>
+
+              <!-- Archivos adjuntos -->
+              <div class="flex flex-col mt-2">
+                <label class="input-label mb-2"><i class="fas fa-paperclip"></i> Archivos adjuntos</label>
+                <div class="flex flex-wrap gap-2">
+                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-sm font-medium border border-outline-variant cursor-pointer hover:bg-surface-container-high transition-colors">
+                    <i class="fas fa-file-pdf text-red-500"></i> Justificación_Viaje.pdf
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-sm font-medium border border-outline-variant cursor-pointer hover:bg-surface-container-high transition-colors">
+                    <i class="fas fa-file-image text-purple-500"></i> Recibo_Hotel.jpg
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-sm font-medium border border-outline-variant cursor-pointer hover:bg-surface-container-high transition-colors">
+                    <i class="fas fa-file-pdf text-red-500"></i> Ficha_Reintegro.pdf
+                  </span>
+                </div>
+              </div>
+
+              <!-- Historial de comentarios en estructura de Tabla estilo E1.1 -->
+              <div class="grid grid-cols-1 gap-6 mt-4">
+                <!-- Comentario Autorizadores -->
+                <div class="flex flex-col">
+                  <label class="input-label mb-2"><i class="fas fa-comments"></i> Comentario autorizadores</label>
+                  <div class="border border-outline-variant rounded-lg overflow-hidden bg-white">
+                    <table class="w-full text-left text-sm">
+                      <tbody class="divide-y divide-outline-variant">
+                        <tr>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3 border-r border-outline-variant">14/10/2023</td>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3 border-r border-outline-variant">Jefe Centro (Autorizador 1)</td>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3">Autorización Jefatura</td>
+                        </tr>
+                        <tr>
+                          <td class="p-3 text-on-surface italic bg-white" colspan="3">"Aprobado. Los gastos están dentro del presupuesto asignado para el proyecto Core."</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Comentario de Compras (Conciliación) -->
+                <div class="flex flex-col">
+                  <label class="input-label mb-2"><i class="fas fa-comments-dollar"></i> Comentario de compras</label>
+                  <div class="border border-outline-variant rounded-lg overflow-hidden bg-white">
+                    <table class="w-full text-left text-sm">
+                      <tbody class="divide-y divide-outline-variant">
+                        <tr>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3 border-r border-outline-variant">15/10/2023</td>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3 border-r border-outline-variant">Carlos Ruiz (Compras)</td>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3">Conciliación de Pagos</td>
+                        </tr>
+                        <tr>
+                          <td class="p-3 text-on-surface italic bg-white" colspan="3">"Validación correcta de facturas y montos. Se procede a enviar a Tesorería para pago."</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Comentario de Tesorería -->
+                <div class="flex flex-col">
+                  <label class="input-label mb-2"><i class="fas fa-university"></i> Comentario de tesoreria</label>
+                  <div class="border border-outline-variant rounded-lg overflow-hidden bg-white">
+                    <table class="w-full text-left text-sm">
+                      <tbody class="divide-y divide-outline-variant">
+                        <tr>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3 border-r border-outline-variant">16/10/2023</td>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3 border-r border-outline-variant">María López (Tesorería)</td>
+                          <td class="p-3 bg-surface-container font-semibold text-primary w-1/3">Procesamiento de Pagos</td>
+                        </tr>
+                        <tr>
+                          <td class="p-3 text-on-surface italic bg-white" colspan="3">"Pago desembolsado exitosamente a las cuentas indicadas."</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Botones inferiores (Regresar e Imprimir exclusivamente) -->
+        <div class="flex flex-wrap gap-4 pl-12 pb-10">
+          <button class="btn-action btn-outline-navy rounded-full px-8 py-3 font-bold text-lg flex items-center gap-2 bg-white border-2 border-primary text-primary hover:bg-surface-container-lowest transition-colors" onclick="window.history.back()">
+            <span class="material-symbols-outlined">arrow_back</span> Regresar
+          </button>
+          <button class="btn-action btn-outline-navy rounded-full px-8 py-3 font-bold text-lg flex items-center gap-2 bg-white border-2 border-primary text-primary hover:bg-surface-container-lowest transition-colors" id="btnImprimir">
+            <span class="material-symbols-outlined">print</span> Imprimir
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- LÓGICA JAVASCRIPT -->
+  <script>
+    const btnImprimir = document.getElementById('btnImprimir');
+
+    // --- Funciones del Sidebar ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleIcon = document.getElementById('toggle-icon');
+      
+      if (sidebar.classList.contains('sidebar-expanded')) {
+        sidebar.classList.remove('sidebar-expanded');
+        sidebar.classList.add('sidebar-collapsed');
+        toggleIcon.textContent = 'chevron_right';
+      } else {
+        sidebar.classList.remove('sidebar-collapsed');
+        sidebar.classList.add('sidebar-expanded');
+        toggleIcon.textContent = 'chevron_left';
+      }
+    }
+
+    function toggleSubmenu(id) {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('sidebar-collapsed')) {
+        toggleSidebar();
+      }
+      
+      const el = document.getElementById(id);
+      const icon = el.querySelector('.dropdown-icon');
+      
+      if (el.classList.contains('submenu-open')) {
+        el.classList.remove('submenu-open');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        el.classList.add('submenu-open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // --- Lógica del Modal de Impresión ---
+    function abrirModalImpresion() {
+      const modal = document.getElementById('modalImpresion');
+      const content = document.getElementById('modalImpresionContent');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+      }, 50);
+    }
+
+    function cerrarModalImpresion() {
+      const modal = document.getElementById('modalImpresion');
+      const content = document.getElementById('modalImpresionContent');
+      content.classList.remove('scale-100', 'opacity-100');
+      content.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function ejecutarImpresionFisica() {
+      cerrarModalImpresion();
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    }
+
+    function ejecutarImpresionDigital() {
+      const formulario = document.getElementById('solicitudForm');
+      formulario.classList.add('pdf-print-mode');
+      
+      const opt = {
+        margin:       [0.15, 0.15, 0.15, 0.15],
+        filename:     'Detalles_Solicitud_En_Curso_Viaticos.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      
+      html2pdf().set(opt).from(formulario).save().then(() => {
+        formulario.classList.remove('pdf-print-mode');
+        cerrarModalImpresion();
+      }).catch(err => {
+        console.error(err);
+        formulario.classList.remove('pdf-print-mode');
+        cerrarModalImpresion();
+      });
+    }
+
+    if (btnImprimir) {
+      btnImprimir.addEventListener('click', (e) => {
+        e.preventDefault();
+        abrirModalImpresion();
+      });
+    }
+  </script>
+
+  <!-- Modal Selección Impresión -->
+  <div id="modalImpresion" class="fixed inset-0 bg-[#00000080] flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl border border-outline-variant transition-all transform scale-95 opacity-0 duration-300" id="modalImpresionContent">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-headline-sm text-lg font-bold text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined">print</span> Opciones de Impresión
+        </h3>
+        <button class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" onclick="cerrarModalImpresion()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p class="font-body-md text-sm text-on-surface-variant mb-6">
+        Seleccione el formato en el cual desea procesar el expediente de la solicitud de viáticos:
+      </p>
+      <div class="flex flex-col gap-3">
+        <button class="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-full py-3 font-bold text-base hover:bg-primary-container transition-colors cursor-pointer shadow-md" onclick="ejecutarImpresionDigital()">
+          <span class="material-symbols-outlined">picture_as_pdf</span> Imprimir Digital (Descargar PDF)
+        </button>
+        <button class="w-full flex items-center justify-center gap-2 bg-white border-2 border-primary text-primary rounded-full py-3 font-bold text-base hover:bg-surface-container-lowest transition-colors cursor-pointer" onclick="ejecutarImpresionFisica()">
+          <span class="material-symbols-outlined">print</span> Imprimir Físico (Menú Impresión)
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

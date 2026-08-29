@@ -1,0 +1,502 @@
+<!-- ===================================================================== -->
+<!-- SUB-VISTA: View_S2_1.html (DETALLE Y RESOLUCIÓN MULTI-RECHAZO S2.1)   -->
+<!-- Soporta: RECHAZO-PRESUPUESTO, RECHAZO-PROVISION 1/2, RECHAZO-PAGO 1, RECHAZO-CIERRE -->
+<!-- ===================================================================== -->
+<div id="view-s2-1-justificacion" class="vista-oculta flex flex-col gap-lg w-full max-w-7xl mx-auto py-4 px-2 md:px-6">
+
+  <!-- Mensajes flotantes de Alerta / Éxito -->
+  <div id="s2-1-alert-box" class="hidden w-full max-w-4xl mx-auto p-4 rounded-xl text-white font-bold text-center shadow-lg transition-all duration-300 z-50">
+    <span id="s2-1-alert-text">Mensaje</span>
+  </div>
+
+  <!-- Encabezado con ID de Expediente y Estado -->
+  <div class="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-outline-variant">
+    <div class="flex items-center gap-3">
+      <button onclick="navegarSubmenu('view-solicitudes-rechazadas')" class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container text-on-surface transition-colors cursor-pointer" title="Regresar a Solicitudes Rechazadas">
+        <i class="fas fa-arrow-left text-base"></i>
+      </button>
+      <div>
+        <h2 id="s2-1-titulo-vista" class="text-2xl font-extrabold text-secondary-container flex items-center gap-2">
+          <i class="fas fa-exclamation-triangle text-2xl text-secondary"></i>
+          <span>Resolución de Solicitud Rechazada</span>
+        </h2>
+        <p class="text-xs text-on-surface-variant">Expediente: <b id="s2-1-id-badge" class="text-primary font-bold text-sm">SOL-XXXX-XXXX</b> • <span id="s2-1-subtitulo-vista">Solventar observaciones del proceso</span></p>
+      </div>
+    </div>
+    <div id="s2-1-status-badge">
+      <!-- Badge dinámico de estado -->
+    </div>
+  </div>
+
+  <!-- Contenedor del Formulario Estructurado -->
+  <div class="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant overflow-hidden flex flex-col">
+    
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 1: INFORMACIÓN DEL SOLICITANTE (Solo Lectura / #E2E8F0)  -->
+    <!-- ================================================================= -->
+    <div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+      <h3 class="text-base font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center gap-2">
+        <i class="fas fa-info-circle text-primary text-base"></i>
+        Información del Solicitante
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Nombre</label>
+          <input id="s2-1-sol-nombre" class="w-full p-2.5 rounded border border-gray-400 bg-gray-200 text-sm font-medium text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Correo</label>
+          <input id="s2-1-sol-correo" class="w-full p-2.5 rounded border border-gray-400 bg-gray-200 text-sm font-medium text-on-surface pointer-events-none" readonly type="email" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Cargo</label>
+          <input id="s2-1-sol-cargo" class="w-full p-2.5 rounded border border-gray-400 bg-gray-200 text-sm font-medium text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Gerencia</label>
+          <input id="s2-1-sol-gerencia" class="w-full p-2.5 rounded border border-gray-400 bg-gray-200 text-sm font-medium text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Centro de Costo</label>
+          <input id="s2-1-sol-cc" class="w-full p-2.5 rounded border border-gray-400 bg-gray-200 text-sm font-medium text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Agencia</label>
+          <input id="s2-1-sol-agencia" class="w-full p-2.5 rounded border border-gray-400 bg-gray-200 text-sm font-medium text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 2A: DETALLE DE VIÁTICO (MODO LECTURA PARA RECHAZO-PRESUPUESTO Y RECHAZO-CIERRE) -->
+    <!-- ================================================================= -->
+    <div id="s2-1-viatico-readonly-container" class="w-full bg-surface-bright p-6 md:p-8 flex flex-col gap-6">
+      <h3 class="text-base font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center gap-2">
+        <i class="fas fa-receipt text-primary text-base"></i>
+        Detalle de Viático
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Duración</label>
+          <input id="s2-1-viatico-duracion" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Fecha Inicio</label>
+          <input id="s2-1-viatico-fecha-ini" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Fecha Fin</label>
+          <input id="s2-1-viatico-fecha-fin" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Tipo de Viático</label>
+          <input id="s2-1-viatico-tipo" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface font-semibold pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col" id="s2-1-hora-container">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Hora del Evento</label>
+          <input id="s2-1-viatico-hora" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Tipo Solicitud</label>
+          <input id="s2-1-viatico-tipo-sol" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Destinatario</label>
+          <input id="s2-1-viatico-destinatario" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Monto Solicitado</label>
+          <input id="s2-1-viatico-monto" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm font-bold text-primary pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Clasificación</label>
+          <input id="s2-1-viatico-clasificacion" class="w-full p-2.5 rounded border border-outline-variant bg-surface text-sm text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+      </div>
+
+      <!-- Detalle Bancario Readonly -->
+      <div class="border border-outline-variant rounded-lg p-4 bg-surface">
+        <h4 class="text-sm text-primary font-bold mb-3 flex items-center gap-1.5">
+          <i class="fas fa-university text-base"></i>
+          Detalle Bancario
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <span class="text-xs text-on-surface-variant font-medium block">Banco:</span>
+            <span id="s2-1-banco" class="text-sm font-semibold text-on-surface">-</span>
+          </div>
+          <div>
+            <span class="text-xs text-on-surface-variant font-medium block">Tipo de Cuenta:</span>
+            <span id="s2-1-tipo-cuenta" class="text-sm font-semibold text-on-surface">-</span>
+          </div>
+          <div>
+            <span class="text-xs text-on-surface-variant font-medium block">No. de Cuenta:</span>
+            <span id="s2-1-num-cuenta" class="text-sm font-semibold text-on-surface">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Motivo del Viático Readonly -->
+      <div class="flex flex-col">
+        <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Motivo del Viático</label>
+        <div id="s2-1-motivo" class="w-full p-3 rounded border border-outline-variant bg-surface text-sm text-on-surface leading-relaxed min-h-[60px]">
+          -
+        </div>
+      </div>
+
+      <!-- Archivos Adjuntos Previamente -->
+      <div class="flex flex-col" id="s2-1-archivos-wrapper">
+        <label class="text-xs text-on-surface-variant uppercase font-semibold mb-2">Comprobantes y Archivos Adjuntos</label>
+        <div id="s2-1-archivos-lista" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- Renderizado dinámico de archivos -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 2B: DETALLE DE VIÁTICO (MODO EDITABLE PARA PROVISION 1/2 Y PAGO 1) -->
+    <!-- ================================================================= -->
+    <div id="s2-1-viatico-editable-container" class="w-full bg-surface-bright p-6 md:p-8 flex flex-col gap-6 hidden">
+      <h3 class="text-base font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center justify-between">
+        <span class="flex items-center gap-2">
+          <i class="fas fa-edit text-primary text-base"></i>
+          Editar Detalle del Viático
+        </span>
+        <span class="text-xs font-normal text-on-surface-variant bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-full border border-yellow-300">
+          Modo Edición Habilitado
+        </span>
+      </h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+        <!-- Duración -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Duración de la Actividad *</label>
+          <select id="s2-1-edit-duracion" class="form-input p-2.5 rounded border border-outline-variant bg-surface text-sm font-medium">
+            <option value="Día único">Día único</option>
+            <option value="Rango de días">Rango de días</option>
+          </select>
+        </div>
+
+        <!-- Fecha Inicio -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Fecha Inicio *</label>
+          <input id="s2-1-edit-fecha-ini" type="date" class="form-input p-2.5 rounded border border-outline-variant bg-surface text-sm">
+        </div>
+
+        <!-- Fecha Fin -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Fecha Fin *</label>
+          <input id="s2-1-edit-fecha-fin" type="date" class="form-input p-2.5 rounded border border-outline-variant bg-surface text-sm">
+        </div>
+
+        <!-- Tipo Viático -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Tipo de Viático *</label>
+          <select id="s2-1-edit-tipo-viatico" class="form-input p-2.5 rounded border border-outline-variant bg-surface text-sm font-semibold">
+            <option value="Alimentación por visitas agencias">Alimentación por visitas agencias</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Hospedaje">Hospedaje</option>
+            <option value="Viático de Capacitación">Viático de Capacitación</option>
+            <option value="Operativo Móvil">Operativo Móvil</option>
+          </select>
+        </div>
+
+        <!-- Hora Evento -->
+        <div class="flex flex-col" id="s2-1-edit-hora-container">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Hora del Evento</label>
+          <input id="s2-1-edit-hora" type="time" class="form-input p-2.5 rounded border border-outline-variant bg-surface text-sm">
+        </div>
+
+        <!-- Tipo Solicitud -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Tipo Solicitud</label>
+          <input id="s2-1-edit-tipo-sol" class="w-full p-2.5 rounded border border-outline-variant bg-gray-100 text-sm pointer-events-none" readonly type="text" value="Personal">
+        </div>
+
+        <!-- Destinatario -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Destinatario</label>
+          <input id="s2-1-edit-destinatario" class="w-full p-2.5 rounded border border-outline-variant bg-gray-100 text-sm pointer-events-none" readonly type="text" value="">
+        </div>
+
+        <!-- Monto -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Monto Solicitado ($) *</label>
+          <input id="s2-1-edit-monto" type="number" step="0.01" min="0.01" class="form-input p-2.5 rounded border border-outline-variant bg-surface text-sm font-bold text-primary">
+        </div>
+
+        <!-- Clasificación -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Clasificación</label>
+          <input id="s2-1-edit-clasificacion" class="w-full p-2.5 rounded border border-outline-variant bg-gray-100 text-sm pointer-events-none" readonly type="text" value="Anticipo">
+        </div>
+      </div>
+
+      <!-- Detalle Bancario Editable con Confirmación -->
+      <div class="border border-outline-variant rounded-xl p-5 bg-surface flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b pb-3 border-outline-variant">
+          <h4 class="text-sm text-primary font-bold flex items-center gap-2">
+            <i class="fas fa-university text-base"></i>
+            Detalle Bancario
+          </h4>
+          <button type="button" id="s2-1-btn-editar-banco" onclick="abrirModalEdicionBancoS2_1()" class="text-xs font-bold text-secondary bg-secondary-fixed hover:bg-secondary-fixed/80 px-3 py-1.5 rounded-lg border border-secondary/20 flex items-center gap-1.5 transition-colors cursor-pointer">
+            <i class="fas fa-pencil-alt"></i>
+            <span>Editar Datos Bancarios</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="flex flex-col">
+            <label class="text-xs text-on-surface-variant font-medium mb-1">Banco:</label>
+            <input id="s2-1-edit-banco" class="w-full p-2.5 rounded border border-gray-300 bg-gray-100 text-sm font-semibold pointer-events-none" readonly type="text">
+          </div>
+          <div class="flex flex-col">
+            <label class="text-xs text-on-surface-variant font-medium mb-1">Tipo de Cuenta:</label>
+            <input id="s2-1-edit-tipo-cuenta" class="w-full p-2.5 rounded border border-gray-300 bg-gray-100 text-sm font-semibold pointer-events-none" readonly type="text">
+          </div>
+          <div class="flex flex-col">
+            <label class="text-xs text-on-surface-variant font-medium mb-1">No. de Cuenta:</label>
+            <input id="s2-1-edit-num-cuenta" class="w-full p-2.5 rounded border border-gray-300 bg-gray-100 text-sm font-semibold pointer-events-none" readonly type="text">
+          </div>
+        </div>
+        <input type="hidden" id="s2-1-edit-es-editado" value="No">
+      </div>
+
+      <!-- Motivo del Viático Editable -->
+      <div class="flex flex-col">
+        <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Motivo del Viático *</label>
+        <textarea id="s2-1-edit-motivo" rows="3" class="form-input p-3 rounded-lg border border-outline-variant bg-surface text-sm text-on-surface"></textarea>
+      </div>
+
+      <!-- Carga de Archivos Adicionales -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs text-on-surface-variant uppercase font-semibold">Archivos Adjuntos</label>
+        <div id="s2-1-edit-dropzone" class="border-2 border-dashed border-outline-variant rounded-xl p-6 text-center hover:border-primary transition-colors cursor-pointer bg-surface">
+          <i class="fas fa-cloud-upload-alt text-3xl text-secondary mb-2"></i>
+          <p class="text-sm font-semibold text-primary">Arrastre archivos aquí o haga clic para seleccionar</p>
+          <p class="text-xs text-on-surface-variant mt-1">Soporta PDF, JPG, PNG (Máx 10MB por archivo)</p>
+          <input type="file" id="s2-1-edit-file-input" multiple class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+        <div id="s2-1-edit-archivos-galeria" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <!-- Archivos cargados -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 3A: RETROALIMENTACIÓN DE PROVISIÓN (RECHAZO-PROVISION 1 y 2) -->
+    <!-- ================================================================= -->
+    <div id="s2-1-info-provision" class="w-full bg-amber-50/70 p-6 md:p-8 border-t border-amber-200 flex flex-col gap-4 hidden">
+      <h4 class="text-base font-bold text-amber-900 flex items-center gap-2">
+        <i class="fas fa-comment-dots text-amber-600"></i>
+        Información de provisión de pago
+      </h4>
+      <div class="overflow-x-auto bg-white rounded-xl border border-amber-200 shadow-xs">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-amber-100/60 text-amber-950 font-bold border-b border-amber-200">
+            <tr>
+              <th class="p-3 w-1/3">NombreProvision</th>
+              <th class="p-3">ComentarioProvision</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="p-3 align-top font-semibold text-on-surface" id="s2-1-provision-nombre">-</td>
+              <td class="p-3 align-top text-on-surface leading-relaxed" id="s2-1-provision-comentario" rowspan="2">-</td>
+            </tr>
+            <tr class="border-t border-amber-100">
+              <td class="p-3 text-xs text-on-surface-variant font-medium">
+                Fecha: <span id="s2-1-provision-fecha" class="font-semibold text-on-surface">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 3B: RETROALIMENTACIÓN DE PROCESAMIENTO (RECHAZO-PAGO 1)   -->
+    <!-- ================================================================= -->
+    <div id="s2-1-info-procesamiento" class="w-full bg-sky-50/70 p-6 md:p-8 border-t border-sky-200 flex flex-col gap-4 hidden">
+      <h4 class="text-base font-bold text-sky-900 flex items-center gap-2">
+        <i class="fas fa-comment-dollar text-sky-600"></i>
+        Información de procesamiento de pago
+      </h4>
+      <div class="overflow-x-auto bg-white rounded-xl border border-sky-200 shadow-xs">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-sky-100/60 text-sky-950 font-bold border-b border-sky-200">
+            <tr>
+              <th class="p-3 w-1/3">NombreProcesamiento</th>
+              <th class="p-3">ComentarioProcesamiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="p-3 align-top font-semibold text-on-surface" id="s2-1-procesamiento-nombre">-</td>
+              <td class="p-3 align-top text-on-surface leading-relaxed" id="s2-1-procesamiento-comentario" rowspan="2">-</td>
+            </tr>
+            <tr class="border-t border-sky-100">
+              <td class="p-3 text-xs text-on-surface-variant font-medium">
+                Fecha: <span id="s2-1-procesamiento-fecha" class="font-semibold text-on-surface">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 3C: RETROALIMENTACIÓN DE CIERRE (RECHAZO-CIERRE)          -->
+    <!-- ================================================================= -->
+    <div id="s2-1-info-cierre" class="w-full bg-rose-50/70 p-6 md:p-8 border-t border-rose-200 flex flex-col gap-4 hidden">
+      <h4 class="text-base font-bold text-rose-900 flex items-center gap-2">
+        <i class="fas fa-comment-slash text-rose-600"></i>
+        Información de cierre de compras
+      </h4>
+      <div class="overflow-x-auto bg-white rounded-xl border border-rose-200 shadow-xs">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-rose-100/60 text-rose-950 font-bold border-b border-rose-200">
+            <tr>
+              <th class="p-3 w-1/3">NombreCierreE</th>
+              <th class="p-3">ComentarioCierreE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="p-3 align-top font-semibold text-on-surface" id="s2-1-cierre-nombre">-</td>
+              <td class="p-3 align-top text-on-surface leading-relaxed" id="s2-1-cierre-comentario" rowspan="2">-</td>
+            </tr>
+            <tr class="border-t border-rose-100">
+              <td class="p-3 text-xs text-on-surface-variant font-medium">
+                Fecha: <span id="s2-1-cierre-fecha" class="font-semibold text-on-surface">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 4A: JUSTIFICACIÓN FUERA DE PRESUPUESTO (RECHAZO-PRESUPUESTO) -->
+    <!-- ================================================================= -->
+    <div id="s2-1-justificacion-container" class="flex flex-col p-6 md:p-8 border-t-2 border-secondary-container/40 bg-surface">
+      <label class="text-sm text-primary font-bold mb-1 flex items-center gap-1.5" for="s2-1-justificacion-input">
+        <i class="fas fa-file-alt text-secondary text-base"></i>
+        Justificación de viático fuera de presupuesto <span class="text-error font-bold">*</span>
+      </label>
+      <p class="text-xs text-on-surface-variant mb-2">Explique de forma detallada la necesidad y urgencia institucional del gasto que justifique su autorización extraordinaria fuera de presupuesto.</p>
+      <textarea id="s2-1-justificacion-input" class="w-full p-3 rounded-lg border-2 border-error bg-surface focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none text-sm text-on-surface transition-colors" rows="4" placeholder="Escriba aquí la justificación detallada..." oninput="validarJustificacionS2_1(this)"></textarea>
+      <span id="s2-1-justificacion-error" class="text-xs text-error font-medium mt-1 hidden">Este campo es obligatorio para enviar la solicitud a la ruta de autorización extraordinaria.</span>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 4B: ACCIONES DE CIERRE / LIQUIDACIÓN (RECHAZO-CIERRE)     -->
+    <!-- ================================================================= -->
+    <div id="s2-1-acciones-cierre" class="flex flex-col p-6 md:p-8 border-t-2 border-secondary-container/40 bg-surface gap-5 hidden">
+      <h3 class="text-base font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center gap-2">
+        <i class="fas fa-tasks text-primary text-base"></i>
+        Acciones de cierre
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Tipo de Cierre -->
+        <div class="flex flex-col">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Tipo de cierre de solicitud *</label>
+          <select id="s2-1-cierre-tipo" onchange="toggleCamposReintegroS2_1(this.value)" class="form-input p-2.5 rounded-lg border border-outline-variant bg-surface text-sm font-semibold">
+            <option value="Solo cierre">Solo cierre</option>
+            <option value="Reintegro y cierre">Reintegro y cierre</option>
+          </select>
+        </div>
+
+        <!-- Monto a Reintegrar -->
+        <div class="flex flex-col hidden" id="s2-1-cierre-monto-container">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Monto a reintegrar ($) *</label>
+          <input type="number" step="0.01" min="0.01" id="s2-1-cierre-monto-reintegro" class="form-input p-2.5 rounded-lg border border-outline-variant bg-surface text-sm font-bold text-primary">
+        </div>
+
+        <!-- Fecha de Reintegro -->
+        <div class="flex flex-col hidden" id="s2-1-cierre-fecha-container">
+          <label class="text-xs text-on-surface-variant uppercase font-semibold mb-1">Fecha de reintegro *</label>
+          <input type="date" id="s2-1-cierre-fecha-reintegro" class="form-input p-2.5 rounded-lg border border-outline-variant bg-surface text-sm">
+        </div>
+      </div>
+
+      <!-- Uploader de comprobantes corregidos -->
+      <div class="flex flex-col gap-2 mt-2">
+        <label class="text-xs text-on-surface-variant uppercase font-semibold">Agregar comprobantes corregidos / facturas *</label>
+        <div id="s2-1-cierre-dropzone" class="border-2 border-dashed border-outline-variant rounded-xl p-6 text-center hover:border-primary transition-colors cursor-pointer bg-surface">
+          <i class="fas fa-cloud-upload-alt text-3xl text-secondary mb-2"></i>
+          <p class="text-sm font-semibold text-primary">Arrastre comprobantes corregidos aquí o haga clic para examinar</p>
+          <input type="file" id="s2-1-cierre-file-input" multiple class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+        <div id="s2-1-cierre-archivos-galeria" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <!-- Galería dinámica -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Botones de Acción Globales -->
+  <div class="flex flex-wrap items-center justify-between gap-4 pt-2 pb-8">
+    <button onclick="navegarSubmenu('view-solicitudes-rechazadas')" class="border border-outline-variant hover:bg-surface-container text-on-surface rounded-full px-6 py-2.5 font-bold text-sm flex items-center gap-2 bg-white transition-colors cursor-pointer shadow-sm">
+      <i class="fas fa-arrow-left text-sm"></i>
+      <span>Regresar</span>
+    </button>
+    <button id="s2-1-btn-enviar" onclick="ejecutarResolucionS2_1()" class="bg-secondary-container hover:bg-secondary text-on-secondary rounded-full px-8 py-2.5 font-bold text-sm flex items-center gap-2 transition-colors shadow-md cursor-pointer">
+      <i class="fas fa-paper-plane text-sm" id="s2-1-btn-icon"></i>
+      <span id="s2-1-btn-text">Enviar justificación</span>
+    </button>
+  </div>
+
+  <!-- MODAL 1: CONFIRMACIÓN DE ACCIÓN -->
+  <div id="s2-1-modal-confirmar" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-surface rounded-xl max-w-md w-full p-6 shadow-2xl border border-outline-variant flex flex-col gap-4 animate-fade-in">
+      <div class="flex items-center gap-3 text-secondary-container">
+        <div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center">
+          <i class="fas fa-question-circle text-2xl text-secondary"></i>
+        </div>
+        <h3 id="s2-1-modal-confirm-title" class="text-lg font-bold text-primary">Confirmar Acción</h3>
+      </div>
+      <p id="s2-1-modal-confirm-msg" class="text-sm text-on-surface-variant leading-relaxed">
+        ¿Está seguro que desea enviar la actualización de esta solicitud?
+      </p>
+      <div class="flex justify-end gap-3 mt-2">
+        <button onclick="cerrarModalConfirmacionS2_1()" class="px-4 py-2 border border-outline-variant rounded-lg text-sm font-medium hover:bg-surface-container transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button id="s2-1-modal-btn-confirmar" onclick="confirmarResolucionFinalS2_1()" class="px-5 py-2 bg-secondary-container hover:bg-secondary text-on-secondary rounded-lg text-sm font-bold shadow-sm transition-colors cursor-pointer flex items-center gap-2">
+          <i class="fas fa-check text-sm"></i>
+          <span>Confirmar y Enviar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CONFIRMACIÓN DE EDICIÓN BANCARIA EN S2.1 -->
+  <div id="s2-1-modal-edicion-banco" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-surface rounded-2xl shadow-2xl border border-outline-variant max-w-lg w-full p-6 md:p-8 flex flex-col gap-5 animate-fade-in">
+      <div class="flex items-center gap-3 text-secondary-container">
+        <div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-exclamation-triangle text-2xl text-secondary"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-lg text-primary">Confirmación de Edición Bancaria</h4>
+          <p class="text-xs text-on-surface-variant">Aviso de responsabilidad del solicitante</p>
+        </div>
+      </div>
+      <p class="text-sm text-on-surface leading-relaxed">
+        ¿Está seguro que desea editar la información de la cuenta bancaria? En caso de proseguir, <b>corre bajo su propio riesgo y responsabilidad</b> si la información ingresada no es correcta o genera problemas en la transferencia del viático.
+      </p>
+      <div class="flex items-center justify-end gap-3 pt-2 border-t border-outline-variant">
+        <button type="button" onclick="cerrarModalEdicionBancoS2_1()" class="btn-action btn-outline-navy px-5 py-2 rounded-lg font-bold text-sm">
+          Cancelar
+        </button>
+        <button type="button" onclick="proseguirEdicionBancoS2_1()" class="btn-action btn-solid-orange px-5 py-2 rounded-lg font-bold text-sm">
+          Proseguir y Editar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

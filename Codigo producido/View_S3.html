@@ -1,0 +1,146 @@
+<!-- ===================================================================== -->
+<!-- SUB-VISTA: View_S3.html (CIERRE DE SOLICITUDES - SOLICITANTE)         -->
+<!-- ===================================================================== -->
+<div id="view-s3-cierre" class="vista-oculta flex flex-col gap-lg w-full">
+  
+  <!-- Encabezado y Botones Principales -->
+  <div class="mb-2">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="font-headline-lg text-headline-lg text-primary mb-xs">Cierre de Solicitudes</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant">Liquidación y rendición de cuentas de viáticos pagados.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Botón Limpiar Filtros -->
+        <button onclick="limpiarFiltrosS3()" class="border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
+          <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros Reactivos -->
+  <div class="bg-surface border border-outline-variant rounded-lg p-md shadow-sm">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-md">
+      
+      <!-- Filtro 1: ID Solicitud -->
+      <div class="flex flex-col relative">
+        <label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-s3-id">ID Solicitud</label>
+        <div class="relative">
+          <input class="w-full h-10 pl-sm pr-8 border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors" id="filter-s3-id" placeholder="Buscar ID..." type="text" autocomplete="off" oninput="filtrarTablaS3()">
+          <span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-md pointer-events-none">search</span>
+        </div>
+      </div>
+
+      <!-- Filtro 2: Rango de Fechas -->
+      <div class="flex flex-col relative">
+        <label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-s3-date">Fechas</label>
+        <div class="relative cursor-pointer" onclick="toggleDateDropdownS3()">
+          <input class="w-full h-10 pl-sm pr-8 border border-outline-variant rounded bg-surface outline-none font-body-sm text-body-sm text-on-surface cursor-pointer" id="filter-s3-date" placeholder="Rango fechas" readonly type="text">
+          <span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-md pointer-events-none">calendar_month</span>
+        </div>
+        <!-- Popover Fechas -->
+        <div class="hidden absolute top-16 left-0 w-64 p-sm bg-white border border-outline-variant rounded-lg shadow-xl z-50 flex flex-col gap-2" id="filter-s3-date-dropdown">
+          <div class="flex flex-col">
+            <label class="font-label-md text-[10px] text-on-surface-variant uppercase mb-1">Fecha Desde</label>
+            <input class="w-full h-8 px-2 border border-outline-variant rounded text-xs bg-surface" id="filter-s3-date-start" type="date">
+          </div>
+          <div class="flex flex-col">
+            <label class="font-label-md text-[10px] text-on-surface-variant uppercase mb-1">Fecha Hasta</label>
+            <input class="w-full h-8 px-2 border border-outline-variant rounded text-xs bg-surface" id="filter-s3-date-end" type="date">
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button class="flex-1 h-8 text-xs bg-primary text-on-primary rounded font-bold cursor-pointer hover:bg-primary-container" onclick="aplicarRangoFechasS3()" type="button">Aplicar</button>
+            <button class="flex-1 h-8 text-xs border border-outline-variant rounded cursor-pointer hover:bg-surface-container" onclick="limpiarRangoFechasS3()" type="button">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro 3: Tipo de Viático -->
+      <div class="flex flex-col">
+        <label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-s3-type">Tipo Viático</label>
+        <select class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors" id="filter-s3-type" onchange="filtrarTablaS3()">
+          <option value="">Todos</option>
+          <option value="Reunión/Trabajo fuera de horario laboral">Reunión/Trabajo fuera horario</option>
+          <option value="Refrigerios por reuniones mayores a 4 horas">Refrigerios > 4 hrs</option>
+          <option value="Alojamiento">Alojamiento</option>
+          <option value="Alimentación por visitas agencias">Alimentación visitas</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Viático Movilidad (Operativos Móviles)">Viático Movilidad</option>
+        </select>
+      </div>
+
+      <!-- Filtro 4: Clasificación Solicitud -->
+      <div class="flex flex-col">
+        <label class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase" for="filter-s3-classification">Clasificación</label>
+        <select class="w-full h-10 px-sm border border-outline-variant rounded bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm text-body-sm text-on-surface transition-colors" id="filter-s3-classification" onchange="filtrarTablaS3()">
+          <option value="">Todas</option>
+          <option value="Anticipo">Anticipo</option>
+          <option value="Reintegro">Reintegro</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Tabla de Datos Principal -->
+  <div class="bg-surface border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[900px]">
+        <thead class="bg-primary border-b border-outline-variant text-on-primary">
+          <tr>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">ID Solicitud</th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle cursor-pointer select-none hover:bg-primary-container transition-colors" onclick="toggleSortDateS3()">
+              <div class="flex items-center justify-center gap-1">
+                <span>Fechas</span>
+                <span class="material-symbols-outlined text-sm font-normal" id="sort-icon-s3">arrow_downward</span>
+              </div>
+            </th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Tipo Viático</th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Monto</th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Estado</th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Actor Actual</th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Clasificación</th>
+            <th class="py-3 px-3 font-label-md text-label-md text-on-primary uppercase font-bold text-center align-middle">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant" id="tabla-s3-body">
+          <!-- Filas renderizadas dinámicamente -->
+        </tbody>
+        <tbody id="s3-no-results-row" class="hidden border-t-0">
+          <tr>
+            <td colspan="8" class="py-12 text-center align-middle bg-surface">
+              <div class="flex flex-col items-center justify-center gap-3">
+                <span class="material-symbols-outlined text-outline text-5xl">task_alt</span>
+                <h3 class="text-on-surface font-semibold text-base">No hay solicitudes pendientes de liquidación</h3>
+                <p class="text-on-surface-variant text-sm max-w-sm">No se encontraron registros en estado PAGADO pendientes de cierre.</p>
+                <button class="mt-2 bg-transparent border border-primary-container text-primary-container hover:bg-primary-container hover:text-on-primary rounded px-4 py-1.5 font-label-lg text-xs transition-colors cursor-pointer" onclick="limpiarFiltrosS3()" type="button">Restablecer filtros</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Paginador y Selector de Cantidad por Página -->
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-on-surface-variant font-body-sm">
+    <div class="flex items-center gap-3">
+      <span id="s3-solicitudes-count">Mostrando 0 de 0 solicitudes</span>
+      <div class="flex items-center gap-1.5">
+        <label for="s3-page-size" class="text-xs text-on-surface-variant">Por pág:</label>
+        <select id="s3-page-size" class="h-8 px-2 border border-outline-variant rounded bg-surface text-xs text-on-surface" onchange="cambiarPageSizeS3(this.value)">
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-1" id="s3-pagination-controls">
+      <!-- Botones de paginación dinámicos -->
+    </div>
+  </div>
+
+</div>

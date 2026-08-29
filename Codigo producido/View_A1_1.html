@@ -1,0 +1,265 @@
+<!-- ===================================================================== -->
+<!-- SUB-VISTA: View_A1_1.html (DETALLE Y RESOLUCIÓN DE AUTORIZACIÓN - A1.1)-->
+<!-- ===================================================================== -->
+<div id="view-a1-1-detalle" class="vista-oculta flex flex-col gap-lg w-full max-w-7xl mx-auto py-4 px-2 md:px-6">
+
+  <!-- Encabezado con ID de Expediente y Estado -->
+  <div class="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-outline-variant">
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="navegarSubmenu('view-a1-autorizaciones')" class="btn-action w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container text-on-surface transition-colors cursor-pointer bg-white shadow-xs" title="Regresar a Bandeja de Autorizaciones">
+        <i class="fas fa-arrow-left text-base"></i>
+      </button>
+      <div>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-primary flex items-center gap-2">
+          <i class="fas fa-file-signature text-2xl text-secondary-container"></i>
+          <span>Autorización de Solicitud</span>
+        </h2>
+        <p class="text-xs text-on-surface-variant">Expediente: <b id="a1-1-id-badge" class="text-primary font-bold text-sm">SOL-XXXX-XXXX</b> • Revisión y firma corporativa de viáticos</p>
+      </div>
+    </div>
+    <div id="a1-1-status-badge" class="flex items-center gap-2">
+      <!-- Badge dinámico de estado y actor -->
+    </div>
+  </div>
+
+  <!-- Contenedor Principal del Formulario Estructura Vertical -->
+  <div class="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant mb-6 overflow-hidden flex flex-col">
+    
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 1: INFORMACIÓN DEL SOLICITANTE (#E2E8F0)                 -->
+    <!-- ================================================================= -->
+    <div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center gap-2">
+        <i class="fas fa-info-circle text-primary text-base"></i>
+        <span>Información del Solicitante</span>
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+        
+        <!-- 1. Nombre -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-user-circle"></i> Nombre</label>
+          <input type="text" id="a1-1-sol-nombre" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 2. Correo Institucional -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-envelope"></i> Correo institucional</label>
+          <input type="email" id="a1-1-sol-correo" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 3. Cargo / Plaza -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-id-badge"></i> Cargo / Plaza</label>
+          <input type="text" id="a1-1-sol-cargo" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 4. Gerencia -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-sitemap"></i> Gerencia</label>
+          <input type="text" id="a1-1-sol-gerencia" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 5. Centro de Costo -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-building"></i> Centro de Costo</label>
+          <input type="text" id="a1-1-sol-centro-costo" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 6. Agencia -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-map-marker-alt"></i> Agencia</label>
+          <input type="text" id="a1-1-sol-agencia" class="form-input border-gray" readonly value="" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 2: DETALLE DEL VIÁTICO (SOLO LECTURA)                     -->
+    <!-- ================================================================= -->
+    <div class="w-full bg-[#f8fafc] p-6 md:p-8 flex flex-col gap-6">
+      <div class="flex items-center justify-between border-b-2 border-outline-variant pb-2">
+        <h3 class="text-lg font-bold text-primary flex items-center gap-2">
+          <i class="fas fa-plane-departure text-primary text-base"></i>
+          <span>Detalle del Viático</span>
+        </h3>
+        <div id="a1-1-badge-presupuesto" class="text-xs px-3 py-1 rounded-full font-bold">
+          <!-- Badge Presupuesto -->
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+        
+        <!-- 1. Duración -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-calendar-alt"></i> Duración de la actividad</label>
+          <input type="text" id="a1-1-viatico-duracion" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 2. Fecha Inicio -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-calendar-plus"></i> Fecha Inicio</label>
+          <input type="text" id="a1-1-viatico-fecha-ini" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 3. Fecha Fin -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-calendar-check"></i> Fecha Fin</label>
+          <input type="text" id="a1-1-viatico-fecha-fin" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- 4. Tipo de Viático -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-tags"></i> Tipo de Viático</label>
+          <input type="text" id="a1-1-viatico-tipo" class="form-input border-gray font-semibold text-primary" readonly value="" />
+        </div>
+
+        <!-- 5. Hora del Evento (Condicional) -->
+        <div class="flex flex-col" id="a1-1-hora-container">
+          <label class="input-label"><i class="fas fa-clock"></i> Hora del Evento</label>
+          <input type="text" id="a1-1-viatico-hora" class="form-input border-gray" readonly value="-" />
+        </div>
+
+        <!-- 6. Tipo de Solicitud -->
+        <div class="flex flex-col">
+          <label class="input-label"><i class="fas fa-users-cog"></i> Tipo de Solicitud</label>
+          <input type="text" id="a1-1-viatico-solicitud-tipo" class="form-input border-gray" readonly value="" />
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TABLA COMPLETA DETALLE BANCARIO (REQUERIMIENTO OFICIAL)       -->
+        <!-- ============================================================= -->
+        <div class="flex flex-col sm:col-span-2 lg:col-span-3 mt-1">
+          <div class="flex items-center justify-between mb-2">
+            <label class="input-label mb-0 text-sm">
+              <i class="fas fa-money-check-alt text-primary"></i> Detalle bancario de transferencia
+            </label>
+            <span id="a1-1-badge-editado" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300 hidden">
+              <i class="fas fa-exclamation-triangle mr-1"></i> Datos Bancarios Editados por Solicitante
+            </span>
+          </div>
+
+          <div class="overflow-x-auto border border-outline-variant rounded-xl shadow-xs bg-white">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-surface-container text-primary font-bold text-xs uppercase tracking-wider">
+                <tr>
+                  <th class="p-3 border-b border-outline-variant">Destinatario</th>
+                  <th class="p-3 border-b border-outline-variant w-36">Monto ($)</th>
+                  <th class="p-3 border-b border-outline-variant">Banco</th>
+                  <th class="p-3 border-b border-outline-variant">Tipo de cuenta</th>
+                  <th class="p-3 border-b border-outline-variant">No. de cuenta</th>
+                </tr>
+              </thead>
+              <tbody class="text-xs text-on-surface">
+                <tr>
+                  <td class="p-3 border-b border-outline-variant font-semibold text-primary" id="a1-1-banco-destinatario">-</td>
+                  <td class="p-3 border-b border-outline-variant font-bold text-primary" id="a1-1-banco-monto">$ 0.00 USD</td>
+                  <td class="p-3 border-b border-outline-variant" id="a1-1-banco-nombre">-</td>
+                  <td class="p-3 border-b border-outline-variant" id="a1-1-banco-tipo">-</td>
+                  <td class="p-3 border-b border-outline-variant font-mono" id="a1-1-banco-numero">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Motivo del Viático -->
+        <div class="flex flex-col sm:col-span-2 lg:col-span-3">
+          <label class="input-label"><i class="fas fa-comment-dots"></i> Motivo del Viático</label>
+          <div id="a1-1-viatico-motivo" class="w-full p-3.5 rounded-xl border border-outline-variant bg-white text-xs text-on-surface leading-relaxed min-h-[60px] whitespace-pre-line">
+            -
+          </div>
+        </div>
+
+        <!-- Justificación Extraordinaria Fuera de Presupuesto (Si aplica) -->
+        <div id="a1-1-justificacion-extra-container" class="flex flex-col sm:col-span-2 lg:col-span-3 bg-amber-50 p-4 rounded-xl border border-amber-200 hidden">
+          <label class="text-xs text-amber-900 uppercase font-bold mb-1 flex items-center gap-1.5">
+            <i class="fas fa-exclamation-triangle text-amber-600"></i>
+            Justificación Extraordinaria de Viático Fuera de Presupuesto
+          </label>
+          <div id="a1-1-justificacion-extra" class="text-xs text-amber-950 font-medium leading-relaxed whitespace-pre-line">
+            -
+          </div>
+        </div>
+
+        <!-- Galería de Archivos Adjuntos -->
+        <div class="flex flex-col sm:col-span-2 lg:col-span-3">
+          <label class="input-label mb-1.5"><i class="fas fa-paperclip"></i> Archivos Adjuntos del Expediente</label>
+          <div id="a1-1-archivos-galeria" class="w-full">
+            <!-- Renderizado dinámico vía window.renderizarGaleriaAdjuntos -->
+          </div>
+        </div>
+
+        <!-- Historial de Firmas Previas en la Ruta (Si aplica) -->
+        <div id="a1-1-firmas-container" class="flex flex-col sm:col-span-2 lg:col-span-3 border-t border-outline-variant pt-4 hidden">
+          <h4 class="text-xs font-bold text-primary mb-2 flex items-center gap-1.5">
+            <i class="fas fa-history text-secondary"></i>
+            <span>Historial de Firmas Previas en la Ruta de Autorización</span>
+          </h4>
+          <div id="a1-1-firmas-lista" class="flex flex-col gap-2">
+            <!-- Firmas previas dinámicas -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 3: ACCIONES DE AUTORIZACIÓN (DECISIÓN Y COMENTARIOS)     -->
+    <!-- ================================================================= -->
+    <div class="w-full bg-white p-6 md:p-8 border-t-2 border-primary/20 flex flex-col gap-6">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center gap-2">
+        <i class="fas fa-tasks text-primary text-base"></i>
+        <span>Acciones de Autorización</span> <span class="text-error">*</span>
+      </h3>
+
+      <!-- Selección de Decisión (Radio Cards Corporativos) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Opción Aprobar -->
+        <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition-all">
+          <input type="radio" name="a1_1_decision" value="Aprobado" checked onchange="toggleDecisionA1_1(this.value)" class="w-5 h-5 text-emerald-600 focus:ring-emerald-500">
+          <div>
+            <span class="block font-bold text-emerald-800 text-sm">✓ Autorizado</span>
+            <span class="block text-xs text-emerald-700">Aprobar la solicitud y estampar firma de autorización</span>
+          </div>
+        </label>
+
+        <!-- Opción Rechazar -->
+        <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-rose-300 bg-rose-50/50 hover:bg-rose-50 cursor-pointer transition-all">
+          <input type="radio" name="a1_1_decision" value="Rechazado" onchange="toggleDecisionA1_1(this.value)" class="w-5 h-5 text-rose-600 focus:ring-rose-500">
+          <div>
+            <span class="block font-bold text-rose-800 text-sm">✕ Rechazado</span>
+            <span class="block text-xs text-rose-700">Denegar solicitud y registrar motivo obligatorio de rechazo</span>
+          </div>
+        </label>
+      </div>
+
+      <!-- Campo de Observaciones / Comentario -->
+      <div class="flex flex-col" id="a1_1_comentario_wrapper">
+        <label class="input-label justify-between" for="a1-1-comentario">
+          <span class="flex items-center gap-1.5">
+            <i class="fas fa-comment-dots text-primary"></i> Comentarios / Justificación de Resolución <span class="text-error hidden" id="a1-1-comentario-asterisco">*</span>
+          </span>
+          <span id="a1-1-comentario-ayuda" class="text-xs text-on-surface-variant font-normal">(Opcional al autorizar)</span>
+        </label>
+        <textarea id="a1-1-comentario" name="comentario" rows="3" class="form-input editable-field border-gray" placeholder="Ingrese comentarios u observaciones para el expediente..."></textarea>
+        <span id="a1-1-comentario-error" class="text-xs text-error font-semibold mt-1 hidden">El comentario es obligatorio para rechazar la solicitud (mínimo 5 caracteres).</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Barra Inferior de Botones -->
+  <div class="flex flex-wrap items-center justify-between gap-4 pt-2 pb-10">
+    <button type="button" onclick="navegarSubmenu('view-a1-autorizaciones')" class="btn-action btn-outline-navy rounded-full px-8 py-3 font-bold text-base flex items-center gap-2 bg-white shadow-sm">
+      <span class="material-symbols-outlined text-base">arrow_back</span>
+      <span>Regresar</span>
+    </button>
+    <button type="button" id="a1-1-btn-guardar" onclick="solicitarConfirmacionAutorizacionA1_1()" class="btn-action btn-solid-orange rounded-full px-8 py-3 font-bold text-base flex items-center gap-2 shadow-md">
+      <i class="fas fa-save text-base" id="a1-1-btn-icon"></i>
+      <span id="a1-1-btn-text">Confirmar Decisión</span>
+    </button>
+  </div>
+
+</div>

@@ -1,0 +1,998 @@
+<script id="backend-simulador">
+/**
+ * =====================================================================
+ * SIMULADOR DE PRUEBAS LOCALES (No afecta el entorno de Apps Script)
+ * Permite validar la UI y navegación en navegadores sin conexión a GAS.
+ * =====================================================================
+ */
+function mock_obtenerUsuarioGoogle() {
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      resolve({
+        nombre: "Roberto Carlos González",
+        correo: "roberto.gonzalez@bancointegral.com.sv",
+        foto: "https://lh3.googleusercontent.com/aida-public/AB6AXuA2l_t_Cc-AFfOw8mXPuf0V4bPzNco1f3t0vwllZ7tNo_Dk-f4Xsj8sM039HFDBBCnt05wcbqbAeBjLOoMoOKjb-g-o1DVhhEL-iGegF4vzEDxadGGX_WvTwfCIbPrId4pbqnSUZec7LJyyxRwAiRUSoHlCH9phkJawp1IBPCe7y1jKYXDZpJ3gEcMKgapL9tnhd37vEhiAneKpSi7FzD8SrbbuKXgrOkzg7oDVQFrEzQXdrB6-wYGg1w"
+      });
+    }, 600);
+  });
+}
+
+function mock_validarDimUsuarios(correo) {
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      var selectSim = document.getElementById('simulador-acceso');
+      var escenario = selectSim ? selectSim.value : 'ACCESO_SI_ADMIN';
+
+      if (escenario.indexOf('ACCESO_SI') === 0) {
+        var rol = "ADMINISTRADOR";
+        if (escenario === 'ACCESO_SI_SOLICITANTE') rol = "SOLICITANTE";
+        if (escenario === 'ACCESO_SI_AUTORIZADOR') rol = "AUTORIZADOR";
+        if (escenario === 'ACCESO_SI_EDITOR_COMPRAS' || escenario === 'ACCESO_SI_EDITOR') rol = "EDITOR-COMPRAS";
+        if (escenario === 'ACCESO_SI_EDITOR_TESORERIA') rol = "EDITOR-TESORERIA";
+
+        resolve({
+          status: 'EXISTE',
+          accesoViaticos: 'SI',
+          datosFila: {
+            NombreUsuario: "Roberto Carlos González",
+            CorreoUsuario: correo || "roberto.gonzalez@bancointegral.com.sv",
+            NombreGoogle: "Roberto Carlos González",
+            CorreoGoogle: correo || "roberto.gonzalez@bancointegral.com.sv",
+            FotoGoogle: "https://lh3.googleusercontent.com/aida-public/AB6AXuA2l_t_Cc-AFfOw8mXPuf0V4bPzNco1f3t0vwllZ7tNo_Dk-f4Xsj8sM039HFDBBCnt05wcbqbAeBjLOoMoOKjb-g-o1DVhhEL-iGegF4vzEDxadGGX_WvTwfCIbPrId4pbqnSUZec7LJyyxRwAiRUSoHlCH9phkJawp1IBPCe7y1jKYXDZpJ3gEcMKgapL9tnhd37vEhiAneKpSi7FzD8SrbbuKXgrOkzg7oDVQFrEzQXdrB6-wYGg1w",
+            Plaza: "Líder de Transformación Digital",
+            NombreGerencia: "GERENCIA DE TECNOLOGÍA Y OPERACIONES",
+            NombreArea: "INNOVACIÓN Y DESARROLLO",
+            NombreRegion: "CENTRAL",
+            CentroCosto: "406-COMPRAS Y PROVISIONES",
+            NombreBanco: "Banco Integral",
+            TipoCuenta: "Ahorro",
+            NumeroCuenta: "4500982314",
+            EsMovil: "Si",
+            RolUsuario_Viaticos: rol
+          }
+        });
+      } else if (escenario === 'ACCESO_NO') {
+        resolve({
+          status: 'EXISTE',
+          accesoViaticos: 'NO'
+        });
+      } else {
+        resolve({
+          status: 'NO_EXISTE',
+          accesoViaticos: null
+        });
+      }
+    }, 700);
+  });
+}
+</script>
+
+<script>
+/**
+ * =====================================================================
+ * CONTROLADOR PRINCIPAL SPA (JS_Logic.html)
+ * Maneja la sesión del usuario, validación contra Google Sheets,
+ * navegación por roles y comportamiento responsivo del sidebar.
+ * =====================================================================
+ */
+window.APP_STATE = {
+  usuarioActivo: null
+};
+
+// Inicialización al cargar el DOM
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(cargarDatosUsuarioEnPantalla)
+      .withFailureHandler(function(err) {
+        mostrarError("Error cargando perfil de Google Workspace: " + err);
+      })
+      .obtenerUsuarioGoogle();
+  } else {
+    var boxSim = document.getElementById('caja-simulador');
+    if (boxSim) boxSim.classList.remove('hidden');
+    mock_obtenerUsuarioGoogle().then(cargarDatosUsuarioEnPantalla);
+  }
+});
+
+/**
+ * Pinta los datos de la cuenta activa en la vista de Login y en el Header.
+ */
+function cargarDatosUsuarioEnPantalla(userData) {
+  if (!userData) return;
+
+  var userImg = document.getElementById("user-profile-img");
+  var navImg = document.getElementById("nav-profile-img");
+  var topImg = document.getElementById("top-profile-img");
+  var userName = document.getElementById("user-profile-name");
+  var userEmail = document.getElementById("user-profile-email");
+  var cargaFoto = document.getElementById("carga-foto");
+  var cargaTexto = document.getElementById("carga-texto");
+  var btn = document.getElementById("btn-ingresar");
+  var btnTexto = document.getElementById("btn-texto");
+  var btnIcono = document.getElementById("btn-icono");
+
+  if (userImg) { userImg.src = userData.foto; userImg.classList.remove("hidden"); }
+  if (navImg) { navImg.src = userData.foto; }
+  if (topImg) { topImg.src = userData.foto; }
+
+  if (userName) { userName.textContent = userData.nombre; userName.classList.remove("hidden"); }
+  if (userEmail) { userEmail.textContent = userData.correo; userEmail.classList.remove("hidden"); }
+
+  if (cargaFoto) cargaFoto.classList.add("hidden");
+  if (cargaTexto) cargaTexto.classList.add("hidden");
+
+  if (btn) btn.disabled = false;
+  if (btnTexto) btnTexto.textContent = "Ingresar al Portal de Viáticos";
+  if (btnIcono) btnIcono.classList.remove("hidden");
+}
+
+/**
+ * Inicia el proceso de validación de credenciales y permisos en Google Sheets.
+ */
+function procesarLogin() {
+  var btnTexto = document.getElementById('btn-texto');
+  var btnIcono = document.getElementById('btn-icono');
+  var btnCargando = document.getElementById('btn-cargando');
+  var btnIngresar = document.getElementById('btn-ingresar');
+  var correoUsuario = document.getElementById('user-profile-email')?.textContent || "";
+
+  if (document.getElementById('caja-error')) {
+    document.getElementById('caja-error').classList.add('hidden');
+  }
+
+  if (btnTexto) btnTexto.textContent = "Validando permisos en DB...";
+  if (btnIcono) btnIcono.classList.add('hidden');
+  if (btnCargando) btnCargando.classList.remove('hidden');
+  if (btnIngresar) btnIngresar.disabled = true;
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(respuesta) {
+        manejarRespuestaLogin(respuesta, correoUsuario);
+      })
+      .withFailureHandler(function(error) {
+        mostrarError("Error de Conexión con el Servidor: " + (error.message || error.toString()));
+        restaurarBotonLogin();
+      })
+      .validarDimUsuarios(correoUsuario);
+  } else {
+    mock_validarDimUsuarios(correoUsuario).then(function(respuesta) {
+      manejarRespuestaLogin(respuesta, correoUsuario);
+    });
+  }
+}
+
+/**
+ * Evalúa la respuesta de autorización del usuario.
+ */
+function manejarRespuestaLogin(respuesta, correoUsuario) {
+  if (respuesta.status === 'EXISTE') {
+    if (respuesta.accesoViaticos === 'SI') {
+      if (respuesta.datosFila) {
+        window.APP_STATE.usuarioActivo = respuesta.datosFila;
+        sessionStorage.setItem('viaticos_user_data', JSON.stringify(respuesta.datosFila));
+        configurarMenusPorRol(window.APP_STATE.usuarioActivo.RolUsuario_Viaticos);
+      }
+      cambiarPantalla('view-home', 'view-login');
+      
+      // Procesar deep link si venía pendiente desde URL
+      if (window._pendingDeepLink && window._pendingDeepLink.view) {
+        var pView = window._pendingDeepLink.view;
+        var pId = window._pendingDeepLink.id;
+        window._pendingDeepLink = null;
+        ejecutarNavegacionDeepLink(pView, pId);
+      } else {
+        navegarSubmenu('view-inicio');
+      }
+    } else {
+      mostrarError("Su perfil no tiene permisos autorizados para ingresar al Portal de Viáticos.");
+    }
+  } else if (respuesta.status === 'ERROR') {
+    mostrarError("Error en Base de Datos: " + respuesta.mensaje);
+  } else {
+    mostrarError("El usuario (" + correoUsuario + ") no se encuentra registrado en el sistema de viáticos.");
+  }
+  restaurarBotonLogin();
+}
+
+/**
+ * Configura la visibilidad del menú lateral según la descripción holística de roles (Fuente de Verdad).
+ */
+function configurarMenusPorRol(rolUsuario) {
+  var menuSolicitantes = document.getElementById('menu-solicitantes');
+  var menuOperaciones = document.getElementById('menu-operaciones') || document.getElementById('menu-editores');
+  var menuAutorizadores = document.getElementById('menu-autorizadores');
+  var menuSolicitudesCurso = document.getElementById('menu-solicitudes-curso');
+  var menuHistorico = document.getElementById('menu-historico');
+
+  var linkProvision = document.getElementById('nav-link-provision-pagos');
+  var linkProcesamiento = document.getElementById('nav-link-procesamiento-pagos');
+  var linkCierreCompras = document.getElementById('nav-link-cierre-compras');
+
+  var liProvision = linkProvision ? linkProvision.closest('li') : null;
+  var liProcesamiento = linkProcesamiento ? linkProcesamiento.closest('li') : null;
+  var liCierreCompras = linkCierreCompras ? linkCierreCompras.closest('li') : null;
+
+  var rol = rolUsuario ? rolUsuario.toString().toUpperCase().trim() : 'SOLICITANTE';
+
+  // Por defecto, módulos transversales visibles para todos los roles autorizados
+  if (menuSolicitantes) menuSolicitantes.style.display = '';
+  if (menuOperaciones) menuOperaciones.style.display = 'none';
+  if (menuAutorizadores) menuAutorizadores.style.display = 'none';
+  if (menuSolicitudesCurso) menuSolicitudesCurso.style.display = '';
+  if (menuHistorico) menuHistorico.style.display = '';
+
+  // Resetear visibilidad de subpestañas de Operaciones
+  if (liProvision) liProvision.style.display = '';
+  if (liProcesamiento) liProcesamiento.style.display = '';
+  if (liCierreCompras) liCierreCompras.style.display = '';
+
+  if (rol === 'SOLICITANTE') {
+    // SOLICITANTE: Solicitantes, Solicitudes en curso, Histórico
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+    if (menuOperaciones) menuOperaciones.style.display = 'none';
+    if (menuAutorizadores) menuAutorizadores.style.display = 'none';
+  } else if (rol === 'EDITOR-COMPRAS' || rol === 'COMPRAS') {
+    // EDITOR-COMPRAS: Solicitantes, Operaciones (Provisión de pagos, Cierre de solicitudes), Solicitudes en curso, Histórico
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+    if (menuOperaciones) menuOperaciones.style.display = '';
+    if (liProvision) liProvision.style.display = '';
+    if (liProcesamiento) liProcesamiento.style.display = 'none';
+    if (liCierreCompras) liCierreCompras.style.display = '';
+    if (menuAutorizadores) menuAutorizadores.style.display = 'none';
+  } else if (rol === 'EDITOR-TESORERIA' || rol === 'TESORERIA') {
+    // EDITOR-TESORERIA: Solicitantes, Operaciones (Procesamiento de pagos), Solicitudes en curso, Histórico
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+    if (menuOperaciones) menuOperaciones.style.display = '';
+    if (liProvision) liProvision.style.display = 'none';
+    if (liProcesamiento) liProcesamiento.style.display = '';
+    if (liCierreCompras) liCierreCompras.style.display = 'none';
+    if (menuAutorizadores) menuAutorizadores.style.display = 'none';
+  } else if (rol === 'EDITOR' || rol === 'OPERACIONES') {
+    // EDITOR GENERAL: Solicitantes, Operaciones (todas), Solicitudes en curso, Histórico
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+    if (menuOperaciones) menuOperaciones.style.display = '';
+    if (liProvision) liProvision.style.display = '';
+    if (liProcesamiento) liProcesamiento.style.display = '';
+    if (liCierreCompras) liCierreCompras.style.display = '';
+    if (menuAutorizadores) menuAutorizadores.style.display = 'none';
+  } else if (rol === 'AUTORIZADOR') {
+    // AUTORIZADOR: Solicitantes, Autorizadores, Solicitudes en curso, Histórico
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+    if (menuOperaciones) menuOperaciones.style.display = 'none';
+    if (menuAutorizadores) menuAutorizadores.style.display = '';
+  } else if (rol === 'ADMINISTRADOR' || rol === 'ADMIN') {
+    // ADMINISTRADOR: Todas las pestañas y submódulos disponibles
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+    if (menuOperaciones) menuOperaciones.style.display = '';
+    if (liProvision) liProvision.style.display = '';
+    if (liProcesamiento) liProcesamiento.style.display = '';
+    if (liCierreCompras) liCierreCompras.style.display = '';
+    if (menuAutorizadores) menuAutorizadores.style.display = '';
+  } else {
+    if (menuSolicitantes) menuSolicitantes.style.display = '';
+  }
+
+  // Actualizar selector de rol en vivo si existe
+  var liveRoleSelect = document.getElementById('top-bar-role-selector');
+  if (liveRoleSelect) liveRoleSelect.value = rol;
+
+  var badgeCargo = document.getElementById('user-profile-cargo');
+  if (badgeCargo && window.APP_STATE && window.APP_STATE.usuarioActivo) {
+    badgeCargo.textContent = (window.APP_STATE.usuarioActivo.Plaza || 'Colaborador') + ' (' + rol + ')';
+  }
+}
+
+/**
+ * Permite cambiar el rol activo dinámicamente en tiempo de ejecución (útil para pruebas y QA).
+ */
+function cambiarRolEnVivo(nuevoRol) {
+  if (!nuevoRol) return;
+  if (!window.APP_STATE.usuarioActivo) {
+    window.APP_STATE.usuarioActivo = {
+      NombreUsuario: "Roberto Carlos González",
+      CorreoUsuario: "roberto.gonzalez@bancointegral.com.sv",
+      NombreGoogle: "Roberto Carlos González",
+      CorreoGoogle: "roberto.gonzalez@bancointegral.com.sv",
+      Plaza: "Líder de Transformación Digital",
+      RolUsuario_Viaticos: nuevoRol
+    };
+  }
+  window.APP_STATE.usuarioActivo.RolUsuario_Viaticos = nuevoRol;
+  configurarMenusPorRol(nuevoRol);
+}
+
+/**
+ * Cambia la vista activa de nivel superior (Login vs Home).
+ */
+function cambiarPantalla(pantallaMostrar, pantallaOcultar) {
+  var viewMostrar = document.getElementById(pantallaMostrar);
+  var viewOcultar = pantallaOcultar ? document.getElementById(pantallaOcultar) : null;
+
+  if (viewOcultar) {
+    viewOcultar.classList.remove('vista-activa');
+    viewOcultar.classList.add('vista-oculta');
+  }
+
+  if (viewMostrar) {
+    viewMostrar.classList.remove('vista-oculta');
+    viewMostrar.classList.add('vista-activa');
+  }
+}
+
+/**
+ * Navega a una subsección dentro del Home (Inicio, Nueva Solicitud, Solicitudes Rechazadas, Provisión de Pagos, etc.).
+ */
+function navegarSubmenu(idVistaMostrar) {
+  var subVistas = [
+    'view-inicio', 
+    'view-nueva-solicitud', 
+    'view-solicitudes-rechazadas', 
+    'view-s2-1-justificacion',
+    'view-e1-provision',
+    'view-e1-1-detalle',
+    'view-e2-procesamiento',
+    'view-e2-1-detalle',
+    'view-s3-cierre',
+    'view-s3-1-cierre',
+    'view-e3-cierre',
+    'view-e3-1-detalle',
+    'view-a1-autorizaciones',
+    'view-a1-1-detalle',
+    'view-a2-catalogo',
+    'view-en-curso',
+    'view-en-curso-detalle',
+    'view-historico',
+    'view-historico-detalle'
+  ];
+  subVistas.forEach(function(id) {
+    var v = document.getElementById(id);
+    if (v) {
+      v.classList.remove('vista-activa');
+      v.classList.add('vista-oculta');
+    }
+  });
+
+  var vMostrar = document.getElementById(idVistaMostrar);
+  if (vMostrar) {
+    vMostrar.classList.remove('vista-oculta');
+    vMostrar.classList.add('vista-activa');
+  }
+
+  // Resetear el scroll del contenedor principal al tope
+  var mainCont = document.getElementById('main-content') || document.querySelector('main');
+  if (mainCont) {
+    mainCont.scrollTop = 0;
+    if (typeof mainCont.scrollTo === 'function') {
+      mainCont.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }
+
+  // Actualizar Título en TopAppBar
+  var topTitle = document.getElementById('top-app-bar-title');
+  if (topTitle) {
+    if (idVistaMostrar === 'view-nueva-solicitud') {
+      topTitle.textContent = 'Viáticos - Nueva Solicitud';
+    } else if (idVistaMostrar === 'view-solicitudes-rechazadas') {
+      topTitle.textContent = 'Viáticos - Solicitudes Rechazadas';
+    } else if (idVistaMostrar === 'view-s2-1-justificacion') {
+      topTitle.textContent = 'Viáticos - Justificación Fuera de Presupuesto';
+    } else if (idVistaMostrar === 'view-e1-provision') {
+      topTitle.textContent = 'Viáticos - Provisión de Pagos';
+    } else if (idVistaMostrar === 'view-e1-1-detalle') {
+      topTitle.textContent = 'Viáticos - Detalle de Provisión de Pago';
+    } else if (idVistaMostrar === 'view-e2-procesamiento') {
+      topTitle.textContent = 'Viáticos - Procesamiento de Pagos';
+    } else if (idVistaMostrar === 'view-e2-1-detalle') {
+      topTitle.textContent = 'Viáticos - Detalle de Procesamiento de Pago';
+    } else if (idVistaMostrar === 'view-s3-cierre') {
+      topTitle.textContent = 'Viáticos - Cierre de Solicitudes';
+    } else if (idVistaMostrar === 'view-s3-1-cierre') {
+      topTitle.textContent = 'Viáticos - Liquidación y Cierre de Solicitud';
+    } else if (idVistaMostrar === 'view-e3-cierre') {
+      topTitle.textContent = 'Viáticos - Cierre de Solicitudes (Compras)';
+    } else if (idVistaMostrar === 'view-e3-1-detalle') {
+      topTitle.textContent = 'Viáticos - Revisión y Cierre de Liquidación';
+    } else if (idVistaMostrar === 'view-a1-autorizaciones') {
+      topTitle.textContent = 'Viáticos - Autorización de Solicitudes';
+    } else if (idVistaMostrar === 'view-a1-1-detalle') {
+      topTitle.textContent = 'Viáticos - Detalle y Resolución de Autorización';
+    } else if (idVistaMostrar === 'view-a2-catalogo') {
+      topTitle.textContent = 'Viáticos - Niveles Autorizantes';
+    } else if (idVistaMostrar === 'view-en-curso' || idVistaMostrar === 'view-en-curso-detalle') {
+      topTitle.textContent = 'Viáticos - Solicitudes en curso';
+    } else if (idVistaMostrar === 'view-historico' || idVistaMostrar === 'view-historico-detalle') {
+      topTitle.textContent = 'Viáticos - Histórico';
+    } else {
+      topTitle.textContent = 'Viáticos - Home Page';
+    }
+  }
+
+  // Actualizar resaltado de enlaces en Sidebar
+  var linkInicio = document.getElementById('nav-link-inicio');
+  var linkNuevaSol = document.getElementById('nav-link-nueva-solicitud');
+  var linkRechazadas = document.getElementById('nav-link-solicitudes-rechazadas');
+  var linkCierreSol = document.getElementById('nav-link-cierre-solicitudes');
+  var linkProvision = document.getElementById('nav-link-provision-pagos');
+  var linkProcesamiento = document.getElementById('nav-link-procesamiento-pagos');
+  var linkCierreCompras = document.getElementById('nav-link-cierre-compras');
+  var linkEnCurso = document.getElementById('nav-link-solicitudes-curso');
+  var linkHistorico = document.getElementById('nav-link-historico');
+
+  if (linkInicio) linkInicio.className = 'flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150';
+  if (linkNuevaSol) linkNuevaSol.className = 'flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm';
+  if (linkRechazadas) linkRechazadas.className = 'flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm';
+  if (linkCierreSol) linkCierreSol.className = 'flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm';
+  if (linkProvision) linkProvision.className = 'flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm';
+  if (linkProcesamiento) linkProcesamiento.className = 'flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm';
+  if (linkCierreCompras) linkCierreCompras.className = 'flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm';
+  if (linkEnCurso) linkEnCurso.className = 'flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150';
+  if (linkHistorico) linkHistorico.className = 'flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150';
+
+  if (idVistaMostrar === 'view-inicio') {
+    if (linkInicio) linkInicio.className = 'flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary font-bold border-l-4 border-secondary-container active:scale-95 duration-150';
+  } else if (idVistaMostrar === 'view-nueva-solicitud') {
+    if (linkNuevaSol) linkNuevaSol.className = 'flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm';
+    if (typeof inicializarVistaNuevaSolicitud === 'function') {
+      inicializarVistaNuevaSolicitud();
+    }
+  } else if (idVistaMostrar === 'view-solicitudes-rechazadas') {
+    if (linkRechazadas) linkRechazadas.className = 'flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm';
+    if (typeof cargarSolicitudesRechazadas === 'function') {
+      cargarSolicitudesRechazadas();
+    }
+  } else if (idVistaMostrar === 'view-s3-cierre') {
+    if (linkCierreSol) linkCierreSol.className = 'flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm';
+    if (typeof cargarSolicitudesCierreS3 === 'function') {
+      cargarSolicitudesCierreS3();
+    }
+  } else if (idVistaMostrar === 'view-e1-provision') {
+    if (linkProvision) linkProvision.className = 'flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm';
+    if (typeof cargarSolicitudesProvisionE1 === 'function') {
+      cargarSolicitudesProvisionE1();
+    }
+  } else if (idVistaMostrar === 'view-e2-procesamiento') {
+    if (linkProcesamiento) linkProcesamiento.className = 'flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm';
+    if (typeof cargarSolicitudesProcesamientoE2 === 'function') {
+      cargarSolicitudesProcesamientoE2();
+    }
+  } else if (idVistaMostrar === 'view-e3-cierre') {
+    if (linkCierreCompras) linkCierreCompras.className = 'flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm';
+    if (typeof cargarSolicitudesCierreE3 === 'function') {
+      cargarSolicitudesCierreE3();
+    }
+  } else if (idVistaMostrar === 'view-a1-autorizaciones') {
+    if (typeof cargarSolicitudesAutorizacionA1 === 'function') {
+      cargarSolicitudesAutorizacionA1();
+    }
+  } else if (idVistaMostrar === 'view-en-curso') {
+    if (linkEnCurso) linkEnCurso.className = 'flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary font-bold border-l-4 border-secondary-container active:scale-95 duration-150';
+    if (typeof cargarSolicitudesEnCurso === 'function') {
+      cargarSolicitudesEnCurso();
+    }
+  } else if (idVistaMostrar === 'view-historico') {
+    if (linkHistorico) linkHistorico.className = 'flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary font-bold border-l-4 border-secondary-container active:scale-95 duration-150';
+    if (typeof cargarSolicitudesHistorico === 'function') {
+      cargarSolicitudesHistorico();
+    }
+  }
+}
+
+/**
+ * Muestra una sub-vista específica cambiando el título superior.
+ */
+function mostrarSubvista(idSubvista, titulo) {
+  navegarSubmenu(idSubvista);
+  var topTitle = document.getElementById('top-app-bar-title');
+  if (topTitle && titulo) {
+    topTitle.textContent = 'Viáticos - ' + titulo;
+  }
+}
+
+/**
+ * Alterna el estado colapsado / expandido del panel lateral.
+ */
+function toggleSidebar() {
+  var sidebar = document.getElementById('sidebar');
+  var mainContent = document.getElementById('main-content');
+  var toggleIcon = document.getElementById('toggle-icon');
+
+  if (!sidebar || !mainContent) return;
+
+  if (sidebar.classList.contains('sidebar-expanded')) {
+    sidebar.classList.remove('sidebar-expanded');
+    sidebar.classList.add('sidebar-collapsed');
+    mainContent.style.marginLeft = '80px';
+    mainContent.style.width = 'calc(100% - 80px)';
+    if (toggleIcon) toggleIcon.textContent = 'chevron_right';
+    
+    document.querySelectorAll('.submenu-open').forEach(function(el) {
+      el.classList.remove('submenu-open');
+    });
+  } else {
+    sidebar.classList.remove('sidebar-collapsed');
+    sidebar.classList.add('sidebar-expanded');
+    mainContent.style.marginLeft = '240px';
+    mainContent.style.width = 'calc(100% - 240px)';
+    if (toggleIcon) toggleIcon.textContent = 'chevron_left';
+  }
+}
+
+/**
+ * Abre o cierra un submenú desplegable en el Sidebar.
+ */
+function toggleSubmenu(id) {
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('sidebar-collapsed')) {
+    toggleSidebar();
+  }
+
+  var el = document.getElementById(id);
+  if (!el) return;
+
+  el.classList.toggle('submenu-open');
+  var icon = el.querySelector('.dropdown-icon');
+  if (icon) {
+    icon.style.transform = el.classList.contains('submenu-open') ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+}
+
+/**
+ * Restaura el estado visual del botón de Login.
+ */
+function restaurarBotonLogin() {
+  var btnTexto = document.getElementById('btn-texto');
+  var btnIcono = document.getElementById('btn-icono');
+  var btnCargando = document.getElementById('btn-cargando');
+  var btnIngresar = document.getElementById('btn-ingresar');
+
+  if (btnTexto) btnTexto.textContent = "Ingresar al Portal de Viáticos";
+  if (btnIcono) btnIcono.classList.remove('hidden');
+  if (btnCargando) btnCargando.classList.add('hidden');
+  if (btnIngresar) btnIngresar.disabled = false;
+}
+
+/**
+ * Muestra alertas de error en la caja dedicada.
+ */
+function mostrarError(mensaje) {
+  var cajaError = document.getElementById('caja-error');
+  if (!cajaError) return;
+  cajaError.textContent = mensaje;
+  cajaError.classList.remove('hidden');
+}
+
+/**
+ * Muestra notificación temporal informativa para módulos en preparación.
+ */
+function mostrarAvisoModulo(nombreModulo) {
+  alert("El módulo '" + nombreModulo + "' formará parte del siguiente entregable.");
+}
+
+/**
+ * Cierra la sesión activa y retorna a la pantalla de Login.
+ */
+function cerrarSesion() {
+  window.APP_STATE.usuarioActivo = null;
+  sessionStorage.removeItem('viaticos_user_data');
+  if (document.getElementById('caja-error')) {
+    document.getElementById('caja-error').classList.add('hidden');
+  }
+  cambiarPantalla('view-login', 'view-home');
+}
+
+/**
+ * Procesa parámetros de URL o Hash para Deep Linking (e.g. ?view=a1_1&id=SOL-XXXX desde notificaciones Gmail).
+ */
+function parsearParametrosURL() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+  var hashParams = new URLSearchParams(hash);
+
+  var view = urlParams.get('view') || hashParams.get('view');
+  var id = urlParams.get('id') || hashParams.get('id');
+
+  if (!view) return;
+
+  var mapVistas = {
+    'inicio': 'view-inicio',
+    'nueva': 'view-nueva-solicitud',
+    'nueva_solicitud': 'view-nueva-solicitud',
+    's1': 'view-nueva-solicitud',
+    's2': 'view-solicitudes-rechazadas',
+    'rechazadas': 'view-solicitudes-rechazadas',
+    's2_1': 'view-s2-1-justificacion',
+    'justificacion': 'view-s2-1-justificacion',
+    'e1': 'view-e1-provision',
+    'provision': 'view-e1-provision',
+    'e1_1': 'view-e1-1-detalle',
+    'e2': 'view-e2-procesamiento',
+    'procesamiento': 'view-e2-procesamiento',
+    'e2_1': 'view-e2-1-detalle',
+    's3': 'view-s3-cierre',
+    'cierre': 'view-s3-cierre',
+    's3_1': 'view-s3-1-cierre',
+    'e3': 'view-e3-cierre',
+    'cierre_compras': 'view-e3-cierre',
+    'e3_1': 'view-e3-1-detalle',
+    'a1': 'view-a1-autorizaciones',
+    'autorizaciones': 'view-a1-autorizaciones',
+    'a1_1': 'view-a1-1-detalle',
+    'a2': 'view-a2-catalogo',
+    'catalogo': 'view-a2-catalogo',
+    'en_curso': 'view-en-curso',
+    'historico': 'view-historico'
+  };
+
+  var targetView = mapVistas[view.toLowerCase()] || view;
+
+  if (window.APP_STATE && window.APP_STATE.usuarioActivo) {
+    ejecutarNavegacionDeepLink(targetView, id);
+  } else {
+    window._pendingDeepLink = { view: targetView, id: id };
+  }
+}
+
+function ejecutarNavegacionDeepLink(targetView, id) {
+  navegarSubmenu(targetView);
+  if (id) {
+    if (targetView === 'view-a1-1-detalle') {
+      if (typeof verDetalleAutorizacionA1_1 === 'function') {
+        verDetalleAutorizacionA1_1(id);
+      } else if (typeof cargarDetalleAutorizacionA1_1 === 'function') {
+        cargarDetalleAutorizacionA1_1(id);
+      }
+    } else if (targetView === 'view-s2-1-justificacion' && typeof cargarDetalleRechazoS2_1 === 'function') {
+      cargarDetalleRechazoS2_1(id);
+    } else if (targetView === 'view-e1-1-detalle' && typeof verDetalleProvisionE1_1 === 'function') {
+      verDetalleProvisionE1_1(id);
+    } else if (targetView === 'view-e2-1-detalle' && typeof verDetalleProcesamientoE2_1 === 'function') {
+      verDetalleProcesamientoE2_1(id);
+    } else if (targetView === 'view-s3-1-cierre' && typeof verDetalleCierreS3_1 === 'function') {
+      verDetalleCierreS3_1(id);
+    } else if (targetView === 'view-e3-1-detalle' && typeof verDetalleCierreE3_1 === 'function') {
+      verDetalleCierreE3_1(id);
+    } else if (targetView === 'view-en-curso' && typeof verExpedienteEnCurso === 'function') {
+      verExpedienteEnCurso(id);
+    } else if (targetView === 'view-historico' && typeof verExpedienteHistorico === 'function') {
+      verExpedienteHistorico(id);
+    }
+  }
+}
+
+// Ejecutar parser de URL al inicio
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', function() {
+    parsearParametrosURL();
+  });
+}
+
+/**
+ * =====================================================================
+ * UTILIDADES GLOBALES UI/UX Y NOTIFICACIONES CORPORATIVAS (FASE 0)
+ * Reemplaza de forma definitiva cualquier alert(), confirm() o prompt().
+ * =====================================================================
+ */
+
+/**
+ * Muestra un modal corporativo de retroalimentación centrado en pantalla.
+ * @param {string} titulo - Título principal del modal
+ * @param {string} mensaje - Mensaje descriptivo (soporta saltos de línea)
+ * @param {string} tipo - 'SUCCESS' | 'ERROR' | 'WARNING' | 'INFO'
+ * @param {function} [callback] - Función a ejecutar al pulsar "Entendido" o cerrar
+ */
+window.mostrarModalFeedback = function(titulo, mensaje, tipo, callback) {
+  var modal = document.getElementById('globalModalFeedback');
+  var icon = document.getElementById('globalModalFeedbackIcon');
+  var tit = document.getElementById('globalModalFeedbackTitulo');
+  var msg = document.getElementById('globalModalFeedbackMensaje');
+  var btn = document.getElementById('globalModalFeedbackBtnCerrar');
+
+  if (!modal) {
+    console.warn("Modal global no encontrado. Mostrando toast como fallback:", titulo, mensaje);
+    window.mostrarToast((titulo ? titulo + ": " : "") + mensaje, tipo === 'SUCCESS' ? 'SUCCESS' : 'ERROR', 6000);
+    if (typeof callback === 'function') callback();
+    return;
+  }
+
+  tipo = (tipo || 'INFO').toUpperCase();
+  tit.textContent = titulo || "Notificación";
+  msg.textContent = mensaje || "";
+
+  // Reset de estilos del contenedor de icono
+  icon.className = "w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-sm";
+
+  if (tipo === 'SUCCESS') {
+    icon.classList.add('bg-green-100', 'text-green-600');
+    icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+    btn.className = "w-full btn-action py-2.5 rounded-lg font-bold text-sm shadow-md bg-green-600 hover:bg-green-700 text-white";
+  } else if (tipo === 'ERROR') {
+    icon.classList.add('bg-red-100', 'text-red-600');
+    icon.innerHTML = '<i class="fas fa-times-circle"></i>';
+    btn.className = "w-full btn-action py-2.5 rounded-lg font-bold text-sm shadow-md bg-red-600 hover:bg-red-700 text-white";
+  } else if (tipo === 'WARNING') {
+    icon.classList.add('bg-amber-100', 'text-amber-600');
+    icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+    btn.className = "w-full btn-action btn-solid-orange py-2.5 rounded-lg font-bold text-sm shadow-md";
+  } else {
+    icon.classList.add('bg-blue-100', 'text-navy-primary');
+    icon.innerHTML = '<i class="fas fa-info-circle"></i>';
+    btn.className = "w-full btn-action btn-outline-navy py-2.5 rounded-lg font-bold text-sm shadow-md";
+  }
+
+  // Manejador del botón cerrar (limpia listeners previos)
+  var nuevoBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(nuevoBtn, btn);
+
+  nuevoBtn.addEventListener('click', function() {
+    modal.classList.add('hidden');
+    if (typeof callback === 'function') {
+      callback();
+    }
+  });
+
+  modal.classList.remove('hidden');
+};
+
+/**
+ * Muestra un modal corporativo interactivo de confirmación (reemplaza confirm()).
+ * @param {Object} opts - { titulo, subtitulo, mensaje, textoConfirmar, textoCancelar, tipo, onConfirm, onCancel }
+ */
+window.mostrarModalConfirmacion = function(opts) {
+  opts = opts || {};
+  var modal = document.getElementById('globalModalConfirmacion');
+  var tit = document.getElementById('globalModalConfirmTitulo');
+  var subtit = document.getElementById('globalModalConfirmSubtitulo');
+  var msg = document.getElementById('globalModalConfirmMensaje');
+  var btnAceptar = document.getElementById('globalModalConfirmBtnAceptar');
+  var btnCancelar = document.getElementById('globalModalConfirmBtnCancelar');
+  var iconWrapper = document.getElementById('globalModalConfirmIconWrapper');
+  var icon = document.getElementById('globalModalConfirmIcon');
+
+  if (!modal) {
+    if (confirm(opts.mensaje || "¿Desea continuar?")) {
+      if (typeof opts.onConfirm === 'function') opts.onConfirm();
+    } else {
+      if (typeof opts.onCancel === 'function') opts.onCancel();
+    }
+    return;
+  }
+
+  tit.textContent = opts.titulo || "Confirmar Acción";
+  subtit.textContent = opts.subtitulo || "Por favor verifique antes de continuar";
+  msg.textContent = opts.mensaje || "¿Está seguro de realizar esta acción?";
+  btnAceptar.textContent = opts.textoConfirmar || "Confirmar";
+  btnCancelar.textContent = opts.textoCancelar || "Cancelar";
+
+  var tipo = (opts.tipo || 'WARNING').toUpperCase();
+  if (tipo === 'DANGER' || tipo === 'ERROR') {
+    iconWrapper.className = "w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 shadow-sm";
+    icon.className = "fas fa-exclamation-triangle text-2xl text-red-600";
+    btnAceptar.className = "btn-action px-5 py-2.5 rounded-lg font-bold text-sm shadow-md bg-red-600 hover:bg-red-700 text-white";
+  } else {
+    iconWrapper.className = "w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center flex-shrink-0 shadow-sm";
+    icon.className = "fas fa-question-circle text-2xl text-secondary";
+    btnAceptar.className = "btn-action btn-solid-orange px-5 py-2.5 rounded-lg font-bold text-sm shadow-md";
+  }
+
+  var nuevoAceptar = btnAceptar.cloneNode(true);
+  btnAceptar.parentNode.replaceChild(nuevoAceptar, btnAceptar);
+  var nuevoCancelar = btnCancelar.cloneNode(true);
+  btnCancelar.parentNode.replaceChild(nuevoCancelar, btnCancelar);
+
+  nuevoAceptar.addEventListener('click', function() {
+    modal.classList.add('hidden');
+    if (typeof opts.onConfirm === 'function') opts.onConfirm();
+  });
+
+  nuevoCancelar.addEventListener('click', function() {
+    modal.classList.add('hidden');
+    if (typeof opts.onCancel === 'function') opts.onCancel();
+  });
+
+  modal.classList.remove('hidden');
+};
+
+/**
+ * Muestra una notificación Toast no bloqueante en la esquina superior derecha.
+ * @param {string} mensaje - Texto del aviso
+ * @param {string} [tipo='INFO'] - 'SUCCESS' | 'ERROR' | 'WARNING' | 'INFO'
+ * @param {number} [duracionMs=4000] - Tiempo en ms antes de desvanecerse
+ */
+window.mostrarToast = function(mensaje, tipo, duracionMs) {
+  var container = document.getElementById('globalToastContainer');
+  if (!container) return;
+
+  duracionMs = duracionMs || 4000;
+  tipo = (tipo || 'INFO').toUpperCase();
+
+  var toast = document.createElement('div');
+  toast.className = "pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium animate-fade-in transition-all duration-300 transform translate-y-0 opacity-100";
+
+  var iconHtml = '<i class="fas fa-info-circle text-lg text-primary"></i>';
+  var bgBorder = "bg-white border-outline-variant text-on-surface";
+
+  if (tipo === 'SUCCESS') {
+    iconHtml = '<i class="fas fa-check-circle text-lg text-green-600"></i>';
+    bgBorder = "bg-green-50 border-green-200 text-green-900";
+  } else if (tipo === 'ERROR') {
+    iconHtml = '<i class="fas fa-exclamation-circle text-lg text-red-600"></i>';
+    bgBorder = "bg-red-50 border-red-200 text-red-900";
+  } else if (tipo === 'WARNING') {
+    iconHtml = '<i class="fas fa-exclamation-triangle text-lg text-amber-600"></i>';
+    bgBorder = "bg-amber-50 border-amber-200 text-amber-900";
+  }
+
+  toast.className += " " + bgBorder;
+  toast.innerHTML = iconHtml + '<div class="flex-1">' + (mensaje || '') + '</div><button type="button" class="text-on-surface-variant hover:text-on-surface text-xs p-1"><i class="fas fa-times"></i></button>';
+
+  var closeBtn = toast.querySelector('button');
+  closeBtn.addEventListener('click', function() {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-10px)';
+    setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+  });
+
+  container.appendChild(toast);
+
+  setTimeout(function() {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }
+  }, duracionMs);
+};
+
+/**
+ * Formatea cualquier fecha a formato estricto DD/MM/YYYY.
+ * @param {string|Date|number} valorFecha
+ * @returns {string} Fecha en formato DD/MM/YYYY o "-" si es nula/inválida.
+ */
+window.formatearFechaDDMMAAAA = function(valorFecha) {
+  if (!valorFecha) return "-";
+  try {
+    if (typeof valorFecha === 'string') {
+      var partes = valorFecha.split('T')[0].split(' ')[0];
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(partes)) {
+        return partes; // Ya viene en DD/MM/YYYY
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(partes)) {
+        var p = partes.split('-');
+        return p[2] + '/' + p[1] + '/' + p[0];
+      }
+    }
+    var d = new Date(valorFecha);
+    if (isNaN(d.getTime())) {
+      return String(valorFecha);
+    }
+    var dia = ("0" + d.getDate()).slice(-2);
+    var mes = ("0" + (d.getMonth() + 1)).slice(-2);
+    var anio = d.getFullYear();
+    return dia + "/" + mes + "/" + anio;
+  } catch (e) {
+    return String(valorFecha || "-");
+  }
+};
+
+/**
+ * Formatea fecha y hora a formato estricto DD/MM/YYYY HH:mm.
+ */
+window.formatearFechaHora = function(valorFecha) {
+  if (!valorFecha) return "-";
+  try {
+    var d = new Date(valorFecha);
+    if (isNaN(d.getTime())) return window.formatearFechaDDMMAAAA(valorFecha);
+    var dia = ("0" + d.getDate()).slice(-2);
+    var mes = ("0" + (d.getMonth() + 1)).slice(-2);
+    var anio = d.getFullYear();
+    var hora = ("0" + d.getHours()).slice(-2);
+    var min = ("0" + d.getMinutes()).slice(-2);
+    return dia + "/" + mes + "/" + anio + " " + hora + ":" + min;
+  } catch (e) {
+    return window.formatearFechaDDMMAAAA(valorFecha);
+  }
+};
+
+/**
+ * Formatea montos numéricos a formato estándar $XX.XX USD.
+ */
+window.formatearMonedaUSD = function(monto) {
+  if (monto === null || monto === undefined || monto === "") return "$0.00 USD";
+  var num = parseFloat(monto);
+  if (isNaN(num)) return "$0.00 USD";
+  return "$" + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USD";
+};
+
+/**
+ * Sanitiza texto para evitar inyecciones HTML en renderizado de tablas.
+ */
+window.limpiarTexto = function(texto) {
+  if (texto === null || texto === undefined) return "";
+  var div = document.createElement('div');
+  div.textContent = String(texto);
+  return div.innerHTML;
+};
+
+/**
+ * Procesa una lista de objetos File a un array de objetos base64 listos para enviar a GAS.
+ */
+window.procesarArchivosParaEnvio = function(fileArray) {
+  return Promise.all(
+    fileArray.map(function(file) {
+      return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var base64Data = e.target.result.split(',')[1];
+          resolve({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            base64: base64Data
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    })
+  );
+};
+
+/**
+ * Renderiza de forma estándar una galería de archivos adjuntos (links a Drive o previews).
+ */
+window.renderizarGaleriaAdjuntos = function(contenedorElement, archivosData, opciones) {
+  if (!contenedorElement) return;
+  contenedorElement.innerHTML = "";
+  opciones = opciones || {};
+
+  var lista = [];
+  if (typeof archivosData === 'string') {
+    try { lista = JSON.parse(archivosData); } catch (e) { lista = []; }
+  } else if (Array.isArray(archivosData)) {
+    lista = archivosData;
+  }
+
+  if (!lista || lista.length === 0) {
+    contenedorElement.innerHTML = '<p class="text-xs text-on-surface-variant italic">No se han adjuntado archivos.</p>';
+    return;
+  }
+
+  var grid = document.createElement('div');
+  grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 w-full";
+
+  var fnLimpiar = window.limpiarTexto || function(t) { return t || ''; };
+
+  lista.forEach(function(item, idx) {
+    if (!item) return;
+    var card = document.createElement('div');
+    card.className = "flex items-center justify-between p-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm hover:border-primary transition-colors text-xs";
+    
+    var nombre = item.NombreArchivo || item.nombre || item.name || item.Nombre || ("Archivo " + (idx + 1));
+    var url = item.LinkArchivo || item.linkArchivo || item.url || item.Url || item.link || "#";
+    var iconClass = "fa-file-pdf text-red-500";
+    var nombreLower = (nombre || '').toLowerCase();
+    if (nombreLower.endsWith('.jpg') || nombreLower.endsWith('.png') || nombreLower.endsWith('.jpeg') || nombreLower.endsWith('.webp')) {
+      iconClass = "fa-file-image text-blue-500";
+    } else if (nombreLower.endsWith('.doc') || nombreLower.endsWith('.docx')) {
+      iconClass = "fa-file-word text-blue-700";
+    } else if (nombreLower.endsWith('.xls') || nombreLower.endsWith('.xlsx')) {
+      iconClass = "fa-file-excel text-green-600";
+    }
+
+    card.innerHTML = 
+      '<div class="flex items-center gap-2 overflow-hidden mr-2">' +
+        '<i class="fas ' + iconClass + ' text-base flex-shrink-0"></i>' +
+        '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline truncate" title="' + fnLimpiar(nombre) + '">' +
+          fnLimpiar(nombre) +
+        '</a>' +
+      '</div>' +
+      (url && url !== '#' ? '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="text-on-surface-variant hover:text-primary flex-shrink-0 p-1" title="Abrir archivo"><i class="fas fa-external-link-alt"></i></a>' : '');
+
+    grid.appendChild(card);
+  });
+
+  contenedorElement.appendChild(grid);
+};
+</script>

@@ -1,0 +1,1032 @@
+<script>
+/**
+ * =====================================================================
+ * JS_S2.html - CONTROLADOR DE SOLICITUDES RECHAZADAS Y MULTI-RESOLUCIÓN (S2 & S2.1)
+ * =====================================================================
+ */
+
+let s2_solicitudes = [];
+let s2_filtradas = [];
+let s2_page = 1;
+let s2_page_size = 10;
+let s2_sort_desc = true;
+let s2_rango_fechas = { start: '', end: '' };
+let s2_solicitud_actual = null;
+let s2_archivos_nuevos = [];
+let s2_cierre_archivos = [];
+
+/**
+ * Inicializa y carga la bandeja de solicitudes rechazadas del usuario autenticado.
+ */
+function cargarSolicitudesRechazadas() {
+  const tbody = document.getElementById('tabla-s2-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="py-10 text-center align-middle bg-surface">
+        <div class="flex items-center justify-center gap-2 text-primary font-medium text-sm">
+          <i class="fas fa-spinner fa-spin text-xl text-secondary-container"></i>
+          <span>Cargando solicitudes rechazadas...</span>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const correoUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.CorreoGoogle) ? window.DATOS_USUARIO.CorreoGoogle : '';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          s2_solicitudes = resp.solicitudes || [];
+          filtrarTablaS2();
+        } else {
+          mostrarErrorTablaS2((resp && resp.mensaje) || 'No se pudieron cargar las solicitudes.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarErrorTablaS2('Error de comunicación: ' + err.toString());
+      })
+      .obtenerSolicitudesRechazadas(correoUsuario);
+  } else {
+    // Fallback para previsualización local / mock data con los 5 estados
+    s2_solicitudes = [
+      {
+        idSolicitud: 'SOL-2026-0001',
+        fechaSolicitud: '12/08/2026 09:30',
+        fechaModificacion: '12/08/2026 10:15',
+        solicitante: 'Roberto Morales',
+        correoSolicitante: 'roberto.morales@bancointegral.com.sv',
+        tipoViatico: 'Alimentación por visitas agencias',
+        monto: 145.50,
+        montoFormatted: '$ 145.50',
+        estadoSolicitud: 'RECHAZO-PRESUPUESTO',
+        actorActual: 'Solicitante',
+        clasificacionSolicitud: 'Anticipo',
+        destinatario: 'Roberto Morales'
+      },
+      {
+        idSolicitud: 'SOL-2026-0002',
+        fechaSolicitud: '11/08/2026 08:30',
+        fechaModificacion: '12/08/2026 11:00',
+        solicitante: 'Roberto Morales',
+        correoSolicitante: 'roberto.morales@bancointegral.com.sv',
+        tipoViatico: 'Hospedaje',
+        monto: 220.00,
+        montoFormatted: '$ 220.00',
+        estadoSolicitud: 'RECHAZO-PROVISION 1',
+        actorActual: 'Solicitante',
+        clasificacionSolicitud: 'Anticipo',
+        destinatario: 'Roberto Morales'
+      },
+      {
+        idSolicitud: 'SOL-2026-0003',
+        fechaSolicitud: '10/08/2026 14:00',
+        fechaModificacion: '11/08/2026 08:30',
+        solicitante: 'Roberto Morales',
+        correoSolicitante: 'roberto.morales@bancointegral.com.sv',
+        tipoViatico: 'Transporte',
+        monto: 85.00,
+        montoFormatted: '$ 85.00',
+        estadoSolicitud: 'RECHAZO-PROVISION 2',
+        actorActual: 'Solicitante',
+        clasificacionSolicitud: 'Anticipo',
+        destinatario: 'Roberto Morales'
+      },
+      {
+        idSolicitud: 'SOL-2026-0004',
+        fechaSolicitud: '09/08/2026 16:20',
+        fechaModificacion: '10/08/2026 15:45',
+        solicitante: 'Roberto Morales',
+        correoSolicitante: 'roberto.morales@bancointegral.com.sv',
+        tipoViatico: 'Viático de Capacitación',
+        monto: 130.00,
+        montoFormatted: '$ 130.00',
+        estadoSolicitud: 'RECHAZO-PAGO 1',
+        actorActual: 'Solicitante',
+        clasificacionSolicitud: 'Anticipo',
+        destinatario: 'Roberto Morales'
+      },
+      {
+        idSolicitud: 'SOL-2026-0005',
+        fechaSolicitud: '05/08/2026 10:00',
+        fechaModificacion: '08/08/2026 17:00',
+        solicitante: 'Roberto Morales',
+        correoSolicitante: 'roberto.morales@bancointegral.com.sv',
+        tipoViatico: 'Alimentación por visitas agencias',
+        monto: 150.00,
+        montoFormatted: '$ 150.00',
+        estadoSolicitud: 'RECHAZO-CIERRE',
+        actorActual: 'Solicitante',
+        clasificacionSolicitud: 'Anticipo',
+        destinatario: 'Roberto Morales'
+      }
+    ];
+    filtrarTablaS2();
+  }
+}
+
+/**
+ * Muestra mensaje de error en el cuerpo de la tabla.
+ */
+function mostrarErrorTablaS2(mensaje) {
+  const tbody = document.getElementById('tabla-s2-body');
+  if (!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="py-8 text-center text-error bg-error-container/20 text-sm font-semibold">
+        ${mensaje}
+      </td>
+    </tr>
+  `;
+}
+
+/**
+ * Filtra los datos de la tabla S2 reactivamente.
+ */
+function filtrarTablaS2() {
+  const fId = (document.getElementById('filter-s2-id')?.value || '').toLowerCase().trim();
+  const fStatus = document.getElementById('filter-s2-status')?.value || '';
+  const fType = document.getElementById('filter-s2-type')?.value || '';
+  const fClass = document.getElementById('filter-s2-classification')?.value || '';
+
+  s2_filtradas = s2_solicitudes.filter(sol => {
+    if (fId && !sol.idSolicitud.toLowerCase().includes(fId)) return false;
+    if (fStatus && sol.estadoSolicitud !== fStatus) return false;
+    if (fType && sol.tipoViatico !== fType) return false;
+    if (fClass && sol.clasificacionSolicitud !== fClass) return false;
+
+    if (s2_rango_fechas.start || s2_rango_fechas.end) {
+      const fechaSol = parseFechaParaFiltro(sol.fechaSolicitud);
+      if (fechaSol) {
+        if (s2_rango_fechas.start) {
+          const fStart = new Date(s2_rango_fechas.start + 'T00:00:00');
+          if (fechaSol < fStart) return false;
+        }
+        if (s2_rango_fechas.end) {
+          const fEnd = new Date(s2_rango_fechas.end + 'T23:59:59');
+          if (fechaSol > fEnd) return false;
+        }
+      }
+    }
+    return true;
+  });
+
+  // Ordenamiento por fecha
+  s2_filtradas.sort((a, b) => {
+    const fA = parseFechaParaFiltro(a.fechaSolicitud) || new Date(0);
+    const fB = parseFechaParaFiltro(b.fechaSolicitud) || new Date(0);
+    return s2_sort_desc ? (fB - fA) : (fA - fB);
+  });
+
+  s2_page = 1;
+  renderTablaS2();
+}
+
+/**
+ * Normaliza y formatea cualquier formato de fecha a 'dd/mm/aaaa'.
+ */
+function formatearFechaS2(fechaStr) {
+  if (!fechaStr) return '-';
+  const str = fechaStr.toString().trim();
+  if (!str) return '-';
+  
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(str)) {
+    return str.split(' ')[0];
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.split('T')[0].split(' ')[0].split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const dia = ('0' + d.getDate()).slice(-2);
+    const mes = ('0' + (d.getMonth() + 1)).slice(-2);
+    const anio = d.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  }
+  return str;
+}
+
+function parseFechaParaFiltro(str) {
+  if (!str) return null;
+  if (str.includes('/')) {
+    const parts = str.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+  }
+  if (str.includes('-')) {
+    const parts = str.split('T')[0].split(' ')[0].split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+  }
+  const iso = new Date(str);
+  return isNaN(iso.getTime()) ? null : iso;
+}
+
+/**
+ * Renderiza la tabla S2 adaptada a la estética y formato de E1.
+ */
+function renderTablaS2() {
+  const tbody = document.getElementById('tabla-s2-body');
+  const noResults = document.getElementById('s2-no-results-row');
+  const countLabel = document.getElementById('s2-solicitudes-count');
+  if (!tbody) return;
+
+  const total = s2_filtradas.length;
+  const totalPages = Math.ceil(total / s2_page_size) || 1;
+  if (s2_page > totalPages) s2_page = totalPages;
+
+  const start = (s2_page - 1) * s2_page_size;
+  const end = Math.min(start + s2_page_size, total);
+  const items = s2_filtradas.slice(start, end);
+
+  if (items.length === 0) {
+    tbody.innerHTML = '';
+    if (noResults) noResults.classList.remove('hidden');
+    if (countLabel) countLabel.textContent = 'Mostrando 0 de 0 solicitudes';
+    renderPaginacionS2(0);
+    return;
+  }
+
+  if (noResults) noResults.classList.add('hidden');
+  if (countLabel) {
+    countLabel.textContent = `Mostrando ${start + 1}-${end} de ${total} solicitudes`;
+  }
+
+  tbody.innerHTML = items.map(sol => {
+    const fCreacion = formatearFechaS2(sol.fechaSolicitud);
+    const fMod = formatearFechaS2(sol.fechaModificacion);
+    const mostrarMod = fMod && fMod !== '-' && fMod !== fCreacion;
+
+    const montoNum = parseFloat(sol.monto || 0);
+    const montoFmt = sol.montoFormatted || ('$ ' + montoNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+    return `
+      <tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/60">
+        <td class="py-3 px-3 text-center font-bold text-primary text-xs align-middle whitespace-nowrap">
+          ${sol.idSolicitud}
+        </td>
+        <td class="py-3 px-3 text-center text-xs text-on-surface-variant align-middle whitespace-nowrap">
+          <div class="font-medium text-on-surface flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[13px] text-primary">calendar_today</span>
+            <span>${fCreacion}</span>
+          </div>
+          ${mostrarMod ? `<div class="text-[10px] text-outline mt-0.5 font-normal">Mod: ${fMod}</div>` : ''}
+        </td>
+        <td class="py-3 px-3 text-center text-xs text-on-surface font-medium align-middle">
+          ${sol.tipoViatico || '-'}
+        </td>
+        <td class="py-3 px-3 text-center font-bold text-primary whitespace-nowrap text-xs align-middle">
+          ${montoFmt}
+        </td>
+        <td class="py-3 px-3 text-center whitespace-nowrap align-middle">
+          ${getBadgeEstadoHtml(sol.estadoSolicitud)}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-semibold text-on-surface-variant whitespace-nowrap align-middle">
+          ${sol.actorActual || 'Solicitante'}
+        </td>
+        <td class="py-3 px-3 text-center whitespace-nowrap align-middle">
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${sol.clasificacionSolicitud === 'Reintegro' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+            ${sol.clasificacionSolicitud || 'Anticipo'}
+          </span>
+        </td>
+        <td class="py-3 px-3 text-center align-middle whitespace-nowrap">
+          <button onclick="verDetalleRechazadaS2('${sol.idSolicitud}', '${sol.estadoSolicitud}')" class="bg-secondary-container hover:bg-secondary text-on-secondary px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 mx-auto cursor-pointer" title="Ver detalle y resolver solicitud rechazada">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            <span>Ver detalles</span>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginacionS2(totalPages);
+}
+
+function getBadgeEstadoHtml(estado) {
+  const e = (estado || '').toUpperCase();
+  let bg = 'bg-rose-100 text-rose-800 border-rose-300';
+  let icon = 'fa-ban';
+
+  if (e.includes('PRESUPUESTO')) {
+    bg = 'bg-amber-100 text-amber-800 border-amber-300';
+    icon = 'fa-chart-pie';
+  } else if (e.includes('PROVISION 1')) {
+    bg = 'bg-orange-100 text-orange-800 border-orange-300';
+    icon = 'fa-sync-alt';
+  } else if (e.includes('PROVISION 2')) {
+    bg = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    icon = 'fa-info-circle';
+  } else if (e.includes('PAGO 1')) {
+    bg = 'bg-sky-100 text-sky-800 border-sky-300';
+    icon = 'fa-money-check-alt';
+  } else if (e.includes('CIERRE')) {
+    bg = 'bg-purple-100 text-purple-800 border-purple-300';
+    icon = 'fa-receipt';
+  }
+
+  return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold border ${bg}">
+    <i class="fas ${icon} text-[10px]"></i> ${estado}
+  </span>`;
+}
+
+function renderPaginacionS2(totalPages) {
+  const info = document.getElementById('s2-pagination-info') || document.getElementById('s2-solicitudes-count');
+  const controls = document.getElementById('s2-pagination-controls');
+  if (!info || !controls) return;
+
+  const total = s2_filtradas.length;
+  if (total === 0) {
+    info.textContent = 'Mostrando 0 de 0 solicitudes';
+    controls.innerHTML = '';
+    return;
+  }
+
+  const start = (s2_page - 1) * s2_page_size + 1;
+  const end = Math.min(start + s2_page_size - 1, total);
+  info.textContent = `Mostrando ${start}-${end} de ${total} solicitudes`;
+
+  let btns = `
+    <button onclick="cambiarPaginaS2(${s2_page - 1})" ${s2_page === 1 ? 'disabled' : ''} class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-xs font-bold ${s2_page === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-container cursor-pointer'}">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+  `;
+
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= s2_page - 1 && p <= s2_page + 1)) {
+      btns += `
+        <button onclick="cambiarPaginaS2(${p})" class="w-8 h-8 rounded text-xs font-bold ${p === s2_page ? 'bg-primary text-on-primary' : 'border border-outline-variant hover:bg-surface-container cursor-pointer'}">
+          ${p}
+        </button>
+      `;
+    } else if (p === s2_page - 2 || p === s2_page + 2) {
+      btns += `<span class="px-1 text-outline">...</span>`;
+    }
+  }
+
+  btns += `
+    <button onclick="cambiarPaginaS2(${s2_page + 1})" ${s2_page === totalPages ? 'disabled' : ''} class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-xs font-bold ${s2_page === totalPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-container cursor-pointer'}">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  `;
+
+  controls.innerHTML = btns;
+}
+
+function cambiarPaginaS2(p) {
+  s2_page = p;
+  renderTablaS2();
+}
+
+function cambiarPageSizeS2(size) {
+  s2_page_size = parseInt(size, 10);
+  s2_page = 1;
+  renderTablaS2();
+}
+
+function toggleSortDateS2() {
+  s2_sort_desc = !s2_sort_desc;
+  const icon = document.getElementById('sort-icon-s2') || document.getElementById('s2-sort-icon');
+  if (icon) {
+    if (icon.tagName.toLowerCase() === 'span') {
+      icon.textContent = s2_sort_desc ? 'arrow_downward' : 'arrow_upward';
+    } else {
+      icon.className = s2_sort_desc ? 'fas fa-arrow-down text-xs' : 'fas fa-arrow-up text-xs';
+    }
+  }
+  filtrarTablaS2();
+}
+
+function toggleDateDropdownS2() {
+  const dropdown = document.getElementById('filter-s2-date-dropdown');
+  dropdown?.classList.toggle('hidden');
+}
+
+function aplicarRangoFechasS2() {
+  const start = document.getElementById('filter-s2-date-start')?.value;
+  const end = document.getElementById('filter-s2-date-end')?.value;
+  const textInput = document.getElementById('filter-s2-date');
+
+  s2_rango_fechas = { start: start || '', end: end || '' };
+
+  if (start && end) {
+    if (textInput) textInput.value = `${start} - ${end}`;
+  } else if (start) {
+    if (textInput) textInput.value = `>= ${start}`;
+  } else if (end) {
+    if (textInput) textInput.value = `<= ${end}`;
+  } else {
+    if (textInput) textInput.value = '';
+  }
+
+  document.getElementById('filter-s2-date-dropdown')?.classList.add('hidden');
+  filtrarTablaS2();
+}
+
+function limpiarRangoFechasS2() {
+  const start = document.getElementById('filter-s2-date-start');
+  const end = document.getElementById('filter-s2-date-end');
+  const textInput = document.getElementById('filter-s2-date');
+
+  if (start) start.value = '';
+  if (end) end.value = '';
+  if (textInput) textInput.value = '';
+
+  s2_rango_fechas = { start: '', end: '' };
+  document.getElementById('filter-s2-date-dropdown')?.classList.add('hidden');
+  filtrarTablaS2();
+}
+
+function limpiarFiltrosS2() {
+  const fields = ['filter-s2-id', 'filter-s2-status', 'filter-s2-type', 'filter-s2-classification', 'filter-s2-date'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  limpiarRangoFechasS2();
+}
+
+// ---------------------------------------------------------------------
+// CONTROLADOR DE DETALLE Y MULTI-RESOLUCIÓN (S2.1)
+// ---------------------------------------------------------------------
+
+/**
+ * Abre el detalle de la solicitud rechazada para cualquiera de los 5 estados.
+ */
+function verDetalleRechazadaS2(idSolicitud, estado) {
+  mostrarSubvista('view-s2-1-justificacion', `Resolución - ${idSolicitud}`);
+  
+  const idBadge = document.getElementById('s2-1-id-badge');
+  if (idBadge) idBadge.textContent = idSolicitud;
+  
+  const stBadge = document.getElementById('s2-1-status-badge');
+  if (stBadge) stBadge.innerHTML = getBadgeEstadoHtml(estado);
+
+  s2_archivos_nuevos = [];
+  s2_cierre_archivos = [];
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && (resp.status === 'OK' || resp.success)) {
+          poblarFormularioS2_1(resp.data || resp.solicitud || resp);
+        } else {
+          if (typeof window.mostrarModalFeedback === 'function') {
+            window.mostrarModalFeedback('Error al Cargar Detalle', (resp && resp.mensaje) || 'No se pudo obtener el detalle.', 'ERROR');
+          } else {
+            alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo obtener el detalle.'));
+          }
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (typeof window.mostrarModalFeedback === 'function') {
+          window.mostrarModalFeedback('Error de Conexión', 'Fallo de comunicación: ' + err.toString(), 'ERROR');
+        } else {
+          alert('Error de conexión: ' + err.toString());
+        }
+      })
+      .obtenerDetalleSolicitudRechazada(idSolicitud);
+  } else {
+    // Mock local para previsualización dinámica según la solicitud clickeada
+    const solBase = s2_solicitudes.find(s => s.idSolicitud === idSolicitud) || {};
+    const estadoReal = estado || solBase.estadoSolicitud || 'RECHAZO-PRESUPUESTO';
+    
+    const mockDetalle = {
+      idSolicitud: idSolicitud,
+      nombreSolicitante: solBase.solicitante || (window.DATOS_USUARIO && window.DATOS_USUARIO.NombreGoogle) || 'Roberto Morales',
+      correoSolicitante: solBase.correoSolicitante || (window.DATOS_USUARIO && window.DATOS_USUARIO.CorreoGoogle) || 'roberto.morales@bancointegral.com.sv',
+      cargoSolicitante: 'Especialista de Sistemas',
+      gerencia: 'TECNOLOGÍA DE LA INFORMACIÓN',
+      centroCosto: '101 - Infraestructura TI',
+      agencia: 'Oficina Central',
+      duracionActividad: 'Día único',
+      fechaInicio: '15/08/2026',
+      fechaFin: '15/08/2026',
+      tipoViatico: solBase.tipoViatico || 'Alimentación por visitas agencias',
+      horaEvento: '',
+      tipoSolicitud: 'Personal',
+      destinatario: solBase.destinatario || solBase.solicitante || 'Roberto Morales',
+      monto: solBase.monto || 145.50,
+      montoFormatted: solBase.montoFormatted || ('$ ' + parseFloat(solBase.monto || 145.50).toFixed(2)),
+      banco: 'Banco Agrícola',
+      tipoCuenta: 'Ahorros',
+      numeroCuenta: '00345678901',
+      motivoViatico: 'Revisión y mantenimiento de servidores centrales fuera de horario.',
+      clasificacionSolicitud: solBase.clasificacionSolicitud || 'Anticipo',
+      dentroPresupuesto: estadoReal === 'RECHAZO-PRESUPUESTO' ? 'No' : 'Si',
+      estadoSolicitud: estadoReal,
+      nombreProvision: 'Ana López (Compras)',
+      fechaProvision: '12/08/2026 10:30',
+      comentarioProvision: 'Se requiere adjuntar itinerario detallado de actividades y cotización de transporte.',
+      nombreProcesamiento: 'Carlos Fuentes (Tesorería)',
+      fechaProcesamiento: '11/08/2026 14:20',
+      comentarioProcesamiento: 'Número de cuenta bancaria presenta inconsistencia con el titular.',
+      nombreCierreE: 'Ana López (Compras)',
+      fechaCierreE: '10/08/2026 16:00',
+      comentarioCierreE: 'Factura 402 no legible, por favor reenviar comprobante con mayor resolución.',
+      archivosAdjuntos: [
+        { NombreArchivo: 'Plan_Trabajo.pdf', TipoArchivo: 'application/pdf', LinkArchivo: '#' }
+      ]
+    };
+    poblarFormularioS2_1(mockDetalle);
+  }
+}
+
+/**
+ * Vuelca los datos y conmuta la vista según el tipo de rechazo.
+ */
+function poblarFormularioS2_1(det) {
+  if (!det) return;
+  s2_solicitud_actual = det;
+  const estado = (det.estadoSolicitud || '').toUpperCase();
+
+  const idBadge = document.getElementById('s2-1-id-badge');
+  if (idBadge) idBadge.textContent = det.idSolicitud;
+
+  const stBadge = document.getElementById('s2-1-status-badge');
+  if (stBadge) stBadge.innerHTML = getBadgeEstadoHtml(det.estadoSolicitud);
+
+  // Sección 1: Solicitante (Readonly)
+  const setElVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const setElText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '-'; };
+
+  setElVal('s2-1-sol-nombre', det.nombreSolicitante);
+  setElVal('s2-1-sol-correo', det.correoSolicitante);
+  setElVal('s2-1-sol-cargo', det.cargoSolicitante);
+  setElVal('s2-1-sol-gerencia', det.gerencia);
+  setElVal('s2-1-sol-cc', det.centroCosto);
+  setElVal('s2-1-sol-agencia', det.agencia);
+
+  // Elementos UI de secciones dinámicas
+  const roContainer = document.getElementById('s2-1-viatico-readonly-container');
+  const editContainer = document.getElementById('s2-1-viatico-editable-container');
+  const infoProv = document.getElementById('s2-1-info-provision');
+  const infoProc = document.getElementById('s2-1-info-procesamiento');
+  const infoCierre = document.getElementById('s2-1-info-cierre');
+  const justifContainer = document.getElementById('s2-1-justificacion-container');
+  const cierreAcciones = document.getElementById('s2-1-acciones-cierre');
+  const btnText = document.getElementById('s2-1-btn-text');
+  const btnIcon = document.getElementById('s2-1-btn-icon');
+  const titVista = document.getElementById('s2-1-titulo-vista');
+  const subVista = document.getElementById('s2-1-subtitulo-vista');
+
+  // Ocultar todas las secciones dinámicas inicialmente
+  if (infoProv) infoProv.classList.add('hidden');
+  if (infoProc) infoProc.classList.add('hidden');
+  if (infoCierre) infoCierre.classList.add('hidden');
+  if (justifContainer) justifContainer.classList.add('hidden');
+  if (cierreAcciones) cierreAcciones.classList.add('hidden');
+
+  // Poblado en modo Readonly
+  setElVal('s2-1-viatico-duracion', det.duracionActividad || 'Día único');
+  setElVal('s2-1-viatico-fecha-ini', formatearFechaS2(det.fechaInicio));
+  setElVal('s2-1-viatico-fecha-fin', formatearFechaS2(det.fechaFin || det.fechaInicio));
+  setElVal('s2-1-viatico-tipo', det.tipoViatico);
+  setElVal('s2-1-viatico-hora', det.horaEvento);
+  setElVal('s2-1-viatico-tipo-sol', det.tipoSolicitud || 'Personal');
+  setElVal('s2-1-viatico-destinatario', det.destinatario);
+  setElVal('s2-1-viatico-monto', det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2)));
+  setElVal('s2-1-viatico-clasificacion', det.clasificacionSolicitud || 'Anticipo');
+  setElText('s2-1-banco', det.banco);
+  setElText('s2-1-tipo-cuenta', det.tipoCuenta);
+  setElText('s2-1-num-cuenta', det.numeroCuenta);
+  setElText('s2-1-motivo', det.motivoViatico);
+
+  // Poblado en modo Editable
+  setElVal('s2-1-edit-duracion', det.duracionActividad || 'Día único');
+  setElVal('s2-1-edit-fecha-ini', formatearFechaParaInput(det.fechaInicio));
+  setElVal('s2-1-edit-fecha-fin', formatearFechaParaInput(det.fechaFin || det.fechaInicio));
+  setElVal('s2-1-edit-tipo-viatico', det.tipoViatico || 'Alimentación por visitas agencias');
+  setElVal('s2-1-edit-hora', det.horaEvento || '');
+  setElVal('s2-1-edit-destinatario', det.destinatario || det.nombreSolicitante || '');
+  setElVal('s2-1-edit-monto', parseFloat(det.monto || 0));
+  setElVal('s2-1-edit-banco', det.banco || '');
+  setElVal('s2-1-edit-tipo-cuenta', det.tipoCuenta || '');
+  setElVal('s2-1-edit-num-cuenta', det.numeroCuenta || '');
+  setElVal('s2-1-edit-motivo', det.motivoViatico || '');
+  setElVal('s2-1-edit-es-editado', det.esEditado || 'No');
+
+  // Renderizar galería de archivos existentes
+  const listaArch = document.getElementById('s2-1-archivos-lista');
+  if (listaArch) {
+    if (det.archivosAdjuntos && Array.isArray(det.archivosAdjuntos) && det.archivosAdjuntos.length > 0) {
+      listaArch.innerHTML = det.archivosAdjuntos.map(arch => `
+        <a href="${arch.LinkArchivo || arch.url || '#'}" target="_blank" class="flex items-center gap-2 p-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors shadow-xs">
+          <i class="fas fa-file-pdf text-red-600 text-lg"></i>
+          <span class="text-xs font-semibold text-primary truncate flex-1">${arch.NombreArchivo || arch.nombre || 'Archivo'}</span>
+          <i class="fas fa-external-link-alt text-xs text-outline"></i>
+        </a>
+      `).join('');
+    } else {
+      listaArch.innerHTML = '<span class="text-xs text-outline italic">No se adjuntaron archivos adicionales.</span>';
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // CONMUTACIÓN DE VISTAS DINÁMICAS SEGÚN EL ESTADO DE RECHAZO
+  // -------------------------------------------------------------------
+  
+  // 1. RECHAZO-PRESUPUESTO
+  if (estado === 'RECHAZO-PRESUPUESTO' || estado.includes('PRESUPUESTO')) {
+    if (titVista) titVista.innerHTML = `<i class="fas fa-chart-pie text-2xl text-amber-600"></i><span>Justificación de Viático Fuera de Presupuesto</span>`;
+    if (subVista) subVista.textContent = 'Reevaluación extraordinaria de fondos';
+    if (roContainer) roContainer.classList.remove('hidden');
+    if (editContainer) editContainer.classList.add('hidden');
+    if (justifContainer) justifContainer.classList.remove('hidden');
+    if (btnText) btnText.textContent = 'Enviar justificación';
+    if (btnIcon) btnIcon.className = 'fas fa-paper-plane text-sm';
+
+    const txtJust = document.getElementById('s2-1-justificacion-input');
+    if (txtJust) {
+      txtJust.value = det.justificacionPresupuesto || '';
+      validarJustificacionS2_1(txtJust);
+    }
+  }
+
+  // 2. RECHAZO-PROVISION 1 (Reinicio y revalidación)
+  else if (estado === 'RECHAZO-PROVISION 1') {
+    if (titVista) titVista.innerHTML = `<i class="fas fa-sync-alt text-2xl text-orange-600"></i><span>Solventar y Reevaluar Solicitud (Provisión)</span>`;
+    if (subVista) subVista.textContent = 'Actualice los datos requeridos para reiniciar el ciclo de autorización';
+    if (roContainer) roContainer.classList.add('hidden');
+    if (editContainer) editContainer.classList.remove('hidden');
+    if (infoProv) infoProv.classList.remove('hidden');
+    
+    setElText('s2-1-provision-nombre', det.nombreProvision || 'Compras');
+    setElText('s2-1-provision-fecha', det.fechaProvision || '-');
+    setElText('s2-1-provision-comentario', det.comentarioProvision || 'Sin observaciones.');
+    
+    if (btnText) btnText.textContent = 'Guardar solicitud';
+    if (btnIcon) btnIcon.className = 'fas fa-save text-sm';
+    configurarDropzoneS2_1('s2-1-edit-dropzone', 's2-1-edit-file-input', 's2-1-edit-archivos-galeria', false);
+  }
+
+  // 3. RECHAZO-PROVISION 2 (Información faltante)
+  else if (estado === 'RECHAZO-PROVISION 2') {
+    if (titVista) titVista.innerHTML = `<i class="fas fa-info-circle text-2xl text-yellow-600"></i><span>Completar Información Faltante (Provisión)</span>`;
+    if (subVista) subVista.textContent = 'Complete la información requerida por Compras';
+    if (roContainer) roContainer.classList.add('hidden');
+    if (editContainer) editContainer.classList.remove('hidden');
+    if (infoProv) infoProv.classList.remove('hidden');
+
+    setElText('s2-1-provision-nombre', det.nombreProvision || 'Compras');
+    setElText('s2-1-provision-fecha', det.fechaProvision || '-');
+    setElText('s2-1-provision-comentario', det.comentarioProvision || 'Sin observaciones.');
+
+    if (btnText) btnText.textContent = 'Guardar solicitud';
+    if (btnIcon) btnIcon.className = 'fas fa-save text-sm';
+    configurarDropzoneS2_1('s2-1-edit-dropzone', 's2-1-edit-file-input', 's2-1-edit-archivos-galeria', false);
+  }
+
+  // 4. RECHAZO-PAGO 1 (Rechazo de Tesorería al Solicitante)
+  else if (estado === 'RECHAZO-PAGO 1') {
+    if (titVista) titVista.innerHTML = `<i class="fas fa-money-check-alt text-2xl text-sky-600"></i><span>Solventar Observaciones de Pago (Tesorería)</span>`;
+    if (subVista) subVista.textContent = 'Corrija datos bancarios o comprobantes para reingreso a Compras';
+    if (roContainer) roContainer.classList.add('hidden');
+    if (editContainer) editContainer.classList.remove('hidden');
+    if (infoProc) infoProc.classList.remove('hidden');
+
+    setElText('s2-1-procesamiento-nombre', det.nombreProcesamiento || 'Tesorería');
+    setElText('s2-1-procesamiento-fecha', det.fechaProcesamiento || '-');
+    setElText('s2-1-procesamiento-comentario', det.comentarioProcesamiento || 'Sin observaciones.');
+
+    if (btnText) btnText.textContent = 'Guardar solicitud';
+    if (btnIcon) btnIcon.className = 'fas fa-save text-sm';
+    configurarDropzoneS2_1('s2-1-edit-dropzone', 's2-1-edit-file-input', 's2-1-edit-archivos-galeria', false);
+  }
+
+  // 5. RECHAZO-CIERRE (Rechazo de Liquidación por Compras)
+  else if (estado === 'RECHAZO-CIERRE') {
+    if (titVista) titVista.innerHTML = `<i class="fas fa-receipt text-2xl text-purple-600"></i><span>Corregir y Reenviar Liquidación de Viático</span>`;
+    if (subVista) subVista.textContent = 'Ajuste comprobantes o montos de reintegro de cierre';
+    if (roContainer) roContainer.classList.remove('hidden');
+    if (editContainer) editContainer.classList.add('hidden');
+    if (infoCierre) infoCierre.classList.remove('hidden');
+    if (cierreAcciones) cierreAcciones.classList.remove('hidden');
+
+    setElText('s2-1-cierre-nombre', det.nombreCierreE || 'Compras');
+    setElText('s2-1-cierre-fecha', det.fechaCierreE || '-');
+    setElText('s2-1-cierre-comentario', det.comentarioCierreE || 'Sin observaciones.');
+
+    setElVal('s2-1-cierre-tipo', det.tipoCierre || 'Solo cierre');
+    toggleCamposReintegroS2_1(det.tipoCierre || 'Solo cierre');
+    setElVal('s2-1-cierre-monto-reintegro', det.montoReintegro || '');
+    setElVal('s2-1-cierre-fecha-reintegro', formatearFechaParaInput(det.fechaReintegro));
+
+    if (btnText) btnText.textContent = 'Guardar';
+    if (btnIcon) btnIcon.className = 'fas fa-save text-sm';
+    configurarDropzoneS2_1('s2-1-cierre-dropzone', 's2-1-cierre-file-input', 's2-1-cierre-archivos-galeria', true);
+  }
+}
+
+function formatearFechaParaInput(str) {
+  if (!str) return '';
+  if (str.indexOf('/') !== -1) {
+    const parts = str.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+  }
+  return str;
+}
+
+function toggleCamposReintegroS2_1(tipo) {
+  const montoCont = document.getElementById('s2-1-cierre-monto-container');
+  const fechaCont = document.getElementById('s2-1-cierre-fecha-container');
+  if (tipo === 'Reintegro y cierre') {
+    montoCont?.classList.remove('hidden');
+    fechaCont?.classList.remove('hidden');
+  } else {
+    montoCont?.classList.add('hidden');
+    fechaCont?.classList.add('hidden');
+  }
+}
+
+// ---------------------------------------------------------------------
+// MANEJO DE EDICIÓN BANCARIA EN S2.1
+// ---------------------------------------------------------------------
+function abrirModalEdicionBancoS2_1() {
+  document.getElementById('s2-1-modal-edicion-banco')?.classList.remove('hidden');
+}
+
+function cerrarModalEdicionBancoS2_1() {
+  document.getElementById('s2-1-modal-edicion-banco')?.classList.add('hidden');
+}
+
+function proseguirEdicionBancoS2_1() {
+  cerrarModalEdicionBancoS2_1();
+  const banco = document.getElementById('s2-1-edit-banco');
+  const tipo = document.getElementById('s2-1-edit-tipo-cuenta');
+  const num = document.getElementById('s2-1-edit-num-cuenta');
+  const flag = document.getElementById('s2-1-edit-es-editado');
+
+  [banco, tipo, num].forEach(el => {
+    if (el) {
+      el.removeAttribute('readonly');
+      el.classList.remove('pointer-events-none', 'bg-gray-100');
+      el.classList.add('bg-white', 'border-primary', 'ring-1', 'ring-primary/30');
+    }
+  });
+
+  if (flag) flag.value = 'Si';
+  banco?.focus();
+}
+
+// ---------------------------------------------------------------------
+// GESTIÓN DE ARCHIVOS ADJUNTOS EN S2.1
+// ---------------------------------------------------------------------
+function configurarDropzoneS2_1(dropzoneId, inputId, galeriaId, esCierre) {
+  const dropzone = document.getElementById(dropzoneId);
+  const input = document.getElementById(inputId);
+  if (!dropzone || !input) return;
+
+  dropzone.onclick = () => input.click();
+
+  input.onchange = (e) => {
+    procesarArchivosS2_1(e.target.files, galeriaId, esCierre);
+  };
+
+  dropzone.ondragover = (e) => {
+    e.preventDefault();
+    dropzone.classList.add('border-primary', 'bg-primary-container/10');
+  };
+
+  dropzone.ondragleave = () => {
+    dropzone.classList.remove('border-primary', 'bg-primary-container/10');
+  };
+
+  dropzone.ondrop = (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-primary', 'bg-primary-container/10');
+    procesarArchivosS2_1(e.dataTransfer.files, galeriaId, esCierre);
+  };
+}
+
+function procesarArchivosS2_1(files, galeriaId, esCierre) {
+  const galeria = document.getElementById(galeriaId);
+  if (!files || files.length === 0) return;
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result.split(',')[1];
+      const item = {
+        NombreArchivo: file.name,
+        TipoArchivo: file.type,
+        ContenidoBase64: base64,
+        TamanoBytes: file.size
+      };
+
+      if (esCierre) {
+        s2_cierre_archivos.push(item);
+      } else {
+        s2_archivos_nuevos.push(item);
+      }
+      renderGaleriaS2_1(galeriaId, esCierre);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderGaleriaS2_1(galeriaId, esCierre) {
+  const galeria = document.getElementById(galeriaId);
+  if (!galeria) return;
+
+  const lista = esCierre ? s2_cierre_archivos : s2_archivos_nuevos;
+  galeria.innerHTML = lista.map((arch, idx) => `
+    <div class="flex items-center justify-between p-2 rounded bg-surface border border-outline-variant text-xs">
+      <span class="truncate font-semibold text-primary">${arch.NombreArchivo}</span>
+      <button type="button" onclick="eliminarArchivoS2_1(${idx}, '${galeriaId}', ${esCierre})" class="text-error hover:text-error/80 ml-2">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function eliminarArchivoS2_1(idx, galeriaId, esCierre) {
+  if (esCierre) {
+    s2_cierre_archivos.splice(idx, 1);
+  } else {
+    s2_archivos_nuevos.splice(idx, 1);
+  }
+  renderGaleriaS2_1(galeriaId, esCierre);
+}
+
+// ---------------------------------------------------------------------
+// VALIDACIÓN Y ENVÍO DE RESOLUCIÓN
+// ---------------------------------------------------------------------
+function validarJustificacionS2_1(textarea) {
+  const err = document.getElementById('s2-1-justificacion-error');
+  const val = (textarea.value || '').trim();
+  if (val.length >= 5) {
+    textarea.classList.remove('border-error');
+    textarea.classList.add('border-emerald-600');
+    err?.classList.add('hidden');
+    return true;
+  } else {
+    textarea.classList.remove('border-emerald-600');
+    textarea.classList.add('border-error');
+    err?.classList.remove('hidden');
+    return false;
+  }
+}
+
+/**
+ * Disparador de botón de acción global: valida según el estado y abre confirmación.
+ */
+function ejecutarResolucionS2_1() {
+  if (!s2_solicitud_actual) return;
+  const estado = (s2_solicitud_actual.estadoSolicitud || '').toUpperCase();
+  const confirmTitle = document.getElementById('s2-1-modal-confirm-title');
+  const confirmMsg = document.getElementById('s2-1-modal-confirm-msg');
+
+  if (estado === 'RECHAZO-PRESUPUESTO' || estado.includes('PRESUPUESTO')) {
+    const txt = document.getElementById('s2-1-justificacion-input');
+    if (!validarJustificacionS2_1(txt)) {
+      txt.focus();
+      return;
+    }
+    if (confirmTitle) confirmTitle.textContent = 'Confirmar Justificación Fuera de Presupuesto';
+    if (confirmMsg) confirmMsg.innerHTML = '¿Está seguro que desea enviar esta justificación? La solicitud pasará al estado <b>INICIADO (Fuera de Presupuesto)</b> y se notificará a los autorizadores correspondientes.';
+  } else if (estado.includes('PROVISION') || estado === 'RECHAZO-PAGO 1') {
+    const monto = parseFloat(document.getElementById('s2-1-edit-monto')?.value || 0);
+    const motivo = (document.getElementById('s2-1-edit-motivo')?.value || '').trim();
+    if (monto <= 0 || !motivo) {
+      if (typeof window.mostrarModalFeedback === 'function') {
+        window.mostrarModalFeedback('Campos Requeridos', 'Por favor complete los campos obligatorios del viático (Monto y Motivo).', 'WARNING');
+      } else {
+        alert('Por favor complete los campos obligatorios del viático (Monto y Motivo).');
+      }
+      return;
+    }
+    if (confirmTitle) confirmTitle.textContent = 'Confirmar Actualización de Solicitud';
+    if (confirmMsg) confirmMsg.innerHTML = `¿Está seguro que desea guardar las correcciones de la solicitud? Esta será enviada a ${estado === 'RECHAZO-PROVISION 1' ? 'reevaluación y autorización' : 'Compras para su provisión'}.`;
+  } else if (estado === 'RECHAZO-CIERRE') {
+    const tipo = document.getElementById('s2-1-cierre-tipo')?.value;
+    if (tipo === 'Reintegro y cierre') {
+      const montoR = parseFloat(document.getElementById('s2-1-cierre-monto-reintegro')?.value || 0);
+      const fechaR = document.getElementById('s2-1-cierre-fecha-reintegro')?.value;
+      if (montoR <= 0 || !fechaR) {
+        if (typeof window.mostrarModalFeedback === 'function') {
+          window.mostrarModalFeedback('Campos Requeridos', 'Por favor especifique el Monto y Fecha de reintegro.', 'WARNING');
+        } else {
+          alert('Por favor especifique el Monto y Fecha de reintegro.');
+        }
+        return;
+      }
+    }
+    if (confirmTitle) confirmTitle.textContent = 'Confirmar Reenvío de Liquidación';
+    if (confirmMsg) confirmMsg.innerHTML = '¿Está seguro que desea reenviar su liquidación de cierre corregida a Compras? La solicitud pasará al estado <b>LIQUIDADO</b>.';
+  }
+
+  document.getElementById('s2-1-modal-confirmar')?.classList.remove('hidden');
+}
+
+function cerrarModalConfirmacionS2_1() {
+  document.getElementById('s2-1-modal-confirmar')?.classList.add('hidden');
+}
+
+/**
+ * Ejecuta la llamada al backend handler resolverRechazoS2_1 con retorno seguro a la bandeja S2.
+ */
+function confirmarResolucionFinalS2_1() {
+  if (!s2_solicitud_actual) return;
+  const btn = document.getElementById('s2-1-modal-btn-confirmar');
+  const idSolicitud = s2_solicitud_actual.idSolicitud;
+  const estado = s2_solicitud_actual.estadoSolicitud;
+  const correoUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.CorreoGoogle) ? window.DATOS_USUARIO.CorreoGoogle : '';
+
+  let payload = {};
+
+  if (estado === 'RECHAZO-PRESUPUESTO' || estado.includes('PRESUPUESTO')) {
+    payload = {
+      justificacion: (document.getElementById('s2-1-justificacion-input')?.value || '').trim()
+    };
+  } else if (estado.includes('PROVISION') || estado === 'RECHAZO-PAGO 1') {
+    payload = {
+      datosViatico: {
+        duracionActividad: document.getElementById('s2-1-edit-duracion')?.value,
+        fechaInicio: document.getElementById('s2-1-edit-fecha-ini')?.value,
+        fechaFin: document.getElementById('s2-1-edit-fecha-fin')?.value,
+        tipoViatico: document.getElementById('s2-1-edit-tipo-viatico')?.value,
+        horaEvento: document.getElementById('s2-1-edit-hora')?.value,
+        tipoSolicitud: document.getElementById('s2-1-edit-tipo-sol')?.value,
+        destinatario: document.getElementById('s2-1-edit-destinatario')?.value,
+        monto: parseFloat(document.getElementById('s2-1-edit-monto')?.value || 0),
+        banco: document.getElementById('s2-1-edit-banco')?.value,
+        tipoCuenta: document.getElementById('s2-1-edit-tipo-cuenta')?.value,
+        numeroCuenta: document.getElementById('s2-1-edit-num-cuenta')?.value,
+        motivoViatico: document.getElementById('s2-1-edit-motivo')?.value,
+        esEditado: document.getElementById('s2-1-edit-es-editado')?.value
+      },
+      listaArchivos: s2_archivos_nuevos
+    };
+  } else if (estado === 'RECHAZO-CIERRE') {
+    payload = {
+      tipoCierre: document.getElementById('s2-1-cierre-tipo')?.value,
+      montoReintegro: document.getElementById('s2-1-cierre-monto-reintegro')?.value,
+      fechaReintegro: document.getElementById('s2-1-cierre-fecha-reintegro')?.value,
+      listaArchivos: s2_cierre_archivos
+    };
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin text-sm"></i> <span>Enviando...</span>`;
+
+  function finalizarS2_1(exito, titulo, msg) {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fas fa-check text-sm"></i> <span>Confirmar y Enviar</span>`;
+    cerrarModalConfirmacionS2_1();
+
+    if (typeof window.mostrarModalFeedback === 'function') {
+      window.mostrarModalFeedback(titulo, msg, exito ? 'SUCCESS' : 'ERROR', function() {
+        if (exito) {
+          s2_solicitud_actual = null;
+          navegarSubmenu('view-solicitudes-rechazadas');
+          if (typeof cargarSolicitudesRechazadas === 'function') {
+            cargarSolicitudesRechazadas();
+          }
+        }
+      });
+    } else {
+      if (exito) {
+        s2_solicitud_actual = null;
+        navegarSubmenu('view-solicitudes-rechazadas');
+        if (typeof cargarSolicitudesRechazadas === 'function') {
+          cargarSolicitudesRechazadas();
+        }
+      }
+    }
+  }
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && (resp.status === 'OK' || resp.success)) {
+          finalizarS2_1(true, '¡Resolución Registrada!', resp.mensaje || 'La solicitud ha sido procesada con éxito.');
+        } else {
+          finalizarS2_1(false, 'Error al Procesar', (resp && resp.mensaje) || 'Ocurrió un error al procesar la resolución.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        finalizarS2_1(false, 'Error de Comunicación', 'Fallo del servidor: ' + err.toString());
+      })
+      .resolverRechazoS2_1(idSolicitud, estado, payload, correoUsuario);
+  } else {
+    // Simulación Local
+    setTimeout(() => {
+      finalizarS2_1(true, '¡Resolución Registrada (Mock)!', 'La resolución para ' + idSolicitud + ' fue enviada exitosamente.');
+    }, 600);
+  }
+}
+
+// Exponer funciones globales para SPA
+window.cargarSolicitudesRechazadas = cargarSolicitudesRechazadas;
+window.verDetalleRechazadaS2 = verDetalleRechazadaS2;
+window.limpiarFiltrosS2 = limpiarFiltrosS2;
+window.filtrarTablaS2 = filtrarTablaS2;
+</script>

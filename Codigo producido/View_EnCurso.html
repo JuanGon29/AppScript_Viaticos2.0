@@ -1,0 +1,421 @@
+<!-- ===================================================================== -->
+<!-- SUB-VISTA: View_EnCurso.html (VISOR "SOLICITUDES EN CURSO")            -->
+<!-- Centro de Monitoreo Holístico y Expediente Progresivo Acumulativo     -->
+<!-- ===================================================================== -->
+<div id="view-en-curso" class="vista-oculta flex flex-col gap-lg w-full max-w-7xl mx-auto py-4 px-2 md:px-6">
+
+  <!-- ===================================================================== -->
+  <!-- 1. BANDEJA PRINCIPAL (TABLA Y FILTROS)                                -->
+  <!-- ===================================================================== -->
+  <div id="en-curso-bandeja" class="flex flex-col gap-lg">
+    
+    <!-- Encabezado de la Vista -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-outline-variant">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
+          <i class="fas fa-tasks text-2xl text-secondary-container"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl font-extrabold text-primary">Solicitudes en curso</h2>
+          <p class="text-xs text-on-surface-variant">Visor y centro de monitoreo operativo holístico para todas las solicitudes activas</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="cargarSolicitudesEnCurso()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary text-xs font-bold transition-all border border-outline-variant cursor-pointer">
+          <i class="fas fa-sync-alt text-xs"></i>
+          <span>Actualizar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de Filtros Avanzados -->
+    <div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        
+        <!-- Filtro: ID / Solicitante -->
+        <div class="flex flex-col gap-1 lg:col-span-2">
+          <label class="text-[11px] font-bold text-on-surface-variant uppercase">Buscar</label>
+          <div class="relative flex items-center">
+            <i class="fas fa-search absolute left-3 text-outline text-xs pointer-events-none"></i>
+            <input id="filter-ec-search" oninput="filtrarTablaEnCurso()" type="text" placeholder="Buscar por ID, Solicitante o CC..." class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-outline-variant text-xs focus:ring-1 focus:ring-primary">
+          </div>
+        </div>
+
+        <!-- Filtro: Estado Solicitud -->
+        <div class="flex flex-col gap-1">
+          <label class="text-[11px] font-bold text-on-surface-variant uppercase">Estado</label>
+          <select id="filter-ec-estado" onchange="filtrarTablaEnCurso()" class="w-full py-1.5 px-2.5 rounded-lg border border-outline-variant text-xs bg-surface text-on-surface">
+            <option value="">Todos los estados</option>
+            <option value="INICIADO">INICIADO</option>
+            <option value="RECHAZO-PRESUPUESTO">RECHAZO-PRESUPUESTO</option>
+            <option value="AUTORIZADO">AUTORIZADO</option>
+            <option value="ENVIADO A PAGO">ENVIADO A PAGO</option>
+            <option value="RECHAZO-PROVISION 1">RECHAZO-PROVISION 1</option>
+            <option value="RECHAZO-PROVISION 2">RECHAZO-PROVISION 2</option>
+            <option value="PAGADO">PAGADO</option>
+            <option value="RECHAZO-PAGO 1">RECHAZO-PAGO 1</option>
+            <option value="RECHAZO-PAGO 2">RECHAZO-PAGO 2</option>
+            <option value="LIQUIDADO">LIQUIDADO</option>
+            <option value="RECHAZO-CIERRE">RECHAZO-CIERRE</option>
+          </select>
+        </div>
+
+        <!-- Filtro: Actor Actual -->
+        <div class="flex flex-col gap-1">
+          <label class="text-[11px] font-bold text-on-surface-variant uppercase">Actor Actual</label>
+          <select id="filter-ec-actor" onchange="filtrarTablaEnCurso()" class="w-full py-1.5 px-2.5 rounded-lg border border-outline-variant text-xs bg-surface text-on-surface">
+            <option value="">Todos los actores</option>
+            <option value="Solicitante">Solicitante</option>
+            <option value="Compras">Compras</option>
+            <option value="Tesoreria">Tesorería</option>
+            <option value="Autorizador 0">Autorizador 0</option>
+            <option value="Autorizador 1">Autorizador 1</option>
+            <option value="Autorizador 2">Autorizador 2</option>
+            <option value="Autorizador 3">Autorizador 3</option>
+          </select>
+        </div>
+
+        <!-- Filtro: Tipo de Viático -->
+        <div class="flex flex-col gap-1">
+          <label class="text-[11px] font-bold text-on-surface-variant uppercase">Tipo Viático</label>
+          <select id="filter-ec-tipo" onchange="filtrarTablaEnCurso()" class="w-full py-1.5 px-2.5 rounded-lg border border-outline-variant text-xs bg-surface text-on-surface">
+            <option value="">Todos los tipos</option>
+            <option value="Alimentación">Alimentación</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Hospedaje">Hospedaje</option>
+            <option value="Combustible">Combustible</option>
+            <option value="Capacitación">Capacitación</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+
+        <!-- Filtro: Clasificación -->
+        <div class="flex flex-col gap-1">
+          <label class="text-[11px] font-bold text-on-surface-variant uppercase">Clasificación</label>
+          <select id="filter-ec-clasificacion" onchange="filtrarTablaEnCurso()" class="w-full py-1.5 px-2.5 rounded-lg border border-outline-variant text-xs bg-surface text-on-surface">
+            <option value="">Todas</option>
+            <option value="Anticipo">Anticipo</option>
+            <option value="Reintegro">Reintegro</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-between border-t pt-2 border-outline-variant/60">
+        <span id="ec-contador-registros" class="text-xs font-semibold text-on-surface-variant">Cargando solicitudes...</span>
+        <button onclick="limpiarFiltrosEnCurso()" class="text-xs font-bold text-primary hover:text-primary-container inline-flex items-center gap-1 cursor-pointer">
+          <i class="fas fa-times-circle text-xs"></i>
+          <span>Limpiar filtros</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla Principal de Solicitudes en Curso -->
+    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container text-primary font-bold text-xs uppercase tracking-wider border-b border-outline-variant">
+              <th class="py-3.5 px-3 text-center">ID Solicitud</th>
+              <th class="py-3.5 px-3 text-center">Solicitante</th>
+              <th class="py-3.5 px-3 text-center">Monto</th>
+              <th class="py-3.5 px-3 text-center">Centro Costo</th>
+              <th class="py-3.5 px-3 text-center cursor-pointer hover:bg-surface-container-high transition-colors" onclick="toggleSortDateEnCurso()">
+                <div class="flex items-center justify-center gap-1">
+                  <span>Fecha Sol.</span>
+                  <i id="ec-sort-icon" class="fas fa-sort text-[10px]"></i>
+                </div>
+              </th>
+              <th class="py-3.5 px-3 text-center">Estado</th>
+              <th class="py-3.5 px-3 text-center">Actor Actual</th>
+              <th class="py-3.5 px-3 text-center">Tipo</th>
+              <th class="py-3.5 px-3 text-center">Clasif.</th>
+              <th class="py-3.5 px-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ec-tabla-body" class="divide-y divide-outline-variant text-xs">
+            <!-- Filas dinámicas generadas por JS_EnCurso -->
+            <tr>
+              <td colspan="10" class="py-8 text-center text-on-surface-variant font-medium">
+                <i class="fas fa-spinner fa-spin mr-2"></i> Cargando solicitudes en curso...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer con Paginación -->
+      <div class="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-outline-variant gap-3 bg-surface">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-on-surface-variant">Filas por página:</span>
+          <select id="ec-page-size" onchange="cambiarPageSizeEnCurso(this.value)" class="py-1 px-2 rounded border border-outline-variant text-xs bg-surface text-on-surface">
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+          </select>
+        </div>
+        <div id="ec-paginacion-controles" class="flex items-center gap-1">
+          <!-- Botones de paginación generados por JS -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 2. EXPEDIENTE PROGRESIVO DE DETALLE (Renderizado Condicional)          -->
+  <!-- ===================================================================== -->
+  <div id="view-en-curso-detalle" class="vista-oculta flex flex-col gap-6 w-full max-w-5xl mx-auto py-2">
+    
+    <!-- Top Action Bar del Expediente -->
+    <div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs flex flex-wrap items-center justify-between gap-3 sticky top-2 z-20">
+      <div class="flex items-center gap-3">
+        <button onclick="regresarTablaEnCurso()" class="p-2 rounded-xl bg-surface hover:bg-surface-container text-primary border border-outline-variant transition-colors cursor-pointer" title="Regresar a la tabla">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="ec-det-id" class="text-lg font-extrabold text-primary">SOL-XXXX</span>
+            <span id="ec-det-estado-badge"></span>
+          </div>
+          <span class="text-[11px] text-on-surface-variant">Expediente acumulativo en tiempo real</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="imprimirExpedienteEnCurso()" class="px-4 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold hover:bg-primary-container transition-all flex items-center gap-1.5 cursor-pointer shadow-xs">
+          <i class="fas fa-print"></i>
+          <span>Imprimir Expediente</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido Imprimible del Expediente -->
+    <div id="ec-expediente-imprimible" class="flex flex-col gap-6">
+
+      <!-- BLOQUE 1: DATOS DEL SOLICITANTE -->
+      <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-user-circle text-secondary"></i>
+          <span>1. Información del Solicitante</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+          <div><span class="text-on-surface-variant font-medium block">Nombre:</span><span id="ec-det-sol-nombre" class="font-bold text-primary">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Correo Electrónico:</span><span id="ec-det-sol-correo" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Cargo / Plaza:</span><span id="ec-det-sol-cargo" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Gerencia:</span><span id="ec-det-sol-gerencia" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Centro de Costo:</span><span id="ec-det-sol-cc" class="font-mono font-bold text-primary">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Agencia:</span><span id="ec-det-sol-agencia" class="font-medium text-on-surface">-</span></div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 2: DETALLE DEL VIÁTICO Y CUENTA BANCARIA -->
+      <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-receipt text-secondary"></i>
+          <span>2. Detalle del Viático y Cuenta de Desembolso</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div><span class="text-on-surface-variant font-medium block">Duración:</span><span id="ec-det-viatico-duracion" class="font-bold text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha Inicio:</span><span id="ec-det-viatico-ini" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha Fin:</span><span id="ec-det-viatico-fin" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Tipo de Viático:</span><span id="ec-det-viatico-tipo" class="font-bold text-primary">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Tipo Solicitud:</span><span id="ec-det-viatico-tiposol" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Destinatario:</span><span id="ec-det-viatico-destinatario" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Monto Solicitado:</span><span id="ec-det-viatico-monto" class="text-base font-extrabold text-emerald-800">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Clasificación:</span><span id="ec-det-viatico-clasif" class="font-bold text-on-surface">-</span></div>
+        </div>
+
+        <!-- Detalle Bancario con Badge EsEditado -->
+        <div class="border border-outline-variant rounded-xl p-3.5 bg-surface mt-2 flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b pb-2 border-outline-variant/60">
+            <span class="text-xs font-bold text-primary flex items-center gap-1.5">
+              <i class="fas fa-university text-secondary"></i>
+              <span>Cuenta Bancaria de Pago</span>
+            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-on-surface-variant font-medium">¿Información editada?:</span>
+              <span id="ec-det-es-editado-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">Normal</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div><span class="text-on-surface-variant font-medium block">Banco:</span><span id="ec-det-banco" class="font-bold text-primary">-</span></div>
+            <div><span class="text-on-surface-variant font-medium block">Tipo de Cuenta:</span><span id="ec-det-tipo-cuenta" class="font-semibold text-on-surface">-</span></div>
+            <div><span class="text-on-surface-variant font-medium block">Número de Cuenta:</span><span id="ec-det-num-cuenta" class="font-mono font-bold text-primary">-</span></div>
+          </div>
+        </div>
+
+        <!-- Motivo -->
+        <div class="flex flex-col gap-1 mt-1">
+          <span class="text-on-surface-variant font-medium text-xs">Motivo de la Solicitud:</span>
+          <div id="ec-det-motivo" class="p-3 bg-surface rounded-xl border border-outline-variant text-xs text-on-surface leading-relaxed min-h-[50px]">
+            -
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 3: PRESUPUESTO Y ARCHIVOS ADJUNTOS -->
+      <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-folder-open text-secondary"></i>
+          <span>3. Presupuesto, Clasificación y Archivos</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div><span class="text-on-surface-variant font-medium block">Rubro Contable:</span><span id="ec-det-rubro" class="font-semibold text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha de Registro:</span><span id="ec-det-fecha-reg" class="font-medium text-on-surface">-</span></div>
+          <div>
+            <span class="text-on-surface-variant font-medium block">Condición Presupuesto:</span>
+            <span id="ec-det-presupuesto-badge" class="inline-flex mt-1"></span>
+          </div>
+        </div>
+
+        <div id="ec-det-justificacion-container" class="p-3.5 bg-amber-50/80 border border-amber-300 rounded-xl flex flex-col gap-1 hidden">
+          <span class="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+            <i class="fas fa-exclamation-triangle text-amber-700"></i>
+            <span>Justificación de Viático Fuera de Presupuesto:</span>
+          </span>
+          <p id="ec-det-justificacion-texto" class="text-xs text-amber-900 leading-relaxed">-</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-bold text-primary">Archivos y Comprobantes Adjuntos:</span>
+          <div id="ec-det-archivos-lista" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+            <!-- Enlaces a archivos adjuntos -->
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 4: HISTORIAL DE AUTORIZACIONES (Condicional) -->
+      <div id="ec-seccion-autorizaciones" class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4 hidden">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-signature text-secondary"></i>
+          <span>4. Historial y Firmas de Autorización</span>
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-surface-container text-primary font-bold border-b border-outline-variant">
+                <th class="py-2.5 px-3 text-center">Nivel / Autorizador</th>
+                <th class="py-2.5 px-3 text-center">Fecha y Hora</th>
+                <th class="py-2.5 px-3 text-center">Resolución</th>
+                <th class="py-2.5 px-3 text-left">Comentarios</th>
+              </tr>
+            </thead>
+            <tbody id="ec-det-aut-body" class="divide-y divide-outline-variant">
+              <!-- Firmas -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BLOQUE 5: PROVISIÓN DE PAGO Y ASIENTO CONTABLE (Condicional) -->
+      <div id="ec-seccion-provision" class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4 hidden">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-file-invoice-dollar text-secondary"></i>
+          <span>5. Provisión de Pago (Compras)</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div><span class="text-on-surface-variant font-medium block">Gestor de Compras:</span><span id="ec-det-prov-nombre" class="font-bold text-primary">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha Provisión:</span><span id="ec-det-prov-fecha" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Resolución:</span><span id="ec-det-prov-res" class="font-bold text-emerald-800">-</span></div>
+        </div>
+        <div class="p-3 bg-surface rounded-xl border border-outline-variant text-xs">
+          <span class="text-on-surface-variant font-medium block mb-1">Comentario de Provisión:</span>
+          <p id="ec-det-prov-comentario" class="text-on-surface leading-relaxed">-</p>
+        </div>
+
+        <!-- Asiento Contable Provisión -->
+        <div id="ec-det-prov-asiento-card" class="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl flex flex-col gap-2 hidden">
+          <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+            <i class="fas fa-book text-blue-700"></i>
+            <span>Asiento Contable de Provisión (Lote Agrupado)</span>
+          </span>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]">
+            <div><span class="text-blue-700 font-medium block">F. Contable:</span><span id="ec-as-prov-fcont" class="font-bold">-</span></div>
+            <div><span class="text-blue-700 font-medium block">F. Valor:</span><span id="ec-as-prov-fval" class="font-bold">-</span></div>
+            <div><span class="text-blue-700 font-medium block">Módulo:</span><span id="ec-as-prov-mod" class="font-bold">-</span></div>
+            <div><span class="text-blue-700 font-medium block">Transacción:</span><span id="ec-as-prov-tra" class="font-bold">-</span></div>
+            <div><span class="text-blue-700 font-medium block">Cód. Relación:</span><span id="ec-as-prov-cod" class="font-bold">-</span></div>
+            <div><span class="text-blue-700 font-medium block">CR / FSE:</span><span id="ec-as-prov-cr" class="font-bold">-</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 6: PROCESAMIENTO DE PAGO (Condicional) -->
+      <div id="ec-seccion-procesamiento" class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4 hidden">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-hand-holding-usd text-secondary"></i>
+          <span>6. Procesamiento y Desembolso de Pago (Tesorería)</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div><span class="text-on-surface-variant font-medium block">Gestor de Tesorería:</span><span id="ec-det-proc-nombre" class="font-bold text-primary">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha Desembolso:</span><span id="ec-det-proc-fecha" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Resolución:</span><span id="ec-det-proc-res" class="font-bold text-emerald-800">-</span></div>
+        </div>
+        <div class="p-3 bg-surface rounded-xl border border-outline-variant text-xs">
+          <span class="text-on-surface-variant font-medium block mb-1">Comentario de Tesorería:</span>
+          <p id="ec-det-proc-comentario" class="text-on-surface leading-relaxed">-</p>
+        </div>
+
+        <!-- Asiento Contable Pago -->
+        <div id="ec-det-proc-asiento-card" class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex flex-col gap-2 hidden">
+          <span class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+            <i class="fas fa-book text-emerald-700"></i>
+            <span>Asiento Contable de Desembolso (Lote Pagado)</span>
+          </span>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]">
+            <div><span class="text-emerald-700 font-medium block">F. Contable:</span><span id="ec-as-proc-fcont" class="font-bold">-</span></div>
+            <div><span class="text-emerald-700 font-medium block">F. Valor:</span><span id="ec-as-proc-fval" class="font-bold">-</span></div>
+            <div><span class="text-emerald-700 font-medium block">Módulo:</span><span id="ec-as-proc-mod" class="font-bold">-</span></div>
+            <div><span class="text-emerald-700 font-medium block">Transacción:</span><span id="ec-as-proc-tra" class="font-bold">-</span></div>
+            <div><span class="text-emerald-700 font-medium block">Cód. Relación:</span><span id="ec-as-proc-cod" class="font-bold">-</span></div>
+            <div><span class="text-emerald-700 font-medium block">CR / FSE:</span><span id="ec-as-proc-cr" class="font-bold">-</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 7: LIQUIDACIÓN Y CIERRE (Condicional) -->
+      <div id="ec-seccion-cierre" class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-xs flex flex-col gap-4 hidden">
+        <h3 class="text-sm font-extrabold text-primary uppercase tracking-wider flex items-center gap-2 border-b pb-2 border-outline-variant">
+          <i class="fas fa-check-double text-secondary"></i>
+          <span>7. Liquidación y Cierre de Viático</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+          <div><span class="text-on-surface-variant font-medium block">Tipo de Cierre:</span><span id="ec-det-cierre-tipo" class="font-bold text-primary">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Monto Reintegro:</span><span id="ec-det-cierre-monto" class="font-bold text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha Liquidación:</span><span id="ec-det-cierre-fechas" class="font-medium text-on-surface">-</span></div>
+          <div><span class="text-on-surface-variant font-medium block">Fecha Cierre Compras:</span><span id="ec-det-cierre-fechae" class="font-medium text-on-surface">-</span></div>
+        </div>
+
+        <div id="ec-det-cierre-compras-box" class="p-3 bg-surface rounded-xl border border-outline-variant text-xs hidden">
+          <span class="text-on-surface-variant font-medium block mb-1">Revisión de Cierre en Compras:</span>
+          <div class="flex items-center gap-4 mb-1">
+            <span class="text-primary font-bold" id="ec-det-cierre-nombre-e">-</span>
+            <span class="font-semibold text-emerald-800" id="ec-det-cierre-res-e">-</span>
+          </div>
+          <p id="ec-det-cierre-comentario-e" class="text-on-surface leading-relaxed">-</p>
+        </div>
+
+        <!-- Asiento Contable Reintegro -->
+        <div id="ec-det-cierre-asiento-card" class="p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl flex flex-col gap-2 hidden">
+          <span class="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+            <i class="fas fa-book text-purple-700"></i>
+            <span>Asiento Contable de Cierre y Reintegro (Compras)</span>
+          </span>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px]">
+            <div><span class="text-purple-700 font-medium block">F. Contable:</span><span id="ec-as-cierre-fcont" class="font-bold">-</span></div>
+            <div><span class="text-purple-700 font-medium block">F. Valor:</span><span id="ec-as-cierre-fval" class="font-bold">-</span></div>
+            <div><span class="text-purple-700 font-medium block">Módulo:</span><span id="ec-as-cierre-mod" class="font-bold">-</span></div>
+            <div><span class="text-purple-700 font-medium block">Transacción:</span><span id="ec-as-cierre-tra" class="font-bold">-</span></div>
+            <div><span class="text-purple-700 font-medium block">Cód. Relación:</span><span id="ec-as-cierre-cod" class="font-bold">-</span></div>
+            <div><span class="text-purple-700 font-medium block">CR / FSE:</span><span id="ec-as-cierre-cr" class="font-bold">-</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

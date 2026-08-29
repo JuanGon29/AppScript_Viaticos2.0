@@ -1,0 +1,731 @@
+<!DOCTYPE html><html data-lt-installed="true" lang="es" class="h-full"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@100..900&amp;display=swap" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#465c9a",
+                    "on-primary-fixed-variant": "#2d4481",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#541100",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#ebeef0",
+                    "tertiary-fixed": "#bdedd2",
+                    "surface": "#f7fafc",
+                    "surface-container-highest": "#e0e3e5",
+                    "inverse-surface": "#2d3133",
+                    "tertiary-fixed-dim": "#a2d1b7",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#7389cb",
+                    "on-secondary-fixed-variant": "#862200",
+                    "surface-bright": "#f7fafc",
+                    "on-tertiary-container": "#68947d",
+                    "inverse-primary": "#b3c5ff",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#ffb5a0",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "secondary-fixed": "#ffdbd1",
+                    "primary": "#000c2f",
+                    "on-tertiary-fixed-variant": "#234f3b",
+                    "inverse-on-surface": "#eef1f3",
+                    "surface-container-high": "#e5e9eb",
+                    "surface-container-low": "#f1f4f6",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary-container": "#002a1a",
+                    "surface-dim": "#d7dadc",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e0e3e5",
+                    "outline-variant": "#c5c6d1",
+                    "on-tertiary-fixed": "#002113",
+                    "on-surface-variant": "#444650",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary": "#ffffff",
+                    "outline": "#757681",
+                    "secondary": "#b02f00",
+                    "tertiary": "#001209",
+                    "secondary-container": "#ff5722",
+                    "on-surface": "#181c1e",
+                    "on-secondary-fixed": "#3b0900",
+                    "primary-container": "#001f5c",
+                    "on-background": "#181c1e",
+                    "background": "#f7fafc",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "base": "8px",
+                    "lg": "48px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "xl": "80px",
+                    "gutter": "24px",
+                    "xs": "4px",
+                    "md": "24px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Segoe UI"],
+                    "body-md": ["Segoe UI"],
+                    "body-lg": ["Segoe UI"],
+                    "headline-lg": ["Segoe UI"],
+                    "body-sm": ["Segoe UI"],
+                    "label-md": ["Segoe UI"],
+                    "label-lg": ["Segoe UI"],
+                    "headline-lg-mobile": ["Segoe UI"],
+                    "display-lg": ["Segoe UI"],
+                    "headline-md": ["Segoe UI"]
+            }
+          }
+        }
+      }
+}catch(_e){}</script>
+<style>
+  :root {
+    --orange-primary: #ff5722;
+    --navy-primary: #001f5c;
+    --theme-red: #da3b33;      
+    --theme-green: #409132;    
+    --theme-gray: #8d9499;
+    --theme-celeste: #00adef;
+  }
+  .form-input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.375rem; 
+    border-width: 2px !important; 
+    border-style: solid;
+    background-color: #f9fafb;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .border-gray { border-color: var(--theme-gray) !important; background-color: #e2e8f0; pointer-events: none; }
+  .border-red { border-color: var(--theme-red) !important; }
+  .border-green { border-color: var(--theme-green) !important; }
+  
+  .editable-field:hover, .editable-field:focus {
+    border-color: var(--theme-celeste) !important;
+    box-shadow: 0 0 8px rgba(0, 173, 239, 0.4);
+    outline: none;
+  }
+  .editable-field.border-gray {
+    background-color: #f9fafb;
+    pointer-events: auto;
+  }
+  #fileContainer:hover {
+    border-color: var(--theme-celeste) !important;
+    box-shadow: 0 0 8px rgba(0, 173, 239, 0.4);
+  }
+
+  .circle-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%;
+    background-color: var(--theme-celeste); color: #000; font-weight: 700; margin-right: 12px;
+  }
+  .input-label { font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 8px; }
+  .input-label i { color: var(--navy-primary); font-size: 1.1rem; width: 18px; text-align: center; }
+  .btn-action { transition: all 0.3s ease; cursor: pointer; }
+  .btn-action:active { transform: translateY(2px); }
+  .btn-solid-orange { background-color: var(--orange-primary); border: 2px solid var(--orange-primary); color: white; }
+  .btn-solid-orange:hover { background-color: #e64a19; border-color: #e64a19; }
+  .btn-outline-navy { background-color: transparent; border: 2px solid var(--navy-primary); color: var(--navy-primary); }
+  .btn-outline-navy:hover { background-color: #001133; border-color: #001133; color: white; }
+
+  /* Sidebar Transition and Collapse Styles */
+  #sidebar {
+    transition: width 0.3s ease;
+    overflow-x: hidden;
+  }
+  .sidebar-expanded {
+    width: 240px;
+  }
+  .sidebar-collapsed {
+    width: 80px;
+  }
+  .sidebar-collapsed .nav-text {
+    opacity: 0;
+    width: 0;
+    display: none;
+  }
+  .sidebar-collapsed .dropdown-icon {
+    display: none;
+  }
+  .sidebar-collapsed .submenu-content {
+    display: none !important;
+  }
+  
+  #main-content {
+    transition: margin-left 0.3s ease, width 0.3s ease;
+  }
+  .sidebar-expanded + #main-content {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+  }
+  .sidebar-collapsed + #main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+  }
+
+  .submenu-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    max-height: 0;
+  }
+  .submenu-open .submenu-content {
+    max-height: 500px;
+  }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex">
+<!-- SideNavBar (Shared Component) - Dark Theme -->
+<nav class="fixed left-0 top-0 h-full bg-primary flex flex-col py-lg z-40 sidebar-expanded" id="sidebar" style="overflow: visible;">
+<!-- Toggle Button -->
+<button class="absolute top-6 w-6 h-6 bg-secondary-container text-on-primary rounded-full flex items-center justify-center cursor-pointer shadow-md z-50 hover:bg-secondary transition-colors -right-4" onclick="toggleSidebar()">
+<span class="material-symbols-outlined text-sm" id="toggle-icon">chevron_left</span>
+</button>
+<!-- Header Info -->
+<div class="flex items-center gap-sm mb-lg px-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex-shrink-0 mx-auto">
+<img alt="Usuario de Banco Integral" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate employee in a bright, modern office setting, representing an avatar for a banking application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2l_t_Cc-AFfOw8mXPuf0V4bPzNco1f3t0vwllZ7tNo_Dk-f4Xsj8sM039HFDBBCnt05wcbqbAeBjLOoMoOKjb-g-o1DVhhEL-iGegF4vzEDxadGGX_WvTwfCIbPrId4pbqnSUZec7LJyyxRwAiRUSoHlCH9phkJawp1IBPCe7y1jKYXDZpJ3gEcMKgapL9tnhd37vEhiAneKpSi7FzD8SrbbuKXgrOkzg7oDVQFrEzQXdrB6-wYGg1w">
+</div>
+<div class="nav-text whitespace-nowrap overflow-hidden">
+<h2 class="font-headline-sm text-base font-bold text-on-primary truncate leading-tight">Portal Viáticos</h2>
+<p class="font-body-sm text-xs text-primary-fixed-dim">Gestión Corporativa</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-2 flex-grow px-2">
+<!-- Inicio -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-lg text-label-lg nav-text">Inicio</span>
+</a>
+</li>
+<!-- Solicitantes -->
+<li class="rounded-lg overflow-hidden" id="menu-solicitantes">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-solicitantes')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-lg text-label-lg nav-text">Solicitantes</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Nueva Solicitud</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Solicitudes Rechazadas</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Editores -->
+<li class="rounded-lg overflow-hidden" id="menu-editores">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium" onclick="toggleSubmenu('menu-editores')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-label-lg text-label-lg nav-text">Editores</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Conciliacion de Pagos</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Procesamiento de Pagos</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Cierre de solicitudes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Autorizadores -->
+<li class="rounded-lg overflow-hidden submenu-open" id="menu-autorizadores">
+<button class="w-full flex items-center justify-between gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary font-bold border-l-4 border-secondary-container" onclick="toggleSubmenu('menu-autorizadores')">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-label-lg text-label-lg nav-text">Autorizadores</span>
+</div>
+<span class="material-symbols-outlined text-sm dropdown-icon transition-transform duration-300" style="transform: rotate(180deg);">expand_more</span>
+</button>
+<div class="submenu-content bg-primary-container/30">
+<ul class="py-1 px-2 flex flex-col gap-1">
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded bg-primary-container text-on-primary font-bold transition-colors text-sm" href="#"><span class="nav-text">Autorizacion de Solicitudes</span></a></li>
+<li class=""><a class="flex items-center gap-sm pl-11 py-2 rounded hover:bg-primary-container text-on-primary/70 hover:text-on-primary transition-colors text-sm" href="#"><span class="nav-text">Niveles Autorizantes</span></a></li>
+</ul>
+</div>
+</li>
+<!-- Solicitudes en curso -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">pending_actions</span>
+<span class="font-label-lg text-label-lg nav-text">Solicitudes en curso</span>
+</a>
+</li>
+<!-- Historico -->
+<li class="">
+<a class="flex items-center gap-md px-3 py-2 rounded-lg hover:bg-primary-container transition-colors text-on-primary/80 hover:text-on-primary font-medium active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-lg text-label-lg nav-text">Historico</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-h-screen relative" id="main-content">
+<!-- TopAppBar (Shared Component) -->
+<header class="docked full-width top-0 sticky z-30 bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-margin-desktop">
+<div class="flex items-center gap-sm"><img alt="Banco Integral Logo" class="h-8 w-auto object-contain mr-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xJD1t15SJ-OElz4OulRz6eM7b-gNXdb3XH_fL8hayrSjkCuvGKMZ3WhBmBkUc_T51ARwFZvdK1-Wha25vWGbC28w5nk57WAwOP0xPywpFVRpyrY4fSxJiwWdwuXycGGTyusw07bKeeXOngUsO5rktajW1N9qYbkRbQXR2ZJHuCNJAN0QQNidIY-MSX0DBvN7UX2xvHXfvFqQysDSdbNhLRB_P2gxPDCjymXEooY2tF7PPqvqeVOBwvE5MNU_DYoeayU">
+<h1 class="font-headline-sm text-headline-sm font-black text-primary tracking-tight">Viáticos - Nueva Solicitud</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity focus:ring-2 focus:ring-on-primary-container rounded-full p-xs">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant ml-sm overflow-hidden cursor-pointer">
+<img alt="Foto de perfil del empleado" class="w-full h-full object-cover" data-alt="A small, professional headshot of an employee, representing a profile picture in a corporate application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEa48FRDnoifXRjLsqelzlMl0VpDdzmmB_LB7M7mIDow0Wgh503bHM78JkIU-2bkwhjz_HmgfRQiMuV2PbD2xs1NbU6dbBSZdzCljpEtDydcdCVNeZOm0lN_ad57QZk_U0kZQ0PhXExeelImIiCuXc3xlqvm_7RbJYBFOw2hZHS4g98X4kC-x52cc-hXRB3BZttGUmQ10LbwRK4XmOlJnS0OJ1QOpYWV_PbhIUtORt0SZ9ohH-WSYtbg">
+</div>
+</div>
+</header>
+<!-- Form Workspace Canvas -->
+<main class="flex-1 p-margin-desktop bg-background overflow-y-auto relative">
+<!-- Mensajes flotantes de Alerta / Éxito -->
+<div class="w-full max-w-6xl mx-auto mb-4 p-4 rounded-lg text-white font-bold text-center shadow-lg transition-opacity duration-300 z-50 absolute top-4 left-1/2 -translate-x-1/2" id="messageBox" style="display:none;">
+<span class="" id="messageText">Mensaje</span>
+</div>
+<div class="w-full max-w-7xl mx-auto">
+<div class="w-full mb-6">
+<h2 class="text-3xl font-extrabold mb-3 flex items-center gap-3" style="color: var(--orange-primary);">
+<i class="fas fa-file-signature text-4xl"></i>Autorizacion de Solicitud
+<i class="fas fa-check-circle text-3xl" style="color: var(--theme-green);"></i>
+<i class="fas fa-times-circle text-3xl" style="color: var(--theme-red);"></i>
+</h2>
+<hr class="border-t-2 border-outline-variant w-full rounded">
+</div>
+<!-- Indicador Paso 1 -->
+<!-- Contenedor del Formulario Estructura Vertical -->
+<div class="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant mb-10 overflow-hidden flex flex-col">
+<form class="w-full flex flex-col" id="solicitudForm">
+<!-- Sección 1: Solo Lectura -->
+<div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+<h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+<i class="fas fa-info-circle mr-2 text-primary"></i> Información del Solicitante
+          </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-user-circle"></i> Nombre</label>
+<input class="form-input border-gray" name="nombre_solicitante" readonly="" type="text" value="Juan Pérez">
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-envelope"></i> Correo</label>
+<input class="form-input border-gray" name="correo_solicitante" readonly="" type="email" value="jperez@bancointegral.com">
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-id-badge"></i> Cargo</label>
+<input class="form-input border-gray" name="cargo_solicitante" readonly="" type="text" value="Especialista de Sistemas">
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-sitemap"></i> Gerencia</label>
+<input class="form-input border-gray" name="gerencia_solicitante" readonly="" type="text" value="Tecnología de la Información">
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-building"></i> Área</label>
+<input class="form-input border-gray" name="area_solicitante" readonly="" type="text" value="Desarrollo Core">
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-file-invoice-dollar"></i> Rubro Contable Base</label>
+<input class="form-input border-gray" name="rubro_contable" readonly="" type="text" value="701 - Viáticos Locales">
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-map-marked-alt"></i> Región</label>
+<input class="form-input border-gray" name="region_solicitante" readonly="" type="text" value="Metropolitana">
+</div>
+</div>
+</div>
+<!-- Sección 2: Editable -->
+<div class="w-full bg-surface-bright p-6 md:p-8">
+<h3 class="text-lg font-bold mb-6 text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+<i class="fas fa-edit mr-2 text-primary"></i> Detalle de Gastos
+          </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-user-tie"></i> Correo Jefe Regional <span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">jefe.centro@banco.com</span>
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-plane-departure"></i> Tipo de Viático <span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">Alimentación</span>
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-clock"></i> Hora del Evento <span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">Tarde (13:00 - 17:00)</span>
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-calendar-plus"></i> Fecha Inicio <span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">15/10/2023</span>
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-calendar-check"></i> Fecha Fin <span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">16/10/2023</span>
+</div>
+<div class="flex flex-col">
+<label class="input-label"><i class="fas fa-users"></i> Cantidad Personas <span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">2</span>
+</div>
+<!-- Contenedor para campos dinámicos de personas -->
+<div class="flex flex-col sm:col-span-2 lg:col-span-3 gap-4" id="dynamicFieldsContainer"><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-outline-variant p-4 rounded-lg bg-white mt-2"><div class="flex flex-col"><label class="input-label"><i class="fas fa-user"></i> Destinatario 1</label><span class="font-body-md text-on-surface py-2">Carlos Ruiz</span></div><div class="flex flex-col"><label class="input-label"><i class="fas fa-dollar-sign"></i> Monto 1 ($)</label><span class="font-body-md text-on-surface py-2">125.00</span></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-outline-variant p-4 rounded-lg bg-white mt-2"><div class="flex flex-col"><label class="input-label"><i class="fas fa-user"></i> Destinatario 2</label><span class="font-body-md text-on-surface py-2">Ana Morales</span></div><div class="flex flex-col"><label class="input-label"><i class="fas fa-dollar-sign"></i> Monto 2 ($)</label><span class="font-body-md text-on-surface py-2">125.00</span></div></div></div>
+<div class="flex flex-col sm:col-span-2 lg:col-span-3">
+<label class="input-label"><i class="fas fa-comment-dots"></i> Motivo de la Solicitud<span class="text-red-500">*</span></label>
+<span class="font-body-md text-on-surface py-2">Reunión extraordinaria con el equipo de Desarrollo Core para revisión de arquitectura del nuevo módulo de pagos.</span>
+</div>
+<!-- Adjuntos -->
+<div class="flex flex-col sm:col-span-2 lg:col-span-3">
+<label class="input-label mb-2"><i class="fas fa-paperclip"></i>Archivos Adjuntos<br><span class="text-red-500">*</span></label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="flex items-center justify-between p-3 bg-white border border-outline-variant rounded-lg shadow-sm">
+<div class="flex items-center overflow-hidden w-full">
+<i class="fas fa-file-pdf text-red-500 text-2xl mr-3 flex-shrink-0"></i>
+<div class="flex flex-col overflow-hidden w-full pr-2">
+<span class="text-sm font-semibold text-primary truncate">Justificación_Viaje.pdf</span>
+<span class="text-xs text-on-surface-variant">1.2 MB</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-white border border-outline-variant rounded-lg shadow-sm">
+<div class="flex items-center overflow-hidden w-full">
+<i class="fas fa-file-image text-purple-500 text-2xl mr-3 flex-shrink-0"></i>
+<div class="flex flex-col overflow-hidden w-full pr-2">
+<span class="text-sm font-semibold text-primary truncate">Recibo_Hotel.jpg</span>
+<span class="text-xs text-on-surface-variant">850 KB</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col sm:col-span-2 lg:col-span-3 mt-4">
+<label class="input-label"><i class="fas fa-tasks"></i> Estado de Autorizacion <span class="text-red-500">*</span></label>
+<select class="form-input border-gray editable-field border-red" id="estadoAutorizacion" name="estado_autorizacion" required=""><option disabled="" selected="" value="">Seleccione una opción</option>
+<option value="Autorizado">Autorizado</option>
+<option value="Rechazado">Rechazado</option></select>
+</div>
+<div class="flex flex-col sm:col-span-2 lg:col-span-3 mt-4 hidden" id="comentarioContainer">
+<label class="input-label"><i class="fas fa-comment-dots"></i> Comentario <span class="text-red-500">*</span></label>
+<textarea class="form-input border-red editable-field" id="comentarioRechazo" name="comentario" placeholder="Ingrese el motivo del rechazo..." rows="3"></textarea>
+</div>
+</div>
+</div>
+</form>
+</div>
+<!-- Indicador Paso 2 -->
+<!-- Contenedor de Botones (Orange/Navy) -->
+<div class="flex flex-wrap gap-4 pl-12 pb-10"><button class="btn-action btn-outline-navy rounded-full px-8 py-3 font-bold text-lg flex items-center gap-2 bg-white" onclick="window.history.back()"><span class="material-symbols-outlined">arrow_back</span> Regresar</button><button class="btn-action bg-secondary-container text-white rounded-full px-8 py-3 font-bold text-lg flex items-center gap-2 hover:bg-secondary transition-colors shadow-md" id="btnGuardar"><i class="fas fa-paper-plane" id="iconGuardar"></i> <span id="textGuardar" class="">Enviar</span></button></div>
+</div>
+</main>
+</div>
+<!-- LÓGICA JAVASCRIPT -->
+<script>
+    const editableFields = document.querySelectorAll('.editable-field');
+    const allFormInputs = document.querySelectorAll('#solicitudForm input, #solicitudForm textarea, #solicitudForm select');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const messageBox = document.getElementById('messageBox');
+    const messageText = document.getElementById('messageText');
+    const inputCantidadPersonas = document.getElementById('cantidad_personas');
+    const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
+    
+    const fileInput = document.getElementById('fileInput');
+    const fileContainer = document.getElementById('fileContainer');
+    const fileGallery = document.getElementById('fileGallery');
+    let arrayArchivos = [];
+
+    const estadoAutorizacion = document.getElementById('estadoAutorizacion');
+    const comentarioContainer = document.getElementById('comentarioContainer');
+    const comentarioRechazo = document.getElementById('comentarioRechazo');
+
+    if (estadoAutorizacion) {
+      estadoAutorizacion.addEventListener('change', (e) => {
+        if (e.target.value === 'Rechazado') {
+          comentarioContainer.classList.remove('hidden');
+          comentarioRechazo.setAttribute('required', 'required');
+        } else {
+          comentarioContainer.classList.add('hidden');
+          comentarioRechazo.removeAttribute('required');
+          comentarioRechazo.value = '';
+          validarCampoVisualmente(comentarioRechazo);
+        }
+        validarCampoVisualmente(e.target);
+      });
+    }
+
+    // --- Funciones del Sidebar ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleIcon = document.getElementById('toggle-icon');
+      
+      if (sidebar.classList.contains('sidebar-expanded')) {
+        sidebar.classList.remove('sidebar-expanded');
+        sidebar.classList.add('sidebar-collapsed');
+        toggleIcon.textContent = 'chevron_right';
+      } else {
+        sidebar.classList.remove('sidebar-collapsed');
+        sidebar.classList.add('sidebar-expanded');
+        toggleIcon.textContent = 'chevron_left';
+      }
+    }
+
+    function toggleSubmenu(id) {
+      const sidebar = document.getElementById('sidebar');
+      // If sidebar is collapsed, expand it when clicking a submenu
+      if (sidebar.classList.contains('sidebar-collapsed')) {
+          toggleSidebar();
+      }
+      
+      const el = document.getElementById(id);
+      const icon = el.querySelector('.dropdown-icon');
+      
+      if (el.classList.contains('submenu-open')) {
+        el.classList.remove('submenu-open');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        el.classList.add('submenu-open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // --- Validación Visual ---
+    function validarCampoVisualmente(campo) {
+      if (!campo) return;
+      let isValid = false;
+      
+      if (campo.id === 'fileContainer') {
+        isValid = arrayArchivos.length > 0;
+      } else {
+        isValid = campo.value.trim() !== '';
+      }
+
+      if (!isValid) {
+        campo.classList.remove('border-green');
+        campo.classList.add('border-red');
+      } else {
+        campo.classList.remove('border-red');
+        campo.classList.add('border-green');
+      }
+    }
+
+    function bindValidation(campo) {
+      campo.addEventListener('blur', () => validarCampoVisualmente(campo));
+      campo.addEventListener('change', () => validarCampoVisualmente(campo));
+      campo.addEventListener('input', () => validarCampoVisualmente(campo));
+    }
+
+    document.querySelectorAll('.editable-field').forEach(bindValidation);
+
+    // --- Campos Dinámicos ---
+    if (inputCantidadPersonas) {
+      inputCantidadPersonas.addEventListener('input', (e) => {
+        const num = parseInt(e.target.value);
+        dynamicFieldsContainer.innerHTML = '';
+        if (num && num > 0) {
+          for (let i = 1; i <= num; i++) {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4 border border-outline-variant p-4 rounded-lg bg-white mt-2';
+            
+            row.innerHTML = `
+              <div class="flex flex-col">
+                <label class="input-label"><i class="fas fa-user"></i> Destinatario ${i} <span class="text-red-500">*</span></label>
+                <input type="text" name="destinatario_${i}" class="form-input editable-field dynamic-field border-red" required="">
+              </div>
+              <div class="flex flex-col">
+                <label class="input-label"><i class="fas fa-dollar-sign"></i> Monto ${i} ($) <span class="text-red-500">*</span></label>
+                <input type="number" name="monto_${i}" class="form-input editable-field dynamic-field border-red" min="0.01" step="0.01" placeholder="0.00" required="">
+              </div>
+            `;
+            dynamicFieldsContainer.appendChild(row);
+          }
+          document.querySelectorAll('.dynamic-field').forEach(field => {
+              bindValidation(field);
+              if(field.type === 'number') {
+                  field.addEventListener('blur', (ev) => {
+                    const valor = parseFloat(ev.target.value);
+                    if (!isNaN(valor)) {
+                      ev.target.value = valor.toFixed(2);
+                      validarCampoVisualmente(ev.target);
+                    }
+                  });
+              }
+          });
+        }
+      });
+    }
+
+    // --- Sistema de Archivos ---
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
+
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['pdf'].includes(ext)) return 'fa-file-pdf text-red-500';
+        if (['jpg', 'jpeg', 'png'].includes(ext)) return 'fa-file-image text-purple-500';
+        return 'fa-file-alt text-gray-500';
+    }
+
+    function actualizarGaleria() {
+      if (!fileGallery) return;
+      fileGallery.innerHTML = ''; 
+
+      arrayArchivos.forEach((archivo, index) => {
+        const card = document.createElement('div');
+        card.className = 'flex items-center justify-between p-3 bg-white border border-outline-variant rounded-lg shadow-sm';
+        card.innerHTML = `
+          <div class="flex items-center overflow-hidden w-full">
+            <i class="fas ${getFileIcon(archivo.name)} text-2xl mr-3 flex-shrink-0"></i>
+            <div class="flex flex-col overflow-hidden w-full pr-2">
+              <span class="text-sm font-semibold text-primary truncate" title="${archivo.name}">${archivo.name}</span>
+              <span class="text-xs text-on-surface-variant">${formatBytes(archivo.size)}</span>
+            </div>
+          </div>
+          <button type="button" class="text-outline hover:text-error transition-colors flex-shrink-0 focus:outline-none" onclick="event.stopPropagation(); removerArchivo(${index})" title="Eliminar archivo">
+            <i class="fas fa-times-circle text-xl"></i>
+          </button>
+        `;
+        fileGallery.appendChild(card);
+      });
+
+      if (fileContainer) validarCampoVisualmente(fileContainer);
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        const nuevosArchivos = Array.from(e.target.files);
+        arrayArchivos = arrayArchivos.concat(nuevosArchivos);
+        actualizarGaleria();
+        fileInput.value = ''; 
+      });
+    }
+
+    window.removerArchivo = function(index) {
+      arrayArchivos.splice(index, 1);
+      actualizarGaleria();            
+    };
+
+    if (fileContainer) {
+      fileContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileContainer.classList.add('dropzone-active');
+      });
+      fileContainer.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        fileContainer.classList.remove('dropzone-active');
+      });
+      fileContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileContainer.classList.remove('dropzone-active');
+        if (e.dataTransfer.files) {
+          const nuevosArchivos = Array.from(e.dataTransfer.files);
+          arrayArchivos = arrayArchivos.concat(nuevosArchivos);
+          actualizarGaleria();
+        }
+      });
+    }
+
+    // --- Sistema de Mensajes ---
+    function mostrarMensaje(mensaje, esError) {
+      messageText.textContent = mensaje;
+      messageBox.style.display = 'block';
+      
+      if (esError) {
+        messageBox.style.backgroundColor = 'var(--theme-red)';
+      } else {
+        messageBox.style.backgroundColor = 'var(--theme-green)';
+      }
+
+      setTimeout(() => { messageBox.style.opacity = '1'; }, 10);
+      
+      setTimeout(() => {
+        messageBox.style.opacity = '0';
+        setTimeout(() => { messageBox.style.display = 'none'; }, 300);
+      }, 5000);
+    }
+
+    // --- Botón Limpiar ---
+    if (btnLimpiar) {
+      btnLimpiar.addEventListener('click', () => {
+        document.querySelectorAll('.editable-field').forEach(campo => {
+          campo.value = '';
+          validarCampoVisualmente(campo);
+        });
+        if (dynamicFieldsContainer) dynamicFieldsContainer.innerHTML = '';
+        arrayArchivos = [];
+        actualizarGaleria();
+        if (fileContainer) validarCampoVisualmente(fileContainer);
+      });
+    }
+
+    // --- Botón Guardar ---
+    if (btnGuardar) {
+      btnGuardar.addEventListener('click', (e) => {
+        e.preventDefault();
+        let hayCamposVacios = false;
+        
+        document.querySelectorAll('.editable-field[required]').forEach(campo => {
+          // Si el campo está visible y vacío
+          if (campo.offsetParent !== null && campo.value.trim() === '') {
+            hayCamposVacios = true;
+            campo.focus(); 
+          }
+        });
+
+        if (hayCamposVacios) {
+          mostrarMensaje("POR FAVOR COMPLETE TODOS LOS CAMPOS OBLIGATORIOS", true);
+          return;
+        }
+
+        const datosEmpaquetados = {};
+        document.querySelectorAll('#solicitudForm input, #solicitudForm textarea, #solicitudForm select').forEach(input => {
+          if (input.name) {
+            datosEmpaquetados[input.name] = input.value;
+          }
+        });
+        
+        datosEmpaquetados['archivos_adjuntos'] = arrayArchivos.map(file => ({
+          nombre: file.name,
+          tamano: file.size,
+          tipo: file.type
+        }));
+
+        console.log("Datos empaquetados listos para enviar:", datosEmpaquetados);
+
+        const iconGuardar = document.getElementById('iconGuardar');
+        const textGuardar = document.getElementById('textGuardar');
+        
+        iconGuardar.classList.replace('fa-paper-plane', 'fa-circle-notch');
+        iconGuardar.classList.add('fa-spin'); 
+        textGuardar.textContent = 'Enviando...';
+        btnGuardar.disabled = true;
+        btnGuardar.style.opacity = '0.8';
+
+        setTimeout(() => {
+          iconGuardar.classList.remove('fa-circle-notch', 'fa-spin');
+          iconGuardar.classList.add('fa-paper-plane');
+          textGuardar.textContent = 'Enviar';
+          btnGuardar.disabled = false;
+          btnGuardar.style.opacity = '1';
+
+          mostrarMensaje("¡Éxito! La solicitud ha sido procesada correctamente.", false);
+        }, 2000);
+      });
+    }
+  </script>
+<div aria-hidden="true" data-snapdom-sandbox="true" id="snapdom-sandbox" style="position: absolute; left: -9999px; top: -9999px; width: 0px; height: 0px; overflow: hidden;"></div>
+
+</body></html>

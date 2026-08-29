@@ -1,0 +1,890 @@
+<script>
+/**
+ * =====================================================================
+ * JS_E2.html - CONTROLADOR DE PROCESAMIENTO DE PAGOS (E2 & E2.1)
+ * =====================================================================
+ */
+
+let e2_solicitudes = [];
+let e2_filtradas = [];
+let e2_page = 1;
+let e2_page_size = 10;
+let e2_sort_desc = true;
+let e2_rango_fechas = { start: '', end: '' };
+let e2_seleccionadas = new Set();
+let e2_solicitud_actual = null;
+let e2_comprobante_base64 = null;
+
+/**
+ * Carga las solicitudes en estado 'ENVIADO A PAGO' para procesamiento por Tesorería.
+ */
+function cargarSolicitudesProcesamientoE2() {
+  const tbody = document.getElementById('tabla-e2-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="py-10 text-center align-middle bg-surface">
+        <div class="flex items-center justify-center gap-2 text-primary font-medium text-sm">
+          <span class="material-symbols-outlined animate-spin text-xl text-secondary-container">progress_activity</span>
+          Cargando solicitudes de procesamiento de pago...
+        </div>
+      </td>
+    </tr>
+  `;
+
+  e2_seleccionadas.clear();
+  actualizarBotonAgruparE2();
+
+  const correoUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.CorreoGoogle) ? window.DATOS_USUARIO.CorreoGoogle : '';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          e2_solicitudes = resp.solicitudes || [];
+          filtrarTablaE2();
+        } else {
+          mostrarErrorTablaE2((resp && resp.mensaje) || 'No se pudieron cargar las solicitudes.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarErrorTablaE2('Error de comunicación: ' + err.toString());
+      })
+      .obtenerSolicitudesProcesamientoE2(correoUsuario);
+  } else {
+    // Mock local
+    e2_solicitudes = [
+      {
+        idSolicitud: 'SOL-2026-0002',
+        solicitante: 'Carlos Mendoza',
+        correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+        monto: 220.00,
+        montoFormatted: '$ 220.00',
+        centroCosto: '406 - Compras y Provisiones',
+        codigoCC: '406',
+        fechaSolicitud: '14/08/2026 11:20',
+        fechaModificacion: '14/08/2026 14:00',
+        estadoSolicitud: 'ENVIADO A PAGO',
+        tipoViatico: 'Transporte',
+        clasificacionSolicitud: 'Anticipo',
+        resolucionProcesamiento: 'Aprobado',
+        comentarioProcesamiento: 'Revisión bancaria correcta.',
+        esAgrupable: true
+      },
+      {
+        idSolicitud: 'SOL-2026-0005',
+        solicitante: 'Elena Torres',
+        correoSolicitante: 'elena.torres@bancointegral.com.sv',
+        monto: 65.00,
+        montoFormatted: '$ 65.00',
+        centroCosto: '202 - Finanzas',
+        codigoCC: '202',
+        fechaSolicitud: '15/08/2026 08:30',
+        fechaModificacion: '15/08/2026 10:00',
+        estadoSolicitud: 'ENVIADO A PAGO',
+        tipoViatico: 'Reunión/Trabajo fuera de horario laboral',
+        clasificacionSolicitud: 'Reintegro',
+        resolucionProcesamiento: '',
+        comentarioProcesamiento: '',
+        esAgrupable: false
+      }
+    ];
+    filtrarTablaE2();
+  }
+}
+
+function mostrarErrorTablaE2(mensaje) {
+  const tbody = document.getElementById('tabla-e2-body');
+  if (!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="py-8 text-center text-error bg-error-container/20 text-sm font-semibold">
+        ${mensaje}
+      </td>
+    </tr>
+  `;
+}
+
+/**
+ * Filtra reactivamente la lista de procesamiento.
+ */
+function filtrarTablaE2() {
+  const filterId = (document.getElementById('filter-e2-id')?.value || '').toLowerCase().trim();
+  const filterSol = (document.getElementById('filter-e2-solicitante')?.value || '').toLowerCase().trim();
+  const filterType = (document.getElementById('filter-e2-type')?.value || '').toLowerCase().trim();
+  const filterClassification = (document.getElementById('filter-e2-classification')?.value || '').toLowerCase().trim();
+  const filterCC = (document.getElementById('filter-e2-cc')?.value || '').toLowerCase().trim();
+
+  e2_filtradas = e2_solicitudes.filter(item => {
+    if (filterId && !(item.idSolicitud || '').toLowerCase().includes(filterId)) return false;
+    if (filterSol && !(item.solicitante || '').toLowerCase().includes(filterSol)) return false;
+    if (filterType && !(item.tipoViatico || '').toLowerCase().includes(filterType)) return false;
+    if (filterClassification && (item.clasificacionSolicitud || '').toLowerCase() !== filterClassification) return false;
+    if (filterCC && !(item.codigoCC || '').toLowerCase().includes(filterCC)) return false;
+
+    if (e2_rango_fechas.start || e2_rango_fechas.end) {
+      const fechaItem = parseFechaE2(item.fechaSolicitud);
+      if (fechaItem) {
+        if (e2_rango_fechas.start) {
+          const dtStart = new Date(e2_rango_fechas.start + 'T00:00:00');
+          if (fechaItem < dtStart) return false;
+        }
+        if (e2_rango_fechas.end) {
+          const dtEnd = new Date(e2_rango_fechas.end + 'T23:59:59');
+          if (fechaItem > dtEnd) return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
+  e2_filtradas.sort((a, b) => {
+    const fA = parseFechaE2(a.fechaSolicitud) || new Date(0);
+    const fB = parseFechaE2(b.fechaSolicitud) || new Date(0);
+    return e2_sort_desc ? (fB - fA) : (fA - fB);
+  });
+
+  e2_page = 1;
+  renderTablaE2();
+}
+
+function formatearFechaE2(fechaStr) {
+  if (!fechaStr) return '-';
+  const str = String(fechaStr).trim();
+  if (!str) return '-';
+
+  // Si ya viene con formato dd/mm/aaaa
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+    return str.split(' ')[0];
+  }
+
+  // Si viene en formato ISO yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.split('T')[0].split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  // Parsear objeto Date o cadena estándar
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const anio = d.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  }
+
+  return str.split(' ')[0];
+}
+
+/**
+ * Renderiza filas en el DOM para E2 con las 9 columnas oficiales.
+ */
+function renderTablaE2() {
+  const tbody = document.getElementById('tabla-e2-body');
+  const noResults = document.getElementById('e2-no-results-row');
+  const countLabel = document.getElementById('e2-solicitudes-count');
+  const paginationControls = document.getElementById('e2-pagination-controls');
+
+  if (!tbody) return;
+
+  if (e2_filtradas.length === 0) {
+    tbody.innerHTML = '';
+    noResults?.classList.remove('hidden');
+    if (countLabel) countLabel.textContent = 'Mostrando 0 de 0 solicitudes';
+    if (paginationControls) paginationControls.innerHTML = '';
+    return;
+  }
+
+  noResults?.classList.add('hidden');
+
+  const total = e2_filtradas.length;
+  const totalPages = Math.ceil(total / e2_page_size) || 1;
+  if (e2_page > totalPages) e2_page = totalPages;
+
+  const startIdx = (e2_page - 1) * e2_page_size;
+  const endIdx = Math.min(startIdx + e2_page_size, total);
+  const itemsPagina = e2_filtradas.slice(startIdx, endIdx);
+
+  if (countLabel) {
+    countLabel.textContent = `Mostrando ${startIdx + 1}-${endIdx} de ${total} solicitudes`;
+  }
+
+  tbody.innerHTML = itemsPagina.map(item => {
+    const badgeEstado = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"><span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>ENVIADO A PAGO</span>';
+
+    const badgeClasif = item.clasificacionSolicitud === 'Reintegro'
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800">Reintegro</span>'
+      : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">Anticipo</span>';
+
+    const isChecked = e2_seleccionadas.has(item.idSolicitud);
+    const checkboxHtml = item.esAgrupable
+      ? `<input type="checkbox" class="w-4 h-4 rounded border-outline-variant text-secondary-container focus:ring-secondary-container cursor-pointer" onchange="toggleSelectSolicitudE2('${item.idSolicitud}', this.checked)" ${isChecked ? 'checked' : ''} title="Seleccionar para desembolso">`
+      : `<span class="w-4 h-4 inline-block" title="Requiere aprobación previa en detalle para habilitar agrupación de pago"></span>`;
+
+    const fechaSolFmt = formatearFechaE2(item.fechaSolicitud);
+    const fechaModFmt = formatearFechaE2(item.fechaModificacion);
+
+    return `
+      <tr class="hover:bg-surface-container-low transition-colors ${isChecked ? 'bg-secondary-container/5' : ''}">
+        <!-- Col 1: ID Solicitud -->
+        <td class="py-3 px-3 text-center font-bold text-primary text-xs align-middle">
+          ${item.idSolicitud}
+        </td>
+
+        <!-- Col 2: Fechas (sortable) -->
+        <td class="py-3 px-3 text-center text-xs text-on-surface-variant align-middle">
+          <div class="font-medium text-on-surface">${fechaSolFmt}</div>
+          ${item.fechaModificacion && item.fechaModificacion !== item.fechaSolicitud ? `<div class="text-[10px] text-outline">Mod: ${fechaModFmt}</div>` : ''}
+        </td>
+
+        <!-- Col 3: Solicitante -->
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.solicitante}
+        </td>
+
+        <!-- Col 4: Tipo de viático -->
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.tipoViatico}
+        </td>
+
+        <!-- Col 5: Monto Total -->
+        <td class="py-3 px-3 text-center text-xs font-bold text-primary align-middle">
+          ${item.montoFormatted || ('$ ' + parseFloat(item.monto || 0).toFixed(2))}
+        </td>
+
+        <!-- Col 6: Código CC -->
+        <td class="py-3 px-3 text-center text-xs font-bold text-on-surface-variant align-middle">
+          <span class="bg-surface-container px-2 py-0.5 rounded font-mono text-[11px]">${item.codigoCC || '-'}</span>
+        </td>
+
+        <!-- Col 7: Estado Solicitud -->
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeEstado}
+        </td>
+
+        <!-- Col 8: Clasificación Solicitud -->
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeClasif}
+        </td>
+
+        <!-- Col 9: Acciones -->
+        <td class="py-3 px-3 text-center align-middle">
+          <div class="flex items-center justify-center gap-2">
+            ${checkboxHtml}
+            <button onclick="verDetalleProcesamientoE2('${item.idSolicitud}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary-container text-on-primary hover:bg-primary text-xs font-bold transition-colors cursor-pointer shadow-xs">
+              <span class="material-symbols-outlined text-sm">visibility</span>
+              Ver detalles
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginacionE2(totalPages);
+}
+
+function toggleSelectSolicitudE2(id, checked) {
+  if (checked) {
+    e2_seleccionadas.add(id);
+  } else {
+    e2_seleccionadas.delete(id);
+  }
+  actualizarBotonAgruparE2();
+  renderTablaE2();
+}
+
+function actualizarBotonAgruparE2() {
+  const btn = document.getElementById('btn-e2-agrupar');
+  const countSpan = document.getElementById('e2-selected-count');
+  const count = e2_seleccionadas.size;
+
+  if (countSpan) countSpan.textContent = count;
+  if (btn) {
+    btn.disabled = (count === 0);
+  }
+}
+
+function renderPaginacionE2(totalPages) {
+  const container = document.getElementById('e2-pagination-controls');
+  if (!container) return;
+
+  let html = '';
+  html += `
+    <button onclick="cambiarPaginaE2(${e2_page - 1})" ${e2_page === 1 ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Anterior
+    </button>
+  `;
+
+  for (let p = 1; p <= totalPages; p++) {
+    if (totalPages > 6 && Math.abs(p - e2_page) > 2 && p !== 1 && p !== totalPages) {
+      if (p === 2 || p === totalPages - 1) html += `<span class="px-1 text-xs text-outline">...</span>`;
+      continue;
+    }
+    const isActive = (p === e2_page);
+    html += `
+      <button onclick="cambiarPaginaE2(${p})" class="px-3 py-1 border ${isActive ? 'bg-primary-container text-on-primary border-primary-container font-bold' : 'border-outline-variant hover:bg-surface-container text-on-surface'} rounded text-xs transition-colors cursor-pointer">
+        ${p}
+      </button>
+    `;
+  }
+
+  html += `
+    <button onclick="cambiarPaginaE2(${e2_page + 1})" ${e2_page === totalPages ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Siguiente
+    </button>
+  `;
+
+  container.innerHTML = html;
+}
+
+function cambiarPaginaE2(p) {
+  e2_page = p;
+  renderTablaE2();
+}
+
+function cambiarPageSizeE2(size) {
+  e2_page_size = parseInt(size) || 10;
+  e2_page = 1;
+  renderTablaE2();
+}
+
+function toggleSortDateE2() {
+  e2_sort_desc = !e2_sort_desc;
+  const icon = document.getElementById('sort-icon-e2');
+  if (icon) icon.textContent = e2_sort_desc ? 'arrow_downward' : 'arrow_upward';
+  filtrarTablaE2();
+}
+
+function limpiarFiltrosE2() {
+  const fields = ['filter-e2-id', 'filter-e2-solicitante', 'filter-e2-type', 'filter-e2-classification', 'filter-e2-cc', 'filter-e2-date'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  limpiarRangoFechasE2();
+}
+
+function toggleDateDropdownE2() {
+  const dropdown = document.getElementById('filter-e2-date-dropdown');
+  dropdown?.classList.toggle('hidden');
+}
+
+function aplicarRangoFechasE2() {
+  const start = document.getElementById('filter-e2-date-start')?.value;
+  const end = document.getElementById('filter-e2-date-end')?.value;
+  const textInput = document.getElementById('filter-e2-date');
+
+  e2_rango_fechas = { start: start || '', end: end || '' };
+
+  if (start && end) {
+    textInput.value = `${start} - ${end}`;
+  } else if (start) {
+    textInput.value = `>= ${start}`;
+  } else if (end) {
+    textInput.value = `<= ${end}`;
+  } else {
+    textInput.value = '';
+  }
+
+  document.getElementById('filter-e2-date-dropdown')?.classList.add('hidden');
+  filtrarTablaE2();
+}
+
+function limpiarRangoFechasE2() {
+  const start = document.getElementById('filter-e2-date-start');
+  const end = document.getElementById('filter-e2-date-end');
+  const textInput = document.getElementById('filter-e2-date');
+
+  if (start) start.value = '';
+  if (end) end.value = '';
+  if (textInput) textInput.value = '';
+
+  e2_rango_fechas = { start: '', end: '' };
+  document.getElementById('filter-e2-date-dropdown')?.classList.add('hidden');
+  filtrarTablaE2();
+}
+
+// ---------------------------------------------------------------------
+// MODAL DE AGRUPACIÓN DE PAGO (E2)
+// ---------------------------------------------------------------------
+
+function abrirModalAgruparE2() {
+  if (e2_seleccionadas.size === 0) return;
+
+  const countSpan = document.getElementById('modal-e2-count');
+  const montoSpan = document.getElementById('modal-e2-monto-total');
+  const listaContainer = document.getElementById('modal-e2-lista-ids');
+  const errBox = document.getElementById('e2-asiento-error');
+
+  errBox?.classList.add('hidden');
+  e2_comprobante_base64 = null;
+  document.getElementById('form-e2-asiento')?.reset();
+
+  const hoyISO = new Date().toISOString().split('T')[0];
+  const inputContable = document.getElementById('e2-asiento-fecha-contable');
+  const inputValor = document.getElementById('e2-asiento-fecha-valor');
+  if (inputContable) inputContable.value = hoyISO;
+  if (inputValor) inputValor.value = hoyISO;
+
+  let totalMonto = 0;
+  const idsArr = Array.from(e2_seleccionadas);
+  
+  if (listaContainer) {
+    listaContainer.innerHTML = idsArr.map(id => {
+      const item = e2_solicitudes.find(s => s.idSolicitud === id);
+      if (item) totalMonto += parseFloat(item.monto || 0);
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-on-primary font-mono">${id}</span>`;
+    }).join('');
+  }
+
+  if (countSpan) countSpan.textContent = idsArr.length;
+  if (montoSpan) montoSpan.textContent = '$ ' + totalMonto.toFixed(2) + ' USD';
+
+  document.getElementById('e2-modal-agrupar')?.classList.remove('hidden');
+}
+
+function cerrarModalAgruparE2() {
+  document.getElementById('e2-modal-agrupar')?.classList.add('hidden');
+}
+
+function handleFileAsientoE2(input) {
+  const file = input.files?.[0];
+  if (!file) {
+    e2_comprobante_base64 = null;
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    e2_comprobante_base64 = {
+      NombreArchivo: file.name,
+      TipoArchivo: file.type || 'application/pdf',
+      ContenidoBase64: e.target.result
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function confirmarGuardarAgrupacionE2() {
+  const btn = document.getElementById('btn-modal-guardar-e2');
+  const errBox = document.getElementById('e2-asiento-error');
+
+  const fContableRaw = document.getElementById('e2-asiento-fecha-contable')?.value;
+  const fValorRaw = document.getElementById('e2-asiento-fecha-valor')?.value;
+  const modulo = (document.getElementById('e2-asiento-modulo')?.value || '').trim();
+  const transaccion = (document.getElementById('e2-asiento-transaccion')?.value || '').trim();
+  const codigoRelacion = (document.getElementById('e2-asiento-codigo-relacion')?.value || '').trim();
+  const crFse = (document.getElementById('e2-asiento-cr-fse')?.value || '').trim();
+
+  if (!fContableRaw || !fValorRaw || !modulo || !transaccion || !codigoRelacion) {
+    if (errBox) {
+      errBox.textContent = 'Por favor complete todos los campos obligatorios (*).';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (!e2_comprobante_base64) {
+    if (errBox) {
+      errBox.textContent = 'Debe adjuntar el comprobante del desembolso bancario.';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const cParts = fContableRaw.split('-');
+  const fContable = `${cParts[2]}/${cParts[1]}/${cParts[0]}`;
+  const vParts = fValorRaw.split('-');
+  const fValor = `${vParts[2]}/${vParts[1]}/${vParts[0]}`;
+
+  const datosAsiento = {
+    fechaContable: fContable,
+    fechaValor: fValor,
+    modulo: modulo,
+    transaccion: transaccion,
+    codigoRelacion: codigoRelacion,
+    crFse: crFse
+  };
+
+  const idsArr = Array.from(e2_seleccionadas);
+  const nombreUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.NombreGoogle) ? window.DATOS_USUARIO.NombreGoogle : 'Editor Tesorería';
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Procesando pago...`;
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">save</span> Guardar Agrupación`;
+        cerrarModalAgruparE2();
+
+        if (resp && resp.status === 'OK') {
+          alert(resp.mensaje || 'Lote de pagos procesado exitosamente.');
+          e2_seleccionadas.clear();
+          cargarSolicitudesProcesamientoE2();
+        } else {
+          alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo procesar el pago.'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">save</span> Guardar Agrupación`;
+        alert('Error de servidor: ' + err.toString());
+      })
+      .guardarAgrupacionProcesamientoE2(idsArr, datosAsiento, e2_comprobante_base64, nombreUsuario);
+  } else {
+    // Simulación local
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">save</span> Guardar Agrupación`;
+      cerrarModalAgruparE2();
+
+      // Mutar array en memoria para que las seleccionadas pasen a PAGADO / FINALIZADO
+      if (typeof e2_solicitudes !== 'undefined' && Array.isArray(e2_solicitudes)) {
+        idsArr.forEach(id => {
+          const item = e2_solicitudes.find(s => s.idSolicitud === id);
+          if (item) {
+            if ((item.clasificacionSolicitud || '').toLowerCase() === 'reintegro') {
+              item.estadoSolicitud = 'FINALIZADO';
+              item.actorActual = '';
+            } else {
+              item.estadoSolicitud = 'PAGADO';
+              item.actorActual = 'Solicitante';
+            }
+            item.fechaProcesamiento = new Date().toLocaleDateString('es-SV');
+            item.nombreProcesamiento = nombreUsuario;
+            item.agrupableProcesamiento = JSON.stringify(datosAsiento);
+          }
+        });
+      }
+
+      alert(`Pago bancario simulado de ${idsArr.length} solicitudes completado (Modo Local). Las solicitudes han cambiado de estado.`);
+      e2_seleccionadas.clear();
+      filtrarTablaE2();
+    }, 900);
+  }
+}
+
+// ---------------------------------------------------------------------
+// DETALLE Y RESOLUCIÓN DE PAGO (E2.1)
+// ---------------------------------------------------------------------
+
+function verDetalleProcesamientoE2(idSolicitud) {
+  mostrarSubvista('view-e2-1-detalle', `Procesamiento - ${idSolicitud}`);
+
+  document.getElementById('e2-1-id-badge').textContent = idSolicitud;
+  document.getElementById('e2-1-status-badge').innerHTML = '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"><span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>ENVIADO A PAGO</span>';
+  
+  // Ocultar sección responder por defecto
+  document.getElementById('e2-1-seccion-responder')?.classList.add('hidden');
+  document.getElementById('e2-1-btn-responder')?.classList.remove('hidden');
+  document.getElementById('e2-1-btn-imprimir')?.classList.remove('hidden');
+  document.getElementById('e2-1-btn-guardar')?.classList.add('hidden');
+  document.getElementById('e2-1-resolucion-select').value = '';
+  document.getElementById('e2-1-comentario-input').value = '';
+  document.getElementById('e2-1-comentario-error')?.classList.add('hidden');
+  document.getElementById('e2-1-comentario-required')?.classList.add('hidden');
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          poblarFormularioE2_1(resp);
+        } else {
+          alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo cargar el detalle.'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Error de conexión: ' + err.toString());
+      })
+      .obtenerDetalleProcesamientoE2_1(idSolicitud);
+  } else {
+    // Mock local
+    const mock = {
+      idSolicitud: idSolicitud,
+      nombreSolicitante: 'Carlos Mendoza',
+      correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+      cargoSolicitante: 'Analista de Operaciones',
+      gerencia: 'GERENCIA DE OPERACIONES',
+      centroCosto: '406 - Compras y Provisiones',
+      agencia: 'Oficina Central',
+      duracionActividad: 'Día único',
+      fechaInicio: '14/08/2026',
+      fechaFin: '14/08/2026',
+      tipoViatico: 'Transporte',
+      horaEvento: '',
+      tipoSolicitud: 'Personal',
+      destinatario: 'Carlos Mendoza',
+      monto: 220.00,
+      montoFormatted: '$ 220.00',
+      banco: 'Banco Cuscatlán',
+      tipoCuenta: 'Corriente',
+      numeroCuenta: '0981234567',
+      motivoViatico: 'Traslado a agencias regionales de Santa Ana para arqueo de caja.',
+      rubroContable: '8110050400000 - Viáticos y Movilidad',
+      clasificacionSolicitud: 'Anticipo',
+      esEditado: 'No',
+      estadoSolicitud: 'ENVIADO A PAGO',
+      fechaSolicitud: '14/08/2026 11:20',
+      fechaModificacion: '14/08/2026 14:00',
+      fechaContableProvision: '14/08/2026',
+      fechaValorProvision: '14/08/2026',
+      moduloProvision: 'CP',
+      transaccionProvision: 'PROV-4421',
+      codigoRelacionProvision: 'REL-099',
+      crFseProvision: 'FSE-10',
+      nombreProvision: 'Mario López (Compras)',
+      fechaProvision: '14/08/2026 13:45',
+      comentarioProvision: 'Provisión contable aprobada según partida 8110.',
+      archivosAdjuntos: [
+        { NombreArchivo: 'Itinerario_Visita.pdf', LinkArchivo: '#' },
+        { NombreArchivo: 'Comprobante_Provision.pdf', LinkArchivo: '#' }
+      ],
+      datosAutorizacion: [
+        { nivel: 1, nombre: 'Jefe Inmediato', fecha: '14/08/2026 12:00', resolucion: 'APROBADO', comentario: 'Conforme con el itinerario presentado.' }
+      ],
+      resolucionProcesamiento: 'Aprobado',
+      comentarioProcesamiento: 'Revisión bancaria correcta.'
+    };
+    poblarFormularioE2_1(mock);
+  }
+}
+
+function poblarFormularioE2_1(det) {
+  e2_solicitud_actual = det;
+
+  document.getElementById('e2-1-id-badge').textContent = det.idSolicitud;
+
+  // Bloque 1: Solicitante (Inputs limpios bg-white)
+  if (document.getElementById('e2-1-sol-nombre')) document.getElementById('e2-1-sol-nombre').value = det.nombreSolicitante || '';
+  if (document.getElementById('e2-1-sol-correo')) document.getElementById('e2-1-sol-correo').value = det.correoSolicitante || '';
+  if (document.getElementById('e2-1-sol-cargo')) document.getElementById('e2-1-sol-cargo').value = det.cargoSolicitante || '';
+  if (document.getElementById('e2-1-sol-gerencia')) document.getElementById('e2-1-sol-gerencia').value = det.gerencia || '';
+  if (document.getElementById('e2-1-sol-cc')) document.getElementById('e2-1-sol-cc').value = det.centroCosto || '';
+  if (document.getElementById('e2-1-sol-agencia')) document.getElementById('e2-1-sol-agencia').value = det.agencia || '';
+
+  // Bloque 2: Detalle Viático (Spans de Texto)
+  if (document.getElementById('e2-1-viatico-duracion')) document.getElementById('e2-1-viatico-duracion').textContent = det.duracionActividad || 'Día único';
+  if (document.getElementById('e2-1-viatico-fecha-ini')) document.getElementById('e2-1-viatico-fecha-ini').textContent = formatearFechaE2(det.fechaInicio) || '-';
+  if (document.getElementById('e2-1-viatico-fecha-fin')) document.getElementById('e2-1-viatico-fecha-fin').textContent = formatearFechaE2(det.fechaFin || det.fechaInicio) || '-';
+  if (document.getElementById('e2-1-viatico-tipo')) document.getElementById('e2-1-viatico-tipo').textContent = det.tipoViatico || '-';
+  
+  const horaCont = document.getElementById('e2-1-hora-container');
+  if (det.horaEvento) {
+    horaCont?.classList.remove('hidden');
+    if (document.getElementById('e2-1-viatico-hora')) document.getElementById('e2-1-viatico-hora').textContent = det.horaEvento;
+  } else {
+    horaCont?.classList.add('hidden');
+  }
+
+  if (document.getElementById('e2-1-viatico-tipo-sol')) document.getElementById('e2-1-viatico-tipo-sol').textContent = det.tipoSolicitud || 'Personal';
+  if (document.getElementById('e2-1-viatico-destinatario')) document.getElementById('e2-1-viatico-destinatario').textContent = det.destinatario || det.nombreSolicitante || '-';
+  if (document.getElementById('e2-1-viatico-monto')) document.getElementById('e2-1-viatico-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('e2-1-viatico-clasificacion')) document.getElementById('e2-1-viatico-clasificacion').textContent = det.clasificacionSolicitud || 'Anticipo';
+  
+  // Tabla de Destinatarios y Pagos
+  if (document.getElementById('e2-1-tb-destinatario')) document.getElementById('e2-1-tb-destinatario').textContent = det.destinatario || det.nombreSolicitante || '-';
+  if (document.getElementById('e2-1-tb-monto')) document.getElementById('e2-1-tb-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('e2-1-banco')) document.getElementById('e2-1-banco').textContent = det.banco || '-';
+  if (document.getElementById('e2-1-tipo-cuenta')) document.getElementById('e2-1-tipo-cuenta').textContent = det.tipoCuenta || '-';
+  if (document.getElementById('e2-1-num-cuenta')) document.getElementById('e2-1-num-cuenta').textContent = det.numeroCuenta || '-';
+  if (document.getElementById('e2-1-motivo')) document.getElementById('e2-1-motivo').textContent = det.motivoViatico || '-';
+
+  // Bloque 3: Info Solicitud & Provisión (Tarjetas de Métricas)
+  if (document.getElementById('e2-1-info-id')) document.getElementById('e2-1-info-id').textContent = det.idSolicitud || '-';
+  if (document.getElementById('e2-1-info-monto')) document.getElementById('e2-1-info-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('e2-1-info-fecha-creacion')) document.getElementById('e2-1-info-fecha-creacion').textContent = formatearFechaE2(det.fechaSolicitud) || '-';
+  if (document.getElementById('e2-1-info-rubro')) document.getElementById('e2-1-info-rubro').textContent = det.rubroContable || '8110050400000 - Viáticos y Movilidad';
+  if (document.getElementById('e2-1-info-clasificacion')) document.getElementById('e2-1-info-clasificacion').textContent = det.clasificacionSolicitud || 'Anticipo';
+
+  const esEdit = (det.esEditado === 'Si' || det.esEditado === 'SI' || det.es_editado === 'Si');
+  const badgeEdit = document.getElementById('e2-1-es-editado-badge');
+  if (badgeEdit) {
+    if (esEdit) {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1';
+      badgeEdit.innerHTML = '<span class="material-symbols-outlined text-xs text-amber-700">warning</span> Modificado manualmente';
+    } else {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300';
+      badgeEdit.textContent = 'Normal';
+    }
+  }
+
+  // Asiento Provisión
+  if (document.getElementById('e2-1-prov-fcontable')) document.getElementById('e2-1-prov-fcontable').textContent = formatearFechaE2(det.fechaContableProvision) || '-';
+  if (document.getElementById('e2-1-prov-fvalor')) document.getElementById('e2-1-prov-fvalor').textContent = formatearFechaE2(det.fechaValorProvision) || '-';
+  if (document.getElementById('e2-1-prov-modulo')) document.getElementById('e2-1-prov-modulo').textContent = det.moduloProvision || '-';
+  if (document.getElementById('e2-1-prov-transaccion')) document.getElementById('e2-1-prov-transaccion').textContent = det.transaccionProvision || '-';
+  if (document.getElementById('e2-1-prov-codrelacion')) document.getElementById('e2-1-prov-codrelacion').textContent = det.codigoRelacionProvision || '-';
+  if (document.getElementById('e2-1-prov-crfse')) document.getElementById('e2-1-prov-crfse').textContent = det.crFseProvision || '-';
+
+  // Archivos
+  const listaArch = document.getElementById('e2-1-archivos-lista');
+  if (listaArch) {
+    if (det.archivosAdjuntos && det.archivosAdjuntos.length > 0) {
+      listaArch.innerHTML = det.archivosAdjuntos.map(arch => `
+        <a href="${arch.LinkArchivo || '#'}" target="_blank" class="flex items-center gap-2 p-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors shadow-xs">
+          <i class="fas fa-paperclip text-primary text-base"></i>
+          <span class="text-xs font-semibold text-primary truncate flex-1">${arch.NombreArchivo || 'Archivo adjunto'}</span>
+          <span class="material-symbols-outlined text-xs text-outline">open_in_new</span>
+        </a>
+      `).join('');
+    } else {
+      listaArch.innerHTML = '<span class="text-xs text-outline italic col-span-full">No hay archivos adjuntos.</span>';
+    }
+  }
+
+  // Bloque 4: Tabla Autorizaciones
+  const tablaAut = document.getElementById('e2-1-tabla-autorizaciones');
+  if (tablaAut) {
+    if (det.datosAutorizacion && det.datosAutorizacion.length > 0) {
+      tablaAut.innerHTML = det.datosAutorizacion.map(aut => `
+        <tr class="hover:bg-surface-container-low transition-colors">
+          <td class="py-2.5 px-4 text-center font-semibold text-primary">${aut.nombre || ('Nivel ' + aut.nivel)}</td>
+          <td class="py-2.5 px-4 text-center text-on-surface-variant">${aut.fecha || '-'}</td>
+          <td class="py-2.5 px-4 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${aut.resolucion === 'APROBADO' ? 'bg-emerald-100 text-emerald-800' : aut.resolucion === 'JUSTIFICADO' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+              ${aut.resolucion || 'REGISTRADO'}
+            </span>
+          </td>
+          <td class="py-2.5 px-4 text-left text-on-surface leading-relaxed">${aut.comentario || '-'}</td>
+        </tr>
+      `).join('');
+    } else {
+      tablaAut.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-outline italic">Sin registros de autorización previa.</td></tr>`;
+    }
+  }
+
+  // Bloque 5: Tabla Provisión Compras
+  if (document.getElementById('e2-1-prov-nombre')) document.getElementById('e2-1-prov-nombre').textContent = det.nombreProvision || 'Compras';
+  if (document.getElementById('e2-1-prov-fecha')) document.getElementById('e2-1-prov-fecha').textContent = formatearFechaE2(det.fechaProvision) || '-';
+  if (document.getElementById('e2-1-prov-comentario')) document.getElementById('e2-1-prov-comentario').textContent = det.comentarioProvision || 'Provisión contable procesada.';
+
+  // Pre-llenar valores previos de resolución
+  if (det.resolucionProcesamiento) {
+    document.getElementById('e2-1-resolucion-select').value = det.resolucionProcesamiento;
+    document.getElementById('e2-1-comentario-input').value = det.comentarioProcesamiento || '';
+    handleCambioResolucionE2_1(det.resolucionProcesamiento);
+  }
+}
+
+function activarSeccionResponderE2_1() {
+  document.getElementById('e2-1-seccion-responder')?.classList.remove('hidden');
+  document.getElementById('e2-1-btn-responder')?.classList.add('hidden');
+  document.getElementById('e2-1-btn-imprimir')?.classList.add('hidden');
+  document.getElementById('e2-1-btn-guardar')?.classList.remove('hidden');
+  document.getElementById('e2-1-resolucion-select')?.focus();
+}
+
+function handleCambioResolucionE2_1(val) {
+  const reqSpan = document.getElementById('e2-1-comentario-required');
+  const errSpan = document.getElementById('e2-1-comentario-error');
+  errSpan?.classList.add('hidden');
+
+  if (val && val !== 'Aprobado') {
+    reqSpan?.classList.remove('hidden');
+  } else {
+    reqSpan?.classList.add('hidden');
+  }
+}
+
+function abrirModalConfirmarResolucionE2_1() {
+  const resolucion = document.getElementById('e2-1-resolucion-select')?.value;
+  const comentario = (document.getElementById('e2-1-comentario-input')?.value || '').trim();
+  const errSpan = document.getElementById('e2-1-comentario-error');
+
+  if (!resolucion) {
+    alert('Debe seleccionar una resolución de procesamiento de pago.');
+    document.getElementById('e2-1-resolucion-select')?.focus();
+    return;
+  }
+
+  if (resolucion !== 'Aprobado' && !comentario) {
+    errSpan?.classList.remove('hidden');
+    document.getElementById('e2-1-comentario-input')?.focus();
+    return;
+  }
+
+  const modalTxt = document.getElementById('e2-1-modal-confirmar-text');
+  if (modalTxt) {
+    modalTxt.innerHTML = `¿Está seguro que desea registrar la resolución de pago como <b>${resolucion}</b> para la solicitud <b>${e2_solicitud_actual?.idSolicitud}</b>?`;
+  }
+
+  document.getElementById('e2-1-modal-confirmar')?.classList.remove('hidden');
+}
+
+function cerrarModalConfirmarResolucionE2_1() {
+  document.getElementById('e2-1-modal-confirmar')?.classList.add('hidden');
+}
+
+function confirmarGuardarResolucionE2_1() {
+  const btn = document.getElementById('e2-1-btn-modal-ejecutar');
+  const idSolicitud = e2_solicitud_actual?.idSolicitud;
+  const resolucion = document.getElementById('e2-1-resolucion-select')?.value;
+  const comentario = (document.getElementById('e2-1-comentario-input')?.value || '').trim();
+  const nombreUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.NombreGoogle) ? window.DATOS_USUARIO.NombreGoogle : 'Editor Tesorería';
+
+  if (!idSolicitud || !resolucion) return;
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Guardando...`;
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Guardar`;
+        cerrarModalConfirmarResolucionE2_1();
+
+        if (resp && resp.status === 'OK') {
+          mostrarAlertaE2_1(resp.mensaje || 'Resolución guardada exitosamente.', 'success');
+          setTimeout(() => {
+            navegarSubmenu('view-e2-procesamiento');
+            cargarSolicitudesProcesamientoE2();
+          }, 1800);
+        } else {
+          mostrarAlertaE2_1((resp && resp.mensaje) || 'Error al procesar la resolución.', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Guardar`;
+        cerrarModalConfirmarResolucionE2_1();
+        mostrarAlertaE2_1('Error de servidor: ' + err.toString(), 'error');
+      })
+      .guardarResolucionProcesamientoE2_1(idSolicitud, resolucion, comentario, nombreUsuario);
+  } else {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Guardar`;
+      cerrarModalConfirmarResolucionE2_1();
+      mostrarAlertaE2_1('Resolución guardada exitosamente (Modo Local).', 'success');
+      setTimeout(() => {
+        navegarSubmenu('view-e2-procesamiento');
+      }, 1500);
+    }, 700);
+  }
+}
+
+function mostrarAlertaE2_1(mensaje, tipo) {
+  const box = document.getElementById('e2-1-alert-box');
+  const txt = document.getElementById('e2-1-alert-text');
+  if (!box || !txt) return;
+
+  txt.textContent = mensaje;
+  box.classList.remove('hidden', 'bg-emerald-600', 'bg-error');
+
+  if (tipo === 'success') {
+    box.classList.add('bg-emerald-600');
+  } else {
+    box.classList.add('bg-error');
+  }
+
+  box.style.display = 'block';
+  setTimeout(() => {
+    box.style.display = 'none';
+  }, 4000);
+}
+</script>

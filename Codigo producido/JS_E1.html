@@ -1,0 +1,902 @@
+<script>
+/**
+ * =====================================================================
+ * JS_E1.html - CONTROLADOR DE PROVISIÓN DE PAGOS (E1 & E1.1)
+ * =====================================================================
+ */
+
+let e1_solicitudes = [];
+let e1_filtradas = [];
+let e1_page = 1;
+let e1_page_size = 10;
+let e1_sort_desc = true;
+let e1_rango_fechas = { start: '', end: '' };
+let e1_seleccionadas = new Set();
+let e1_solicitud_actual = null;
+let e1_comprobante_base64 = null;
+
+/**
+ * Carga las solicitudes autorizadas o devueltas para provisión de pagos.
+ */
+function cargarSolicitudesProvisionE1() {
+  const tbody = document.getElementById('tabla-e1-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="py-10 text-center align-middle bg-surface">
+        <div class="flex items-center justify-center gap-2 text-primary font-medium text-sm">
+          <span class="material-symbols-outlined animate-spin text-xl text-secondary-container">progress_activity</span>
+          Cargando solicitudes de provisión...
+        </div>
+      </td>
+    </tr>
+  `;
+
+  e1_seleccionadas.clear();
+  actualizarBotonAgruparE1();
+
+  const correoUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.CorreoGoogle) ? window.DATOS_USUARIO.CorreoGoogle : '';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          e1_solicitudes = resp.solicitudes || [];
+          filtrarTablaE1();
+        } else {
+          mostrarErrorTablaE1((resp && resp.mensaje) || 'No se pudieron cargar las solicitudes.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarErrorTablaE1('Error de comunicación: ' + err.toString());
+      })
+      .obtenerSolicitudesProvisionE1(correoUsuario);
+  } else {
+    // Mock local para previsualización
+    e1_solicitudes = [
+      {
+        idSolicitud: 'SOL-2026-0002',
+        solicitante: 'Carlos Mendoza',
+        correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+        monto: 220.00,
+        montoFormatted: '$ 220.00',
+        centroCosto: '406 - Compras y Provisiones',
+        codigoCC: '406',
+        fechaSolicitud: '14/08/2026 11:20',
+        fechaModificacion: '14/08/2026 11:20',
+        estadoSolicitud: 'AUTORIZADO',
+        tipoViatico: 'Transporte',
+        clasificacionSolicitud: 'Anticipo',
+        resolucionProvision: 'Aprobado',
+        comentarioProvision: 'Validado con presupuesto departamental.',
+        esAgrupable: true
+      },
+      {
+        idSolicitud: 'SOL-2026-0003',
+        solicitante: 'Ana Ramos',
+        correoSolicitante: 'ana.ramos@bancointegral.com.sv',
+        monto: 95.50,
+        montoFormatted: '$ 95.50',
+        centroCosto: '101 - TI',
+        codigoCC: '101',
+        fechaSolicitud: '13/08/2026 09:00',
+        fechaModificacion: '13/08/2026 15:30',
+        estadoSolicitud: 'RECHAZO-PAGO 2',
+        tipoViatico: 'Alimentación por visitas agencias',
+        clasificacionSolicitud: 'Anticipo',
+        resolucionProvision: '',
+        comentarioProvision: '',
+        esAgrupable: false
+      }
+    ];
+    filtrarTablaE1();
+  }
+}
+
+function mostrarErrorTablaE1(mensaje) {
+  const tbody = document.getElementById('tabla-e1-body');
+  if (!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="py-8 text-center text-error bg-error-container/20 text-sm font-semibold">
+        ${mensaje}
+      </td>
+    </tr>
+  `;
+}
+
+/**
+ * Filtra reactivamente la lista de provisión.
+ */
+function filtrarTablaE1() {
+  const filterId = (document.getElementById('filter-e1-id')?.value || '').toLowerCase().trim();
+  const filterSol = (document.getElementById('filter-e1-solicitante')?.value || '').toLowerCase().trim();
+  const filterType = (document.getElementById('filter-e1-type')?.value || '').toLowerCase().trim();
+  const filterClassification = (document.getElementById('filter-e1-classification')?.value || '').toLowerCase().trim();
+  const filterCC = (document.getElementById('filter-e1-cc')?.value || '').toLowerCase().trim();
+
+  e1_filtradas = e1_solicitudes.filter(item => {
+    if (filterId && !(item.idSolicitud || '').toLowerCase().includes(filterId)) return false;
+    if (filterSol && !(item.solicitante || '').toLowerCase().includes(filterSol)) return false;
+    if (filterType && !(item.tipoViatico || '').toLowerCase().includes(filterType)) return false;
+    if (filterClassification && (item.clasificacionSolicitud || '').toLowerCase() !== filterClassification) return false;
+    if (filterCC && !(item.codigoCC || '').toLowerCase().includes(filterCC)) return false;
+
+    // Filtro Fechas
+    if (e1_rango_fechas.start || e1_rango_fechas.end) {
+      const fechaItem = parseFechaE1(item.fechaSolicitud);
+      if (fechaItem) {
+        if (e1_rango_fechas.start) {
+          const dtStart = new Date(e1_rango_fechas.start + 'T00:00:00');
+          if (fechaItem < dtStart) return false;
+        }
+        if (e1_rango_fechas.end) {
+          const dtEnd = new Date(e1_rango_fechas.end + 'T23:59:59');
+          if (fechaItem > dtEnd) return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
+  e1_filtradas.sort((a, b) => {
+    const fA = parseFechaE1(a.fechaSolicitud) || new Date(0);
+    const fB = parseFechaE1(b.fechaSolicitud) || new Date(0);
+    return e1_sort_desc ? (fB - fA) : (fA - fB);
+  });
+
+  e1_page = 1;
+  renderTablaE1();
+}
+
+/**
+ * Normaliza y formatea cualquier formato de fecha a 'dd/mm/aaaa'.
+ */
+function formatearFechaE1(fechaStr) {
+  if (!fechaStr) return '-';
+  const str = fechaStr.toString().trim();
+  if (!str) return '-';
+  
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(str)) {
+    return str.split(' ')[0];
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.split('T')[0].split(' ')[0].split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const dia = ('0' + d.getDate()).slice(-2);
+    const mes = ('0' + (d.getMonth() + 1)).slice(-2);
+    const anio = d.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  }
+  return str;
+}
+
+function parseFechaE1(str) {
+  if (!str) return null;
+  if (str.includes('/')) {
+    const parts = str.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+  }
+  if (str.includes('-')) {
+    const parts = str.split('T')[0].split(' ')[0].split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Renderiza filas en el DOM para E1 alineadas a Diseño UI/Editores/E1 Provision de pagos.html.
+ */
+function renderTablaE1() {
+  const tbody = document.getElementById('tabla-e1-body');
+  const noResults = document.getElementById('e1-no-results-row');
+  const countLabel = document.getElementById('e1-solicitudes-count');
+  const paginationControls = document.getElementById('e1-pagination-controls');
+
+  if (!tbody) return;
+
+  if (e1_filtradas.length === 0) {
+    tbody.innerHTML = '';
+    noResults?.classList.remove('hidden');
+    if (countLabel) countLabel.textContent = 'Mostrando 0 de 0 solicitudes';
+    if (paginationControls) paginationControls.innerHTML = '';
+    return;
+  }
+
+  noResults?.classList.add('hidden');
+
+  const total = e1_filtradas.length;
+  const totalPages = Math.ceil(total / e1_page_size) || 1;
+  if (e1_page > totalPages) e1_page = totalPages;
+
+  const startIdx = (e1_page - 1) * e1_page_size;
+  const endIdx = Math.min(startIdx + e1_page_size, total);
+  const itemsPagina = e1_filtradas.slice(startIdx, endIdx);
+
+  if (countLabel) {
+    countLabel.textContent = `Mostrando ${startIdx + 1}-${endIdx} de ${total} solicitudes`;
+  }
+
+  tbody.innerHTML = itemsPagina.map(item => {
+    const isAutorizado = (item.estadoSolicitud || '').toUpperCase() === 'AUTORIZADO';
+    const badgeEstado = isAutorizado
+      ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>AUTORIZADO</span>'
+      : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>RECHAZO-PAGO 2</span>';
+
+    const badgeClasif = item.clasificacionSolicitud === 'Reintegro'
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800">Reintegro</span>'
+      : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">Anticipo</span>';
+
+    const isChecked = e1_seleccionadas.has(item.idSolicitud);
+    const checkboxHtml = item.esAgrupable
+      ? `<input type="checkbox" class="w-4 h-4 rounded border-outline-variant text-secondary-container focus:ring-secondary-container cursor-pointer" onchange="toggleSelectSolicitudE1('${item.idSolicitud}', this.checked)" ${isChecked ? 'checked' : ''} title="Seleccionar para agrupar">`
+      : `<span class="w-4 h-4 inline-block" title="Requiere resolución 'Aprobado' en detalle para habilitar agrupación"></span>`;
+
+    const fCreacion = formatearFechaE1(item.fechaSolicitud);
+    const fMod = formatearFechaE1(item.fechaModificacion);
+    const mostrarMod = fMod && fMod !== '-' && fMod !== fCreacion;
+
+    return `
+      <tr class="hover:bg-surface-container-low transition-colors ${isChecked ? 'bg-secondary-container/5' : ''}">
+        <td class="py-3 px-3 text-center font-bold text-primary text-xs align-middle">
+          ${item.idSolicitud}
+        </td>
+        <td class="py-3 px-3 text-center text-xs text-on-surface-variant align-middle">
+          <div class="font-medium text-on-surface flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[13px] text-primary">calendar_today</span>
+            <span>${fCreacion}</span>
+          </div>
+          ${mostrarMod ? `<div class="text-[10px] text-outline mt-0.5 font-normal">Mod: ${fMod}</div>` : ''}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.solicitante}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.tipoViatico}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-bold text-primary align-middle">
+          ${item.montoFormatted || ('$ ' + parseFloat(item.monto || 0).toFixed(2))}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-bold text-on-surface-variant align-middle">
+          <span class="bg-surface-container px-2 py-0.5 rounded font-mono text-[11px]">${item.codigoCC || '-'}</span>
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeEstado}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeClasif}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          <div class="flex items-center justify-center gap-2">
+            ${checkboxHtml}
+            <button onclick="verDetalleProvisionE1('${item.idSolicitud}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary-container text-on-primary hover:bg-primary text-xs font-bold transition-colors cursor-pointer shadow-xs">
+              <span class="material-symbols-outlined text-sm">visibility</span>
+              Ver detalles
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginacionE1(totalPages);
+}
+
+function toggleSelectSolicitudE1(id, checked) {
+  if (checked) {
+    e1_seleccionadas.add(id);
+  } else {
+    e1_seleccionadas.delete(id);
+  }
+  actualizarBotonAgruparE1();
+  renderTablaE1();
+}
+
+function actualizarBotonAgruparE1() {
+  const btn = document.getElementById('btn-e1-agrupar');
+  const countSpan = document.getElementById('e1-selected-count');
+  const count = e1_seleccionadas.size;
+
+  if (countSpan) countSpan.textContent = count;
+  if (btn) {
+    btn.disabled = (count === 0);
+  }
+}
+
+function renderPaginacionE1(totalPages) {
+  const container = document.getElementById('e1-pagination-controls');
+  if (!container) return;
+
+  let html = '';
+  html += `
+    <button onclick="cambiarPaginaE1(${e1_page - 1})" ${e1_page === 1 ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Anterior
+    </button>
+  `;
+
+  for (let p = 1; p <= totalPages; p++) {
+    if (totalPages > 6 && Math.abs(p - e1_page) > 2 && p !== 1 && p !== totalPages) {
+      if (p === 2 || p === totalPages - 1) html += `<span class="px-1 text-xs text-outline">...</span>`;
+      continue;
+    }
+    const isActive = (p === e1_page);
+    html += `
+      <button onclick="cambiarPaginaE1(${p})" class="px-3 py-1 border ${isActive ? 'bg-primary-container text-on-primary border-primary-container font-bold' : 'border-outline-variant hover:bg-surface-container text-on-surface'} rounded text-xs transition-colors cursor-pointer">
+        ${p}
+      </button>
+    `;
+  }
+
+  html += `
+    <button onclick="cambiarPaginaE1(${e1_page + 1})" ${e1_page === totalPages ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Siguiente
+    </button>
+  `;
+
+  container.innerHTML = html;
+}
+
+function cambiarPaginaE1(p) {
+  e1_page = p;
+  renderTablaE1();
+}
+
+function cambiarPageSizeE1(size) {
+  e1_page_size = parseInt(size) || 10;
+  e1_page = 1;
+  renderTablaE1();
+}
+
+function toggleSortDateE1() {
+  e1_sort_desc = !e1_sort_desc;
+  const icon = document.getElementById('sort-icon-e1');
+  if (icon) icon.textContent = e1_sort_desc ? 'arrow_downward' : 'arrow_upward';
+  filtrarTablaE1();
+}
+
+function limpiarFiltrosE1() {
+  const fields = ['filter-e1-id', 'filter-e1-solicitante', 'filter-e1-type', 'filter-e1-classification', 'filter-e1-cc', 'filter-e1-date'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  limpiarRangoFechasE1();
+}
+
+function toggleDateDropdownE1() {
+  const dropdown = document.getElementById('filter-e1-date-dropdown');
+  dropdown?.classList.toggle('hidden');
+}
+
+function aplicarRangoFechasE1() {
+  const start = document.getElementById('filter-e1-date-start')?.value;
+  const end = document.getElementById('filter-e1-date-end')?.value;
+  const textInput = document.getElementById('filter-e1-date');
+
+  e1_rango_fechas = { start: start || '', end: end || '' };
+
+  if (start && end) {
+    textInput.value = `${start} - ${end}`;
+  } else if (start) {
+    textInput.value = `>= ${start}`;
+  } else if (end) {
+    textInput.value = `<= ${end}`;
+  } else {
+    textInput.value = '';
+  }
+
+  document.getElementById('filter-e1-date-dropdown')?.classList.add('hidden');
+  filtrarTablaE1();
+}
+
+function limpiarRangoFechasE1() {
+  const start = document.getElementById('filter-e1-date-start');
+  const end = document.getElementById('filter-e1-date-end');
+  const textInput = document.getElementById('filter-e1-date');
+
+  if (start) start.value = '';
+  if (end) end.value = '';
+  if (textInput) textInput.value = '';
+
+  e1_rango_fechas = { start: '', end: '' };
+  document.getElementById('filter-e1-date-dropdown')?.classList.add('hidden');
+  filtrarTablaE1();
+}
+
+// ---------------------------------------------------------------------
+// MODAL DE AGRUPACIÓN (E1)
+// ---------------------------------------------------------------------
+
+function abrirModalAgruparE1() {
+  if (e1_seleccionadas.size === 0) return;
+
+  const countSpan = document.getElementById('modal-e1-count');
+  const montoSpan = document.getElementById('modal-e1-monto-total');
+  const listaContainer = document.getElementById('modal-e1-lista-ids');
+  const errBox = document.getElementById('e1-asiento-error');
+
+  errBox?.classList.add('hidden');
+  e1_comprobante_base64 = null;
+  document.getElementById('form-e1-asiento')?.reset();
+
+  const hoyISO = new Date().toISOString().split('T')[0];
+  const inputContable = document.getElementById('e1-asiento-fecha-contable');
+  const inputValor = document.getElementById('e1-asiento-fecha-valor');
+  if (inputContable) inputContable.value = hoyISO;
+  if (inputValor) inputValor.value = hoyISO;
+
+  let totalMonto = 0;
+  const idsArr = Array.from(e1_seleccionadas);
+  
+  if (listaContainer) {
+    listaContainer.innerHTML = idsArr.map(id => {
+      const item = e1_solicitudes.find(s => s.idSolicitud === id);
+      if (item) totalMonto += parseFloat(item.monto || 0);
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-on-primary font-mono">${id}</span>`;
+    }).join('');
+  }
+
+  if (countSpan) countSpan.textContent = idsArr.length;
+  if (montoSpan) montoSpan.textContent = '$ ' + totalMonto.toFixed(2) + ' USD';
+
+  document.getElementById('e1-modal-agrupar')?.classList.remove('hidden');
+}
+
+function cerrarModalAgruparE1() {
+  document.getElementById('e1-modal-agrupar')?.classList.add('hidden');
+}
+
+function handleFileAsientoE1(input) {
+  const file = input.files?.[0];
+  if (!file) {
+    e1_comprobante_base64 = null;
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    e1_comprobante_base64 = {
+      NombreArchivo: file.name,
+      TipoArchivo: file.type || 'application/pdf',
+      ContenidoBase64: e.target.result
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function confirmarGuardarAgrupacionE1() {
+  const btn = document.getElementById('btn-modal-guardar-e1');
+  const errBox = document.getElementById('e1-asiento-error');
+
+  const fContableRaw = document.getElementById('e1-asiento-fecha-contable')?.value;
+  const fValorRaw = document.getElementById('e1-asiento-fecha-valor')?.value;
+  const modulo = (document.getElementById('e1-asiento-modulo')?.value || '').trim();
+  const transaccion = (document.getElementById('e1-asiento-transaccion')?.value || '').trim();
+  const codigoRelacion = (document.getElementById('e1-asiento-codigo-relacion')?.value || '').trim();
+  const crFse = (document.getElementById('e1-asiento-cr-fse')?.value || '').trim();
+
+  if (!fContableRaw || !fValorRaw || !modulo || !transaccion || !codigoRelacion) {
+    if (errBox) {
+      errBox.textContent = 'Por favor complete todos los campos obligatorios (*).';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (!e1_comprobante_base64) {
+    if (errBox) {
+      errBox.textContent = 'Debe adjuntar el archivo de comprobante del asiento contable.';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  // Formato dd/mm/aaaa
+  const cParts = fContableRaw.split('-');
+  const fContable = `${cParts[2]}/${cParts[1]}/${cParts[0]}`;
+  const vParts = fValorRaw.split('-');
+  const fValor = `${vParts[2]}/${vParts[1]}/${vParts[0]}`;
+
+  const datosAsiento = {
+    fechaContable: fContable,
+    fechaValor: fValor,
+    modulo: modulo,
+    transaccion: transaccion,
+    codigoRelacion: codigoRelacion,
+    crFse: crFse
+  };
+
+  const idsArr = Array.from(e1_seleccionadas);
+  const nombreUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.NombreGoogle) ? window.DATOS_USUARIO.NombreGoogle : 'Editor Compras';
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Guardando...`;
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">save</span> Guardar Agrupación`;
+        cerrarModalAgruparE1();
+
+        if (resp && resp.status === 'OK') {
+          alert(resp.mensaje || 'Agrupación contable registrada exitosamente.');
+          e1_seleccionadas.clear();
+          cargarSolicitudesProvisionE1();
+        } else {
+          alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo guardar la agrupación.'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">save</span> Guardar Agrupación`;
+        alert('Error de servidor: ' + err.toString());
+      })
+      .guardarAgrupacionProvisionE1(idsArr, datosAsiento, e1_comprobante_base64, nombreUsuario);
+  } else {
+    // Simulación local
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">save</span> Guardar Agrupación`;
+      cerrarModalAgruparE1();
+
+      // Mutar array en memoria para que las seleccionadas pasen a ENVIADO A PAGO
+      if (typeof e1_solicitudes !== 'undefined' && Array.isArray(e1_solicitudes)) {
+        idsArr.forEach(id => {
+          const item = e1_solicitudes.find(s => s.idSolicitud === id);
+          if (item) {
+            item.estadoSolicitud = 'ENVIADO A PAGO';
+            item.actorActual = 'Tesoreria';
+            item.fechaProvision = new Date().toLocaleDateString('es-SV');
+            item.nombreProvision = nombreUsuario;
+            item.agrupableProvision = JSON.stringify(datosAsiento);
+          }
+        });
+      }
+
+      alert(`Agrupación simulada de ${idsArr.length} solicitudes completada (Modo Local). Las solicitudes han pasado al estado ENVIADO A PAGO.`);
+      e1_seleccionadas.clear();
+      filtrarTablaE1();
+    }, 900);
+  }
+}
+
+// ---------------------------------------------------------------------
+// DETALLE Y RESOLUCIÓN (E1.1)
+// ---------------------------------------------------------------------
+
+function verDetalleProvisionE1(idSolicitud) {
+  mostrarSubvista('view-e1-1-detalle', `Provisión - ${idSolicitud}`);
+
+  document.getElementById('e1-1-id-badge').textContent = idSolicitud;
+  document.getElementById('e1-1-status-badge').innerHTML = '';
+  document.getElementById('e1-1-seccion-rechazo-pago')?.classList.add('hidden');
+  
+  // Ocultar sección responder por defecto
+  document.getElementById('e1-1-seccion-responder')?.classList.add('hidden');
+  document.getElementById('e1-1-btn-responder')?.classList.remove('hidden');
+  document.getElementById('e1-1-btn-imprimir')?.classList.remove('hidden');
+  document.getElementById('e1-1-btn-guardar')?.classList.add('hidden');
+  document.getElementById('e1-1-resolucion-select').value = '';
+  document.getElementById('e1-1-comentario-input').value = '';
+  document.getElementById('e1-1-comentario-error')?.classList.add('hidden');
+  document.getElementById('e1-1-comentario-required')?.classList.add('hidden');
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          poblarFormularioE1_1(resp);
+        } else {
+          alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo cargar el detalle.'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Error de conexión: ' + err.toString());
+      })
+      .obtenerDetalleProvisionE1_1(idSolicitud);
+  } else {
+    // Mock local
+    const mock = {
+      idSolicitud: idSolicitud,
+      nombreSolicitante: 'Carlos Mendoza',
+      correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+      cargoSolicitante: 'Analista de Operaciones',
+      gerencia: 'GERENCIA DE OPERACIONES',
+      centroCosto: '406 - Compras y Provisiones',
+      agencia: 'Oficina Central',
+      duracionActividad: 'Día único',
+      fechaInicio: '14/08/2026',
+      fechaFin: '14/08/2026',
+      tipoViatico: 'Transporte',
+      horaEvento: '',
+      tipoSolicitud: 'Personal',
+      destinatario: 'Carlos Mendoza',
+      monto: 220.00,
+      montoFormatted: '$ 220.00',
+      banco: 'Banco Cuscatlán',
+      tipoCuenta: 'Corriente',
+      numeroCuenta: '0981234567',
+      motivoViatico: 'Traslado a agencias regionales de Santa Ana para arqueo de caja.',
+      rubroContable: '8110050400000 - Viáticos y Movilidad',
+      clasificacionSolicitud: 'Anticipo',
+      esEditado: 'No',
+      estadoSolicitud: 'AUTORIZADO',
+      fechaSolicitud: '14/08/2026 11:20',
+      fechaModificacion: '14/08/2026 11:20',
+      archivosAdjuntos: [
+        { NombreArchivo: 'Itinerario_Visita.pdf', LinkArchivo: '#' }
+      ],
+      datosAutorizacion: [
+        { nivel: 1, nombre: 'Jefe Inmediato', fecha: '14/08/2026 12:00', resolucion: 'APROBADO', comentario: 'Conforme con el itinerario presentado.' }
+      ],
+      resolucionProvision: 'Aprobado',
+      comentarioProvision: 'Validado con presupuesto departamental.'
+    };
+    poblarFormularioE1_1(mock);
+  }
+}
+
+function poblarFormularioE1_1(det) {
+  e1_solicitud_actual = det;
+
+  document.getElementById('e1-1-id-badge').textContent = det.idSolicitud;
+  
+  const isAutorizado = (det.estadoSolicitud || '').toUpperCase() === 'AUTORIZADO';
+  document.getElementById('e1-1-status-badge').innerHTML = isAutorizado
+    ? '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>AUTORIZADO</span>'
+    : '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>RECHAZO-PAGO 2</span>';
+
+  // Bloque 1: Solicitante (Inputs limpios bg-white)
+  if (document.getElementById('e1-1-sol-nombre')) document.getElementById('e1-1-sol-nombre').value = det.nombreSolicitante || '';
+  if (document.getElementById('e1-1-sol-correo')) document.getElementById('e1-1-sol-correo').value = det.correoSolicitante || '';
+  if (document.getElementById('e1-1-sol-cargo')) document.getElementById('e1-1-sol-cargo').value = det.cargoSolicitante || '';
+  if (document.getElementById('e1-1-sol-gerencia')) document.getElementById('e1-1-sol-gerencia').value = det.gerencia || '';
+  if (document.getElementById('e1-1-sol-cc')) document.getElementById('e1-1-sol-cc').value = det.centroCosto || '';
+  if (document.getElementById('e1-1-sol-agencia')) document.getElementById('e1-1-sol-agencia').value = det.agencia || '';
+
+  // Bloque 2: Detalle Viático (Spans de Texto)
+  if (document.getElementById('e1-1-viatico-duracion')) document.getElementById('e1-1-viatico-duracion').textContent = det.duracionActividad || 'Día único';
+  if (document.getElementById('e1-1-viatico-fecha-ini')) document.getElementById('e1-1-viatico-fecha-ini').textContent = formatearFechaE1(det.fechaInicio) || '-';
+  if (document.getElementById('e1-1-viatico-fecha-fin')) document.getElementById('e1-1-viatico-fecha-fin').textContent = formatearFechaE1(det.fechaFin || det.fechaInicio) || '-';
+  if (document.getElementById('e1-1-viatico-tipo')) document.getElementById('e1-1-viatico-tipo').textContent = det.tipoViatico || '-';
+  
+  const horaCont = document.getElementById('e1-1-hora-container');
+  if (det.horaEvento) {
+    horaCont?.classList.remove('hidden');
+    if (document.getElementById('e1-1-viatico-hora')) document.getElementById('e1-1-viatico-hora').textContent = det.horaEvento;
+  } else {
+    horaCont?.classList.add('hidden');
+  }
+
+  if (document.getElementById('e1-1-viatico-tipo-sol')) document.getElementById('e1-1-viatico-tipo-sol').textContent = det.tipoSolicitud || 'Personal';
+  if (document.getElementById('e1-1-viatico-destinatario')) document.getElementById('e1-1-viatico-destinatario').textContent = det.destinatario || det.nombreSolicitante || '-';
+  if (document.getElementById('e1-1-viatico-monto')) document.getElementById('e1-1-viatico-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('e1-1-viatico-clasificacion')) document.getElementById('e1-1-viatico-clasificacion').textContent = det.clasificacionSolicitud || 'Anticipo';
+  
+  // Tabla de Destinatarios y Pagos
+  if (document.getElementById('e1-1-tb-destinatario')) document.getElementById('e1-1-tb-destinatario').textContent = det.destinatario || det.nombreSolicitante || '-';
+  if (document.getElementById('e1-1-tb-monto')) document.getElementById('e1-1-tb-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('e1-1-banco')) document.getElementById('e1-1-banco').textContent = det.banco || '-';
+  if (document.getElementById('e1-1-tipo-cuenta')) document.getElementById('e1-1-tipo-cuenta').textContent = det.tipoCuenta || '-';
+  if (document.getElementById('e1-1-num-cuenta')) document.getElementById('e1-1-num-cuenta').textContent = det.numeroCuenta || '-';
+  if (document.getElementById('e1-1-motivo')) document.getElementById('e1-1-motivo').textContent = det.motivoViatico || '-';
+
+  // Bloque 3: Info Solicitud (Tarjetas de Métricas)
+  if (document.getElementById('e1-1-info-id')) document.getElementById('e1-1-info-id').textContent = det.idSolicitud || '-';
+  if (document.getElementById('e1-1-info-monto')) document.getElementById('e1-1-info-monto').textContent = det.montoFormatted || ('$ ' + parseFloat(det.monto || 0).toFixed(2));
+  if (document.getElementById('e1-1-info-fecha-creacion')) document.getElementById('e1-1-info-fecha-creacion').textContent = formatearFechaE1(det.fechaSolicitud) || '-';
+  if (document.getElementById('e1-1-info-rubro')) document.getElementById('e1-1-info-rubro').textContent = det.rubroContable || '8110050400000 - Viáticos y Movilidad';
+  if (document.getElementById('e1-1-info-clasificacion')) document.getElementById('e1-1-info-clasificacion').textContent = det.clasificacionSolicitud || 'Anticipo';
+
+  const actorProvCont = document.getElementById('e1-1-container-actor-prov');
+  const fechaProvCont = document.getElementById('e1-1-container-fecha-prov');
+  if (det.nombreProvision) {
+    actorProvCont?.classList.remove('hidden');
+    if (document.getElementById('e1-1-info-actor-prov')) document.getElementById('e1-1-info-actor-prov').textContent = det.nombreProvision;
+  } else {
+    actorProvCont?.classList.add('hidden');
+  }
+  if (det.fechaProvision) {
+    fechaProvCont?.classList.remove('hidden');
+    if (document.getElementById('e1-1-info-fecha-prov')) document.getElementById('e1-1-info-fecha-prov').textContent = formatearFechaE1(det.fechaProvision) || det.fechaProvision;
+  } else {
+    fechaProvCont?.classList.add('hidden');
+  }
+
+  const esEdit = (det.esEditado === 'Si' || det.esEditado === 'SI' || det.es_editado === 'Si');
+  const badgeEdit = document.getElementById('e1-1-es-editado-badge');
+  if (badgeEdit) {
+    if (esEdit) {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1';
+      badgeEdit.innerHTML = '<span class="material-symbols-outlined text-xs text-amber-700">warning</span> Modificado manualmente';
+    } else {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300';
+      badgeEdit.textContent = 'Normal';
+    }
+  }
+
+  // Archivos
+  const listaArch = document.getElementById('e1-1-archivos-lista');
+  if (listaArch) {
+    if (det.archivosAdjuntos && det.archivosAdjuntos.length > 0) {
+      listaArch.innerHTML = det.archivosAdjuntos.map(arch => `
+        <a href="${arch.LinkArchivo || '#'}" target="_blank" class="flex items-center gap-2 p-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container transition-colors shadow-xs">
+          <i class="fas fa-paperclip text-primary text-base"></i>
+          <span class="text-xs font-semibold text-primary truncate flex-1">${arch.NombreArchivo || 'Archivo adjunto'}</span>
+          <span class="material-symbols-outlined text-xs text-outline">open_in_new</span>
+        </a>
+      `).join('');
+    } else {
+      listaArch.innerHTML = '<span class="text-xs text-outline italic col-span-full">No hay archivos adjuntos.</span>';
+    }
+  }
+
+  // Bloque 4: Tabla Autorizaciones
+  const tablaAut = document.getElementById('e1-1-tabla-autorizaciones');
+  if (tablaAut) {
+    if (det.datosAutorizacion && det.datosAutorizacion.length > 0) {
+      tablaAut.innerHTML = det.datosAutorizacion.map(aut => `
+        <tr class="hover:bg-surface-container-low transition-colors">
+          <td class="py-2.5 px-4 text-center font-semibold text-primary">${aut.nombre || ('Nivel ' + aut.nivel)}</td>
+          <td class="py-2.5 px-4 text-center text-on-surface-variant">${aut.fecha || '-'}</td>
+          <td class="py-2.5 px-4 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${aut.resolucion === 'APROBADO' ? 'bg-emerald-100 text-emerald-800' : aut.resolucion === 'JUSTIFICADO' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+              ${aut.resolucion || 'REGISTRADO'}
+            </span>
+          </td>
+          <td class="py-2.5 px-4 text-left text-on-surface leading-relaxed">${aut.comentario || '-'}</td>
+        </tr>
+      `).join('');
+    } else {
+      tablaAut.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-outline italic">Sin registros de autorización previa.</td></tr>`;
+    }
+  }
+
+  // Bloque 5: Rechazo Pago 2 (Devolución de Tesorería)
+  const secRechazo = document.getElementById('e1-1-seccion-rechazo-pago');
+  if (det.estadoSolicitud === 'RECHAZO-PAGO 2') {
+    secRechazo?.classList.remove('hidden');
+    document.getElementById('e1-1-proc-nombre').textContent = det.nombreProcesamiento || 'Tesorería';
+    document.getElementById('e1-1-proc-fecha').textContent = det.fechaProcesamiento || '-';
+    document.getElementById('e1-1-proc-comentario').textContent = det.comentarioProcesamiento || 'Devuelto por corrección contable.';
+  } else {
+    secRechazo?.classList.add('hidden');
+  }
+
+  // Pre-llenar valores de resolución previa si existían
+  if (det.resolucionProvision) {
+    document.getElementById('e1-1-resolucion-select').value = det.resolucionProvision;
+    document.getElementById('e1-1-comentario-input').value = det.comentarioProvision || '';
+    handleCambioResolucionE1_1(det.resolucionProvision);
+  }
+}
+
+function activarSeccionResponderE1_1() {
+  document.getElementById('e1-1-seccion-responder')?.classList.remove('hidden');
+  document.getElementById('e1-1-btn-responder')?.classList.add('hidden');
+  document.getElementById('e1-1-btn-imprimir')?.classList.add('hidden');
+  document.getElementById('e1-1-btn-guardar')?.classList.remove('hidden');
+  document.getElementById('e1-1-resolucion-select')?.focus();
+}
+
+function handleCambioResolucionE1_1(val) {
+  const reqSpan = document.getElementById('e1-1-comentario-required');
+  const errSpan = document.getElementById('e1-1-comentario-error');
+  errSpan?.classList.add('hidden');
+
+  if (val && val !== 'Aprobado') {
+    reqSpan?.classList.remove('hidden');
+  } else {
+    reqSpan?.classList.add('hidden');
+  }
+}
+
+function abrirModalConfirmarResolucionE1_1() {
+  const resolucion = document.getElementById('e1-1-resolucion-select')?.value;
+  const comentario = (document.getElementById('e1-1-comentario-input')?.value || '').trim();
+  const errSpan = document.getElementById('e1-1-comentario-error');
+
+  if (!resolucion) {
+    alert('Debe seleccionar una resolución de provisión.');
+    document.getElementById('e1-1-resolucion-select')?.focus();
+    return;
+  }
+
+  if (resolucion !== 'Aprobado' && !comentario) {
+    errSpan?.classList.remove('hidden');
+    document.getElementById('e1-1-comentario-input')?.focus();
+    return;
+  }
+
+  const modalTxt = document.getElementById('e1-1-modal-confirmar-text');
+  if (modalTxt) {
+    modalTxt.innerHTML = `¿Está seguro que desea asentar la resolución como <b>${resolucion}</b> para la solicitud <b>${e1_solicitud_actual?.idSolicitud}</b>?`;
+  }
+
+  document.getElementById('e1-1-modal-confirmar')?.classList.remove('hidden');
+}
+
+function cerrarModalConfirmarResolucionE1_1() {
+  document.getElementById('e1-1-modal-confirmar')?.classList.add('hidden');
+}
+
+function confirmarGuardarResolucionE1_1() {
+  const btn = document.getElementById('e1-1-btn-modal-ejecutar');
+  const idSolicitud = e1_solicitud_actual?.idSolicitud;
+  const resolucion = document.getElementById('e1-1-resolucion-select')?.value;
+  const comentario = (document.getElementById('e1-1-comentario-input')?.value || '').trim();
+  const nombreUsuario = (window.DATOS_USUARIO && window.DATOS_USUARIO.NombreGoogle) ? window.DATOS_USUARIO.NombreGoogle : 'Editor Compras';
+
+  if (!idSolicitud || !resolucion) return;
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Guardando...`;
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Guardar`;
+        cerrarModalConfirmarResolucionE1_1();
+
+        if (resp && resp.status === 'OK') {
+          mostrarAlertaE1_1(resp.mensaje || 'Resolución guardada exitosamente.', 'success');
+          setTimeout(() => {
+            navegarSubmenu('view-e1-provision');
+            cargarSolicitudesProvisionE1();
+          }, 1800);
+        } else {
+          mostrarAlertaE1_1((resp && resp.mensaje) || 'Error al procesar la resolución.', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Guardar`;
+        cerrarModalConfirmarResolucionE1_1();
+        mostrarAlertaE1_1('Error de servidor: ' + err.toString(), 'error');
+      })
+      .guardarResolucionProvisionE1_1(idSolicitud, resolucion, comentario, nombreUsuario);
+  } else {
+    // Modo local
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmar y Guardar`;
+      cerrarModalConfirmarResolucionE1_1();
+      mostrarAlertaE1_1('Resolución guardada exitosamente (Modo Local).', 'success');
+      setTimeout(() => {
+        navegarSubmenu('view-e1-provision');
+      }, 1500);
+    }, 700);
+  }
+}
+
+function mostrarAlertaE1_1(mensaje, tipo) {
+  const box = document.getElementById('e1-1-alert-box');
+  const txt = document.getElementById('e1-1-alert-text');
+  if (!box || !txt) return;
+
+  txt.textContent = mensaje;
+  box.classList.remove('hidden', 'bg-emerald-600', 'bg-error');
+
+  if (tipo === 'success') {
+    box.classList.add('bg-emerald-600');
+  } else {
+    box.classList.add('bg-error');
+  }
+
+  box.style.display = 'block';
+  setTimeout(() => {
+    box.style.display = 'none';
+  }, 4000);
+}
+</script>

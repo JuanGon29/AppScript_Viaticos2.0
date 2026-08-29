@@ -1,0 +1,652 @@
+<script>
+/**
+ * =====================================================================
+ * CONTROLADOR JS: JS_EnCurso.html (SOLICITUDES EN CURSO)
+ * Maneja el visor holístico de solicitudes activas y el expediente
+ * acumulativo progresivo con renderizado condicional.
+ * =====================================================================
+ */
+
+let ec_todas_solicitudes = [];
+let ec_filtradas = [];
+let ec_page = 1;
+let ec_page_size = 10;
+let ec_sort_desc = true;
+
+/**
+ * Carga las solicitudes en curso desde el backend o mock local.
+ */
+function cargarSolicitudesEnCurso() {
+  const tbody = document.getElementById('ec-tabla-body');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="py-8 text-center text-on-surface-variant font-medium">
+          <i class="fas fa-spinner fa-spin mr-2"></i> Cargando solicitudes en curso...
+        </td>
+      </tr>`;
+  }
+
+  const userEmail = (window.APP_STATE && window.APP_STATE.usuarioActivo && window.APP_STATE.usuarioActivo.CorreoUsuario) || '';
+  const userRol = (window.APP_STATE && window.APP_STATE.usuarioActivo && window.APP_STATE.usuarioActivo.RolUsuario_Viaticos) || 'SOLICITANTE';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          ec_todas_solicitudes = resp.solicitudes || [];
+          filtrarTablaEnCurso();
+        } else {
+          mostrarErrorTablaEnCurso((resp && resp.mensaje) || 'No se pudieron cargar las solicitudes en curso.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarErrorTablaEnCurso('Error de conexión: ' + err.toString());
+      })
+      .obtenerSolicitudesEnCurso(userEmail, userRol);
+  } else {
+    // Mock local con datos en diversas etapas activas
+    setTimeout(() => {
+      ec_todas_solicitudes = [
+        {
+          idSolicitud: 'SOL-2026-001',
+          solicitante: 'Carlos Mendoza',
+          correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+          monto: 45.00,
+          montoFormatted: '$ 45.00',
+          codigoCC: 'CC-102',
+          fechaSolicitud: '14/08/2026 09:30',
+          fechaModificacion: '14/08/2026 09:30',
+          estadoSolicitud: 'INICIADO',
+          actorActual: 'Autorizador 1',
+          tipoViatico: 'Alimentación',
+          clasificacionSolicitud: 'Anticipo',
+          esEditado: 'No'
+        },
+        {
+          idSolicitud: 'SOL-2026-002',
+          solicitante: 'María Fernanda López',
+          correoSolicitante: 'maria.lopez@bancointegral.com.sv',
+          monto: 120.50,
+          montoFormatted: '$ 120.50',
+          codigoCC: 'CC-205',
+          fechaSolicitud: '14/08/2026 10:15',
+          fechaModificacion: '14/08/2026 11:00',
+          estadoSolicitud: 'AUTORIZADO',
+          actorActual: 'Compras',
+          tipoViatico: 'Transporte',
+          clasificacionSolicitud: 'Anticipo',
+          esEditado: 'Si'
+        },
+        {
+          idSolicitud: 'SOL-2026-003',
+          solicitante: 'Roberto González',
+          correoSolicitante: 'roberto.gonzalez@bancointegral.com.sv',
+          monto: 85.00,
+          montoFormatted: '$ 85.00',
+          codigoCC: 'CC-301',
+          fechaSolicitud: '14/08/2026 11:20',
+          fechaModificacion: '14/08/2026 14:00',
+          estadoSolicitud: 'ENVIADO A PAGO',
+          actorActual: 'Tesoreria',
+          tipoViatico: 'Hospedaje',
+          clasificacionSolicitud: 'Anticipo',
+          esEditado: 'No'
+        },
+        {
+          idSolicitud: 'SOL-2026-004',
+          solicitante: 'Lucía Morales',
+          correoSolicitante: 'lucia.morales@bancointegral.com.sv',
+          monto: 60.00,
+          montoFormatted: '$ 60.00',
+          codigoCC: 'CC-108',
+          fechaSolicitud: '13/08/2026 15:40',
+          fechaModificacion: '14/08/2026 16:30',
+          estadoSolicitud: 'PAGADO',
+          actorActual: 'Solicitante',
+          tipoViatico: 'Combustible',
+          clasificacionSolicitud: 'Anticipo',
+          esEditado: 'No'
+        },
+        {
+          idSolicitud: 'SOL-2026-005',
+          solicitante: 'David Flores',
+          correoSolicitante: 'david.flores@bancointegral.com.sv',
+          monto: 35.00,
+          montoFormatted: '$ 35.00',
+          codigoCC: 'CC-202',
+          fechaSolicitud: '12/08/2026 08:30',
+          fechaModificacion: '14/08/2026 17:00',
+          estadoSolicitud: 'LIQUIDADO',
+          actorActual: 'Compras',
+          tipoViatico: 'Alimentación',
+          clasificacionSolicitud: 'Anticipo',
+          esEditado: 'No'
+        }
+      ];
+
+      // Filtrar por rol si es solicitante puro
+      if (userRol === 'SOLICITANTE' && userEmail) {
+        ec_todas_solicitudes = ec_todas_solicitudes.filter(s => s.correoSolicitante.toLowerCase() === userEmail.toLowerCase());
+      }
+
+      filtrarTablaEnCurso();
+    }, 400);
+  }
+}
+
+function mostrarErrorTablaEnCurso(msg) {
+  const tbody = document.getElementById('ec-tabla-body');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="py-6 text-center text-red-600 font-semibold">
+          <i class="fas fa-exclamation-circle mr-1"></i> ${msg}
+        </td>
+      </tr>`;
+  }
+}
+
+/**
+ * Filtra y ordena las solicitudes en memoria.
+ */
+function filtrarTablaEnCurso() {
+  const q = (document.getElementById('filter-ec-search')?.value || '').toLowerCase().trim();
+  const estado = document.getElementById('filter-ec-estado')?.value || '';
+  const actor = document.getElementById('filter-ec-actor')?.value || '';
+  const tipo = document.getElementById('filter-ec-tipo')?.value || '';
+  const clasif = document.getElementById('filter-ec-clasificacion')?.value || '';
+
+  ec_filtradas = ec_todas_solicitudes.filter(item => {
+    if (q) {
+      const matchId = (item.idSolicitud || '').toLowerCase().includes(q);
+      const matchSol = (item.solicitante || '').toLowerCase().includes(q);
+      const matchCC = (item.codigoCC || '').toLowerCase().includes(q);
+      if (!matchId && !matchSol && !matchCC) return false;
+    }
+    if (estado && (item.estadoSolicitud || '').toUpperCase() !== estado.toUpperCase()) return false;
+    if (actor && (item.actorActual || '').toLowerCase() !== actor.toLowerCase()) return false;
+    if (tipo && (item.tipoViatico || '').toLowerCase() !== tipo.toLowerCase()) return false;
+    if (clasif && (item.clasificacionSolicitud || '').toLowerCase() !== clasif.toLowerCase()) return false;
+
+    return true;
+  });
+
+  // Ordenar por fecha
+  ec_filtradas.sort((a, b) => {
+    const da = parseFechaHoraEnCurso(a.fechaSolicitud);
+    const db = parseFechaHoraEnCurso(b.fechaSolicitud);
+    return ec_sort_desc ? (db - da) : (da - db);
+  });
+
+  ec_page = 1;
+  renderTablaEnCurso();
+}
+
+function parseFechaHoraEnCurso(str) {
+  if (!str) return new Date(0);
+  const parts = str.split(' ');
+  const dateParts = parts[0].split('/');
+  if (dateParts.length === 3) {
+    const day = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]) - 1;
+    const year = parseInt(dateParts[2]);
+    let hour = 0, min = 0;
+    if (parts[1]) {
+      const timeParts = parts[1].split(':');
+      hour = parseInt(timeParts[0]) || 0;
+      min = parseInt(timeParts[1]) || 0;
+    }
+    return new Date(year, month, day, hour, min);
+  }
+  return new Date(str);
+}
+
+/**
+ * Renderiza la página actual de la tabla.
+ */
+function renderTablaEnCurso() {
+  const tbody = document.getElementById('ec-tabla-body');
+  const countLabel = document.getElementById('ec-contador-registros');
+  const total = ec_filtradas.length;
+
+  if (total === 0) {
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="py-8 text-center text-on-surface-variant font-medium">
+            <i class="fas fa-inbox text-2xl mb-2 text-outline block"></i>
+            No se encontraron solicitudes en curso con los filtros seleccionados.
+          </td>
+        </tr>`;
+    }
+    if (countLabel) countLabel.textContent = 'Mostrando 0 de 0 solicitudes';
+    renderPaginacionEnCurso(0, 1);
+    return;
+  }
+
+  const startIdx = (ec_page - 1) * ec_page_size;
+  const endIdx = Math.min(startIdx + ec_page_size, total);
+  const itemsPagina = ec_filtradas.slice(startIdx, endIdx);
+
+  if (countLabel) {
+    countLabel.textContent = `Mostrando ${startIdx + 1}-${endIdx} de ${total} solicitudes`;
+  }
+
+  tbody.innerHTML = itemsPagina.map(item => {
+    const badgeEstado = generarBadgeEstadoEnCurso(item.estadoSolicitud);
+    const badgeClasif = item.clasificacionSolicitud === 'Reintegro'
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-100 text-purple-800">Reintegro</span>'
+      : '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 text-blue-800">Anticipo</span>';
+
+    return `
+      <tr class="hover:bg-surface-container-low transition-colors">
+        <td class="py-3 px-3 text-center font-bold text-primary text-xs align-middle">
+          ${item.idSolicitud}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.solicitante}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-bold text-primary align-middle">
+          ${item.montoFormatted || ('$ ' + parseFloat(item.monto || 0).toFixed(2))}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-bold text-on-surface-variant align-middle">
+          <span class="bg-surface-container px-2 py-0.5 rounded font-mono text-[11px]">${item.codigoCC || '-'}</span>
+        </td>
+        <td class="py-3 px-3 text-center text-xs text-on-surface-variant align-middle">
+          <div class="font-medium text-on-surface">${item.fechaSolicitud ? item.fechaSolicitud.split(' ')[0] : '-'}</div>
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeEstado}
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-semibold text-primary align-middle">
+          <span class="px-2 py-0.5 rounded bg-surface-container text-[11px]">${item.actorActual || '-'}</span>
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-medium text-on-surface align-middle">
+          ${item.tipoViatico}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          ${badgeClasif}
+        </td>
+        <td class="py-3 px-3 text-center align-middle">
+          <button onclick="verExpedienteEnCurso('${item.idSolicitud}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary-container text-on-primary hover:bg-primary text-xs font-bold transition-colors cursor-pointer shadow-xs">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Ver detalles
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginacionEnCurso(total, Math.ceil(total / ec_page_size));
+}
+
+function generarBadgeEstadoEnCurso(estado) {
+  const est = (estado || '').toUpperCase();
+  if (est === 'INICIADO') {
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200">INICIADO</span>';
+  } else if (est === 'AUTORIZADO') {
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">AUTORIZADO</span>';
+  } else if (est === 'ENVIADO A PAGO') {
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">ENVIADO A PAGO</span>';
+  } else if (est === 'PAGADO') {
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800 border border-teal-200">PAGADO</span>';
+  } else if (est === 'LIQUIDADO') {
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">LIQUIDADO</span>';
+  } else if (est.includes('RECHAZO')) {
+    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300"><i class="fas fa-exclamation-triangle text-[9px] text-amber-600"></i>${est}</span>`;
+  }
+  return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-800">${est}</span>`;
+}
+
+function renderPaginacionEnCurso(total, totalPages) {
+  const container = document.getElementById('ec-paginacion-controles');
+  if (!container) return;
+
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = `
+    <button onclick="cambiarPaginaEnCurso(${ec_page - 1})" ${ec_page === 1 ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Anterior
+    </button>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= ec_page - 1 && i <= ec_page + 1)) {
+      html += `
+        <button onclick="cambiarPaginaEnCurso(${i})" class="px-3 py-1 border ${i === ec_page ? 'bg-primary text-on-primary font-bold border-primary' : 'border-outline-variant hover:bg-surface-container'} rounded text-xs transition-colors cursor-pointer">
+          ${i}
+        </button>
+      `;
+    } else if (i === ec_page - 2 || i === ec_page + 2) {
+      html += `<span class="px-1 text-xs text-outline">...</span>`;
+    }
+  }
+
+  html += `
+    <button onclick="cambiarPaginaEnCurso(${ec_page + 1})" ${ec_page === totalPages ? 'disabled' : ''} class="px-3 py-1 border border-outline-variant rounded text-xs font-medium hover:bg-surface-container transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+      Siguiente
+    </button>
+  `;
+
+  container.innerHTML = html;
+}
+
+function cambiarPaginaEnCurso(p) {
+  ec_page = p;
+  renderTablaEnCurso();
+}
+
+function cambiarPageSizeEnCurso(size) {
+  ec_page_size = parseInt(size) || 10;
+  ec_page = 1;
+  renderTablaEnCurso();
+}
+
+function toggleSortDateEnCurso() {
+  ec_sort_desc = !ec_sort_desc;
+  const icon = document.getElementById('ec-sort-icon');
+  if (icon) icon.className = ec_sort_desc ? 'fas fa-sort-down text-xs text-primary' : 'fas fa-sort-up text-xs text-primary';
+  filtrarTablaEnCurso();
+}
+
+function limpiarFiltrosEnCurso() {
+  const fields = ['filter-ec-search', 'filter-ec-estado', 'filter-ec-actor', 'filter-ec-tipo', 'filter-ec-clasificacion'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  filtrarTablaEnCurso();
+}
+
+// =====================================================================
+// EXPEDIENTE PROGRESIVO ACUMULATIVO (Renderizado Condicional)
+// =====================================================================
+
+function verExpedienteEnCurso(idSolicitud) {
+  const bandeja = document.getElementById('en-curso-bandeja');
+  const detalle = document.getElementById('view-en-curso-detalle');
+
+  if (bandeja) bandeja.classList.add('hidden');
+  if (detalle) detalle.classList.remove('vista-oculta');
+
+  document.getElementById('ec-det-id').textContent = idSolicitud;
+  document.getElementById('ec-det-estado-badge').innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.status === 'OK') {
+          poblarExpedienteEnCurso(resp);
+        } else {
+          alert('Error: ' + ((resp && resp.mensaje) || 'No se pudo cargar el expediente.'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Error de conexión: ' + err.toString());
+      })
+      .obtenerExpedienteEnCurso(idSolicitud);
+  } else {
+    // Mock completo del expediente
+    setTimeout(() => {
+      const mockExp = {
+        idSolicitud: idSolicitud,
+        nombreSolicitante: 'Carlos Mendoza',
+        correoSolicitante: 'carlos.mendoza@bancointegral.com.sv',
+        cargoSolicitante: 'Analista de Operaciones',
+        gerencia: 'Operaciones',
+        centroCosto: 'CC-102',
+        agencia: 'Oficina Central',
+        duracionActividad: 'Día único',
+        fechaInicio: '14/08/2026',
+        fechaFin: '14/08/2026',
+        tipoViatico: 'Alimentación',
+        horaEvento: '13:00',
+        tipoSolicitud: 'Personal',
+        destinatario: 'Carlos Mendoza',
+        monto: 45.00,
+        montoFormatted: '$ 45.00',
+        clasificacionSolicitud: 'Anticipo',
+        banco: 'Banco Integral',
+        tipoCuenta: 'Ahorro',
+        numeroCuenta: '001-445892-00',
+        motivoViatico: 'Supervisión de agencias zona occidental y arqueo de caja.',
+        esEditado: 'No',
+        fechaSolicitud: '14/08/2026 09:30',
+        fechaModificacion: '14/08/2026 09:30',
+        rubroContable: '8110050400000 - Viáticos y Movilidad',
+        estadoSolicitud: 'INICIADO',
+        actorActual: 'Autorizador 1',
+        dentroPresupuesto: 'Si',
+        justificacionPresupuesto: '',
+        archivosAdjuntos: [
+          { NombreArchivo: 'Itinerario_Supervision.pdf', LinkArchivo: '#' }
+        ],
+        datosAutorizacion: [
+          { nivel: 1, nombre: 'Jefe Regional', fecha: '14/08/2026 10:00', resolucion: 'APROBADO', comentario: 'Conforme con el itinerario de supervisión.' }
+        ],
+        nombreProvision: '',
+        fechaProvision: '',
+        resolucionProvision: '',
+        comentarioProvision: '',
+        agrupableProvision: null,
+        nombreProcesamiento: '',
+        fechaProcesamiento: '',
+        resolucionProcesamiento: '',
+        comentarioProcesamiento: '',
+        agrupableProcesamiento: null,
+        tipoCierre: '',
+        montoReintegro: 0,
+        fechaReintegro: '',
+        fechaCierreS: '',
+        nombreCierreE: '',
+        fechaCierreE: '',
+        resolucionCierreE: '',
+        comentarioCierreE: '',
+        agrupableCierreE: null
+      };
+
+      poblarExpedienteEnCurso(mockExp);
+    }, 300);
+  }
+}
+
+/**
+ * Rellena el expediente e implementa el renderizado condicional de etapas transitadas.
+ */
+function poblarExpedienteEnCurso(exp) {
+  document.getElementById('ec-det-id').textContent = exp.idSolicitud;
+  document.getElementById('ec-det-estado-badge').innerHTML = generarBadgeEstadoEnCurso(exp.estadoSolicitud);
+
+  // 1. Solicitante
+  document.getElementById('ec-det-sol-nombre').textContent = exp.nombreSolicitante || '-';
+  document.getElementById('ec-det-sol-correo').textContent = exp.correoSolicitante || '-';
+  document.getElementById('ec-det-sol-cargo').textContent = exp.cargoSolicitante || '-';
+  document.getElementById('ec-det-sol-gerencia').textContent = exp.gerencia || '-';
+  document.getElementById('ec-det-sol-cc').textContent = exp.centroCosto || '-';
+  document.getElementById('ec-det-sol-agencia').textContent = exp.agencia || '-';
+
+  // 2. Viático & Bancario
+  document.getElementById('ec-det-viatico-duracion').textContent = exp.duracionActividad || 'Día único';
+  document.getElementById('ec-det-viatico-ini').textContent = exp.fechaInicio || '-';
+  document.getElementById('ec-det-viatico-fin').textContent = exp.fechaFin || exp.fechaInicio || '-';
+  document.getElementById('ec-det-viatico-tipo').textContent = exp.tipoViatico || '-';
+  document.getElementById('ec-det-viatico-tiposol').textContent = exp.tipoSolicitud || 'Personal';
+  document.getElementById('ec-det-viatico-destinatario').textContent = exp.destinatario || '-';
+  document.getElementById('ec-det-viatico-monto').textContent = exp.montoFormatted || ('$ ' + parseFloat(exp.monto || 0).toFixed(2));
+  document.getElementById('ec-det-viatico-clasif').textContent = exp.clasificacionSolicitud || 'Anticipo';
+  document.getElementById('ec-det-banco').textContent = exp.banco || '-';
+  document.getElementById('ec-det-tipo-cuenta').textContent = exp.tipoCuenta || '-';
+  document.getElementById('ec-det-num-cuenta').textContent = exp.numeroCuenta || '-';
+  document.getElementById('ec-det-motivo').textContent = exp.motivoViatico || '-';
+
+  // Badge EsEditado
+  const esEdit = (exp.esEditado === 'Si' || exp.esEditado === 'SI');
+  const badgeEdit = document.getElementById('ec-det-es-editado-badge');
+  if (badgeEdit) {
+    if (esEdit) {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1';
+      badgeEdit.innerHTML = '<i class="fas fa-exclamation-triangle text-[10px] text-amber-700"></i> Modificado manualmente';
+    } else {
+      badgeEdit.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300';
+      badgeEdit.textContent = 'Normal';
+    }
+  }
+
+  // 3. Presupuesto & Archivos
+  document.getElementById('ec-det-rubro').textContent = exp.rubroContable || '8110050400000 - Viáticos y Movilidad';
+  document.getElementById('ec-det-fecha-reg').textContent = exp.fechaSolicitud || '-';
+
+  const badgePres = document.getElementById('ec-det-presupuesto-badge');
+  const justCont = document.getElementById('ec-det-justificacion-container');
+  if (exp.dentroPresupuesto === 'No') {
+    if (badgePres) badgePres.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300"><i class="fas fa-exclamation-circle mr-1"></i>Fuera de Presupuesto</span>';
+    if (justCont) {
+      justCont.classList.remove('hidden');
+      document.getElementById('ec-det-justificacion-texto').textContent = exp.justificacionPresupuesto || 'Sin justificación registrada.';
+    }
+  } else {
+    if (badgePres) badgePres.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fas fa-check-circle mr-1"></i>Dentro de Presupuesto</span>';
+    if (justCont) justCont.classList.add('hidden');
+  }
+
+  // Archivos
+  const listaArch = document.getElementById('ec-det-archivos-lista');
+  if (listaArch) {
+    if (exp.archivosAdjuntos && exp.archivosAdjuntos.length > 0) {
+      listaArch.innerHTML = exp.archivosAdjuntos.map(arch => `
+        <a href="${arch.LinkArchivo || '#'}" target="_blank" class="flex items-center gap-2 p-2 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container transition-colors shadow-xs">
+          <i class="fas fa-paperclip text-primary text-sm"></i>
+          <span class="text-xs font-semibold text-primary truncate flex-1">${arch.NombreArchivo || 'Archivo adjunto'}</span>
+          <i class="fas fa-external-link-alt text-[10px] text-outline"></i>
+        </a>
+      `).join('');
+    } else {
+      listaArch.innerHTML = '<span class="text-xs text-outline italic">No hay comprobantes adjuntos.</span>';
+    }
+  }
+
+  // 4. BLOQUE CONDICIONAL: AUTORIZACIONES
+  const secAut = document.getElementById('ec-seccion-autorizaciones');
+  const tbodyAut = document.getElementById('ec-det-aut-body');
+  if (exp.datosAutorizacion && exp.datosAutorizacion.length > 0) {
+    secAut?.classList.remove('hidden');
+    if (tbodyAut) {
+      tbodyAut.innerHTML = exp.datosAutorizacion.map(aut => `
+        <tr class="hover:bg-surface-container-low transition-colors">
+          <td class="py-2 px-3 text-center font-semibold text-primary">${aut.nombre || ('Nivel ' + aut.nivel)}</td>
+          <td class="py-2 px-3 text-center text-on-surface-variant">${aut.fecha || '-'}</td>
+          <td class="py-2 px-3 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${aut.resolucion === 'APROBADO' ? 'bg-emerald-100 text-emerald-800' : aut.resolucion === 'JUSTIFICADO' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+              ${aut.resolucion || 'REGISTRADO'}
+            </span>
+          </td>
+          <td class="py-2 px-3 text-left text-on-surface leading-relaxed">${aut.comentario || '-'}</td>
+        </tr>
+      `).join('');
+    }
+  } else {
+    secAut?.classList.add('hidden');
+  }
+
+  // 5. BLOQUE CONDICIONAL: PROVISIÓN (COMPRAS)
+  const secProv = document.getElementById('ec-seccion-provision');
+  if (exp.nombreProvision || exp.fechaProvision || exp.agrupableProvision) {
+    secProv?.classList.remove('hidden');
+    document.getElementById('ec-det-prov-nombre').textContent = exp.nombreProvision || 'Gestor Compras';
+    document.getElementById('ec-det-prov-fecha').textContent = exp.fechaProvision || '-';
+    document.getElementById('ec-det-prov-res').textContent = exp.resolucionProvision || 'Aprobado';
+    document.getElementById('ec-det-prov-comentario').textContent = exp.comentarioProvision || 'Provisión contable realizada.';
+
+    const asientoCard = document.getElementById('ec-det-prov-asiento-card');
+    if (exp.agrupableProvision) {
+      asientoCard?.classList.remove('hidden');
+      document.getElementById('ec-as-prov-fcont').textContent = exp.agrupableProvision.fechaContable || '-';
+      document.getElementById('ec-as-prov-fval').textContent = exp.agrupableProvision.fechaValor || '-';
+      document.getElementById('ec-as-prov-mod').textContent = exp.agrupableProvision.modulo || '-';
+      document.getElementById('ec-as-prov-tra').textContent = exp.agrupableProvision.transaccion || '-';
+      document.getElementById('ec-as-prov-cod').textContent = exp.agrupableProvision.codigoRelacion || '-';
+      document.getElementById('ec-as-prov-cr').textContent = exp.agrupableProvision.crFse || '-';
+    } else {
+      asientoCard?.classList.add('hidden');
+    }
+  } else {
+    secProv?.classList.add('hidden');
+  }
+
+  // 6. BLOQUE CONDICIONAL: PROCESAMIENTO PAGO (TESORERÍA)
+  const secProc = document.getElementById('ec-seccion-procesamiento');
+  if (exp.nombreProcesamiento || exp.fechaProcesamiento || exp.agrupableProcesamiento) {
+    secProc?.classList.remove('hidden');
+    document.getElementById('ec-det-proc-nombre').textContent = exp.nombreProcesamiento || 'Gestor Tesorería';
+    document.getElementById('ec-det-proc-fecha').textContent = exp.fechaProcesamiento || '-';
+    document.getElementById('ec-det-proc-res').textContent = exp.resolucionProcesamiento || 'Aprobado';
+    document.getElementById('ec-det-proc-comentario').textContent = exp.comentarioProcesamiento || 'Desembolso bancario ejecutado.';
+
+    const asientoCardP = document.getElementById('ec-det-proc-asiento-card');
+    if (exp.agrupableProcesamiento) {
+      asientoCardP?.classList.remove('hidden');
+      document.getElementById('ec-as-proc-fcont').textContent = exp.agrupableProcesamiento.fechaContable || '-';
+      document.getElementById('ec-as-proc-fval').textContent = exp.agrupableProcesamiento.fechaValor || '-';
+      document.getElementById('ec-as-proc-mod').textContent = exp.agrupableProcesamiento.modulo || '-';
+      document.getElementById('ec-as-proc-tra').textContent = exp.agrupableProcesamiento.transaccion || '-';
+      document.getElementById('ec-as-proc-cod').textContent = exp.agrupableProcesamiento.codigoRelacion || '-';
+      document.getElementById('ec-as-proc-cr').textContent = exp.agrupableProcesamiento.crFse || '-';
+    } else {
+      asientoCardP?.classList.add('hidden');
+    }
+  } else {
+    secProc?.classList.add('hidden');
+  }
+
+  // 7. BLOQUE CONDICIONAL: LIQUIDACIÓN Y CIERRE (SOLICITANTE Y COMPRAS)
+  const secCierre = document.getElementById('ec-seccion-cierre');
+  if (exp.fechaCierreS || exp.nombreCierreE || exp.agrupableCierreE || exp.montoReintegro > 0) {
+    secCierre?.classList.remove('hidden');
+    document.getElementById('ec-det-cierre-tipo').textContent = exp.tipoCierre || 'Solo cierre';
+    document.getElementById('ec-det-cierre-monto').textContent = exp.montoReintegro ? ('$ ' + parseFloat(exp.montoReintegro).toFixed(2)) : '$ 0.00';
+    document.getElementById('ec-det-cierre-fechas').textContent = exp.fechaCierreS || '-';
+    document.getElementById('ec-det-cierre-fechae').textContent = exp.fechaCierreE || '-';
+
+    const boxCompras = document.getElementById('ec-det-cierre-compras-box');
+    if (exp.nombreCierreE) {
+      boxCompras?.classList.remove('hidden');
+      document.getElementById('ec-det-cierre-nombre-e').textContent = exp.nombreCierreE;
+      document.getElementById('ec-det-cierre-res-e').textContent = exp.resolucionCierreE || 'Aprobado';
+      document.getElementById('ec-det-cierre-comentario-e').textContent = exp.comentarioCierreE || '-';
+    } else {
+      boxCompras?.classList.add('hidden');
+    }
+
+    const asientoCardC = document.getElementById('ec-det-cierre-asiento-card');
+    if (exp.agrupableCierreE) {
+      asientoCardC?.classList.remove('hidden');
+      document.getElementById('ec-as-cierre-fcont').textContent = exp.agrupableCierreE.fechaContable || '-';
+      document.getElementById('ec-as-cierre-fval').textContent = exp.agrupableCierreE.fechaValor || '-';
+      document.getElementById('ec-as-cierre-mod').textContent = exp.agrupableCierreE.modulo || '-';
+      document.getElementById('ec-as-cierre-tra').textContent = exp.agrupableCierreE.transaccion || '-';
+      document.getElementById('ec-as-cierre-cod').textContent = exp.agrupableCierreE.codigoRelacion || '-';
+      document.getElementById('ec-as-cierre-cr').textContent = exp.agrupableCierreE.crFse || '-';
+    } else {
+      asientoCardC?.classList.add('hidden');
+    }
+  } else {
+    secCierre?.classList.add('hidden');
+  }
+}
+
+function regresarTablaEnCurso() {
+  const bandeja = document.getElementById('en-curso-bandeja');
+  const detalle = document.getElementById('view-en-curso-detalle');
+
+  if (detalle) detalle.classList.add('vista-oculta');
+  if (bandeja) bandeja.classList.remove('hidden');
+}
+
+function imprimirExpedienteEnCurso() {
+  window.print();
+}
+</script>

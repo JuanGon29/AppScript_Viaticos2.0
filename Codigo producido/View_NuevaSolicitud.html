@@ -1,0 +1,363 @@
+<!-- ================================================================= -->
+<!-- VISTA: View_NuevaSolicitud.html (Página S1 - Nueva Solicitud) -->
+<!-- ================================================================= -->
+
+<div class="w-full max-w-7xl mx-auto py-4 px-2 md:px-6">
+
+  <!-- Encabezado de la Vista S1 -->
+  <div class="w-full mb-6">
+    <h2 class="text-3xl font-extrabold mb-3 flex items-center gap-3 text-secondary-container">
+      <i class="fas fa-file-signature text-3xl md:text-4xl text-secondary-container"></i>
+      <span>Nueva Solicitud</span>
+    </h2>
+    <hr class="border-t-2 border-outline-variant w-full rounded"/>
+  </div>
+
+  <!-- Indicador Paso 1 -->
+  <div class="flex items-center mb-4">
+    <span class="circle-num">1</span>
+    <span class="font-bold text-primary text-xl tracking-wide">Completar los campos</span>
+  </div>
+
+  <!-- Contenedor del Formulario -->
+  <div class="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant mb-8 overflow-hidden flex flex-col">
+    <form id="formNuevaSolicitud" class="w-full flex flex-col" onsubmit="return false;">
+
+      <!-- ================================================================= -->
+      <!-- SECCIÓN 1: INFORMACIÓN DEL SOLICITANTE (Solo Lectura / #E2E8F0)  -->
+      <!-- ================================================================= -->
+      <div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+        <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+          <i class="fas fa-info-circle mr-2 text-primary"></i> Información del Solicitante
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+          <!-- Nombre -->
+          <div class="flex flex-col">
+            <label class="input-label"><i class="fas fa-user-circle"></i> Nombre</label>
+            <input type="text" id="s1_nombre_solicitante" name="nombre_solicitante" class="form-input border-gray font-medium" readonly value="" />
+          </div>
+
+          <!-- Correo -->
+          <div class="flex flex-col">
+            <label class="input-label"><i class="fas fa-envelope"></i> Correo Institucional</label>
+            <input type="email" id="s1_correo_solicitante" name="correo_solicitante" class="form-input border-gray font-medium" readonly value="" />
+          </div>
+
+          <!-- Cargo / Plaza -->
+          <div class="flex flex-col">
+            <label class="input-label"><i class="fas fa-id-badge"></i> Cargo / Plaza</label>
+            <input type="text" id="s1_cargo_solicitante" name="cargo_solicitante" class="form-input border-gray font-medium" readonly value="" />
+          </div>
+
+          <!-- Gerencia -->
+          <div class="flex flex-col">
+            <label class="input-label"><i class="fas fa-sitemap"></i> Gerencia</label>
+            <input type="text" id="s1_gerencia_solicitante" name="gerencia_solicitante" class="form-input border-gray font-medium" readonly value="" />
+          </div>
+
+          <!-- Centro de Costo -->
+          <div class="flex flex-col">
+            <label class="input-label"><i class="fas fa-building"></i> Centro de Costo</label>
+            <input type="text" id="s1_centro_costo" name="centro_costo" class="form-input border-gray font-medium" readonly value="" />
+          </div>
+
+          <!-- Agencia -->
+          <div class="flex flex-col">
+            <label class="input-label"><i class="fas fa-store-alt"></i> Agencia</label>
+            <input type="text" id="s1_agencia" name="agencia" class="form-input border-gray font-medium" readonly value="" />
+          </div>
+
+          <!-- Región (Oculto o Informativo) -->
+          <input type="hidden" id="s1_region_solicitante" name="region_solicitante" value="" />
+          <input type="hidden" id="s1_es_movil" name="es_movil" value="No" />
+          <input type="hidden" id="s1_es_editado" name="es_editado" value="No" />
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- SECCIÓN 2: DETALLE DEL VIÁTICO (Campos Dinámicos y Editables)    -->
+      <!-- ================================================================= -->
+      <div class="w-full bg-surface-bright p-6 md:p-8 flex flex-col gap-6">
+        <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+          <i class="fas fa-edit mr-2 text-primary"></i> Detalle del Viático
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
+
+          <!-- 1. Duración de la actividad -->
+          <div class="flex flex-col">
+            <label class="input-label">
+              <i class="fas fa-hourglass-half"></i> Duración de la Actividad <span class="text-error">*</span>
+            </label>
+            <select id="s1_duracion_actividad" name="duracion_actividad" class="form-input editable-field border-red" required>
+              <option value="">Seleccione...</option>
+              <option value="Día único">Día único</option>
+              <option value="Rango de días">Rango de días</option>
+            </select>
+          </div>
+
+          <!-- 2. Fecha Inicio -->
+          <div class="flex flex-col">
+            <label class="input-label">
+              <i class="fas fa-calendar-plus"></i> Fecha Inicio <span class="text-error">*</span>
+            </label>
+            <input type="date" id="s1_fecha_inicio" name="fecha_inicio" class="form-input editable-field border-red" disabled required />
+          </div>
+
+          <!-- 3. Fecha Fin -->
+          <div class="flex flex-col">
+            <label class="input-label">
+              <i class="fas fa-calendar-check"></i> Fecha Fin <span class="text-error">*</span>
+            </label>
+            <input type="date" id="s1_fecha_fin" name="fecha_fin" class="form-input editable-field border-red" disabled required />
+          </div>
+
+          <!-- 4. Tipo de Viático (6 categorías) -->
+          <div class="flex flex-col">
+            <label class="input-label">
+              <i class="fas fa-receipt"></i> Tipo de Viático <span class="text-error">*</span>
+            </label>
+            <select id="s1_tipo_viatico" name="tipo_viatico" class="form-input editable-field border-red" required>
+              <option value="">Seleccione tipo de viático...</option>
+              <option value="Reunión/Trabajo fuera de horario laboral" data-rubro="1" data-codigo="8110029900000">Reunión/Trabajo fuera de horario laboral</option>
+              <option value="Refrigerios por reuniones mayores a 4 horas" data-rubro="1" data-codigo="8110029900000">Refrigerios por reuniones mayores a 4 horas</option>
+              <option value="Alojamiento" data-rubro="2" data-codigo="8110050400000">Alojamiento</option>
+              <option value="Alimentación por visitas agencias" data-rubro="2" data-codigo="8110050400000">Alimentación por visitas agencias</option>
+              <option value="Transporte" data-rubro="2" data-codigo="8110050400000">Transporte</option>
+              <option value="Viático Movilidad (Operativos Móviles)" data-rubro="2" data-codigo="8110050400000" id="opt_viatico_movil" class="hidden">Viático Movilidad (Operativos Móviles)</option>
+            </select>
+            <input type="hidden" id="s1_rubro_contable" name="rubro_contable" value="" />
+            <input type="hidden" id="s1_rubro_codigo" name="rubro_codigo" value="" />
+          </div>
+
+          <!-- 5. Hora del Evento (Condicionada a Reunión fuera de horario) -->
+          <div class="flex flex-col" id="container_hora_evento">
+            <label class="input-label">
+              <i class="fas fa-clock"></i> Hora del Evento <span class="text-error" id="req_hora_evento">*</span>
+            </label>
+            <select id="s1_hora_evento" name="hora_evento" class="form-input editable-field border-gray" disabled>
+              <option value="">Seleccione franja horaria...</option>
+              <option value="Antes de las 7:00am">Antes de las 7:00am</option>
+              <option value="Posterior a las 7:30pm">Posterior a las 7:30pm</option>
+              <option value="Posterior a las 2:00pm (Sábado)">Posterior a las 2:00pm (Sábado)</option>
+            </select>
+          </div>
+
+          <!-- 6. Tipo de Solicitud (Personal vs Delegado) -->
+          <div class="flex flex-col">
+            <label class="input-label">
+              <i class="fas fa-users-cog"></i> Tipo de Solicitud <span class="text-error">*</span>
+            </label>
+            <select id="s1_tipo_solicitud" name="tipo_solicitud" class="form-input editable-field border-green" required>
+              <option value="Personal" selected>Personal</option>
+              <option value="Delegado">Delegado</option>
+            </select>
+          </div>
+
+          <!-- Destinatario Selector (Si es Delegado) -->
+          <div class="flex flex-col sm:col-span-2 lg:col-span-3 hidden" id="container_destinatario_delegado">
+            <label class="input-label">
+              <i class="fas fa-user-friends"></i> Seleccionar Colaborador Destinatario (Mismo Centro de Costo) <span class="text-error">*</span>
+            </label>
+            <select id="s1_select_destinatario" class="form-input editable-field border-red">
+              <option value="">Cargando colaboradores del centro de costo...</option>
+            </select>
+          </div>
+
+          <!-- ============================================================= -->
+          <!-- COMPONENTE: TABLA DETALLE BANCARIO                           -->
+          <!-- ============================================================= -->
+          <div class="flex flex-col sm:col-span-2 lg:col-span-3 mt-2">
+            <div class="flex items-center justify-between mb-2">
+              <label class="input-label mb-0 text-base">
+                <i class="fas fa-money-check-alt text-primary"></i> Detalle bancario
+              </label>
+
+              <!-- Botones de Edición / Reversión Bancaria -->
+              <div class="flex items-center gap-2">
+                <button type="button" id="btnEditarBanco" class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container-high hover:bg-surface-container-highest border border-outline text-primary text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" title="Editar cuentas bancarias de transferencia">
+                  <i class="fas fa-pencil-alt text-xs"></i> Editar
+                </button>
+                <button type="button" id="btnRegresarBanco" class="hidden inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface-variant text-xs font-bold rounded-lg transition-colors cursor-pointer" title="Revertir y bloquear datos originales">
+                  <i class="fas fa-undo text-xs"></i> Regresar
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabla Detalle Bancario -->
+            <div class="overflow-x-auto border border-outline-variant rounded-xl shadow-sm bg-white">
+              <table class="w-full text-left border-collapse">
+                <thead class="bg-surface-container text-primary font-bold text-xs uppercase tracking-wider">
+                  <tr>
+                    <th class="p-3.5 border-b border-outline-variant">Destinatario</th>
+                    <th class="p-3.5 border-b border-outline-variant w-36">Monto ($) <span class="text-error">*</span></th>
+                    <th class="p-3.5 border-b border-outline-variant">Banco</th>
+                    <th class="p-3.5 border-b border-outline-variant">Tipo de cuenta</th>
+                    <th class="p-3.5 border-b border-outline-variant">No. de cuenta</th>
+                  </tr>
+                </thead>
+                <tbody class="text-sm">
+                  <tr class="transition-colors hover:bg-surface-container-lowest">
+                    <!-- Destinatario -->
+                    <td class="p-3 border-b border-outline-variant">
+                      <input type="text" id="s1_destinatario_nombre" name="destinatario" class="form-input border-gray font-semibold text-primary" readonly value="" />
+                      <input type="hidden" id="s1_destinatario_correo" name="correo_destinatario" value="" />
+                    </td>
+
+                    <!-- Monto -->
+                    <td class="p-3 border-b border-outline-variant">
+                      <input type="number" id="s1_monto" name="monto" class="form-input editable-field border-red font-bold text-primary" step="0.01" min="0.01" placeholder="0.00" required />
+                    </td>
+
+                    <!-- Banco -->
+                    <td class="p-3 border-b border-outline-variant">
+                      <input type="text" id="s1_banco" name="banco" class="form-input border-gray bank-field" readonly value="" />
+                    </td>
+
+                    <!-- Tipo Cuenta -->
+                    <td class="p-3 border-b border-outline-variant">
+                      <input type="text" id="s1_tipo_cuenta" name="tipo_cuenta" class="form-input border-gray bank-field" readonly value="" />
+                    </td>
+
+                    <!-- No Cuenta -->
+                    <td class="p-3 border-b border-outline-variant">
+                      <input type="text" id="s1_numero_cuenta" name="numero_cuenta" class="form-input border-gray bank-field" readonly value="" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 7. Motivo del Viático (Textarea) -->
+          <div class="flex flex-col sm:col-span-2 lg:col-span-3">
+            <label class="input-label">
+              <i class="fas fa-comment-dots"></i> Motivo del Viático <span class="text-error">*</span>
+            </label>
+            <textarea id="s1_motivo_viatico" name="motivo_viatico" class="form-input editable-field border-red" rows="3" placeholder="Explique detalladamente el motivo, objetivo y justificación del gasto solicitado..." required></textarea>
+          </div>
+
+          <!-- 8. Zona Drag & Drop de Archivos Adjuntos -->
+          <div class="flex flex-col sm:col-span-2 lg:col-span-3">
+            <div class="flex items-center justify-between mb-1">
+              <label class="input-label mb-0">
+                <i class="fas fa-paperclip"></i> Añadir Archivos Adjuntos <span id="s1_req_archivos" class="text-error hidden">* (Obligatorio por anticipación &le; 2 días)</span>
+              </label>
+              <span class="text-xs text-on-surface-variant font-medium">Formatos permitidos: PDF, JPG, PNG (Máx 10MB)</span>
+            </div>
+
+            <!-- Contenedor Drag & Drop -->
+            <div id="s1_fileContainer" class="form-input border-gray border-dashed flex flex-col items-center justify-center p-6 md:p-8 cursor-pointer bg-surface-container-lowest hover:bg-surface transition-colors">
+              <i class="fas fa-cloud-upload-alt text-4xl text-secondary-container mb-2 transition-transform transform hover:scale-110"></i>
+              <p class="text-sm text-primary font-bold text-center">Arrastre archivos aquí o haga clic para seleccionarlos</p>
+              <p class="text-xs text-on-surface-variant mt-1">Comprobantes, invitaciones, agendas de trabajo o justificaciones</p>
+            </div>
+            <input type="file" id="s1_fileInput" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+
+            <!-- Galería de Archivos Seleccionados -->
+            <div id="s1_fileGallery" class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Indicador Paso 2: Enviar Solicitud -->
+  <div class="flex items-center mb-4">
+    <span class="circle-num">2</span>
+    <span class="font-bold text-primary text-xl tracking-wide">Enviar Solicitud</span>
+  </div>
+
+  <!-- Botones de Acción Principales -->
+  <div class="flex flex-wrap items-center gap-4 pl-0 md:pl-12 pb-10">
+    <button type="button" id="s1_btnLimpiar" class="btn-action btn-outline-navy rounded-full px-8 py-3 font-bold text-base flex items-center gap-2 bg-white">
+      <i class="fas fa-eraser text-lg"></i> Limpiar Campos
+    </button>
+    <button type="button" id="s1_btnGuardar" class="btn-action btn-solid-orange rounded-full px-8 py-3 font-bold text-base flex items-center gap-2 shadow-md">
+      <i class="fas fa-save text-lg" id="s1_iconGuardar"></i>
+      <span id="s1_textGuardar">Guardar Solicitud</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- ================================================================= -->
+<!-- MODAL POP-UP 1: CONFIRMACIÓN DE EDICIÓN DE DATOS BANCARIOS       -->
+<!-- ================================================================= -->
+<div id="modalConfirmarEdicionBanco" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden p-4">
+  <div class="bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant max-w-lg w-full p-6 md:p-8 flex flex-col gap-5 animate-fade-in">
+    <div class="flex items-center gap-3 text-secondary-container">
+      <div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-exclamation-triangle text-2xl text-secondary"></i>
+      </div>
+      <div>
+        <h4 class="font-bold text-lg text-primary">Confirmación de Edición Bancaria</h4>
+        <p class="text-xs text-on-surface-variant">Aviso de responsabilidad del solicitante</p>
+      </div>
+    </div>
+
+    <p class="text-sm text-on-surface leading-relaxed">
+      ¿Está seguro que desea editar la información de la cuenta bancaria? En caso de proseguir, <b>corre bajo su propio riesgo y responsabilidad</b> si la información ingresada no es correcta o genera problemas en la transferencia del viático.
+    </p>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-outline-variant">
+      <button type="button" id="btnCancelarEdicionBanco" class="btn-action btn-outline-navy px-5 py-2 rounded-lg font-bold text-sm">
+        Cancelar
+      </button>
+      <button type="button" id="btnProseguirEdicionBanco" class="btn-action btn-solid-orange px-5 py-2 rounded-lg font-bold text-sm">
+        Proseguir y Editar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- MODAL POP-UP 2: FEEDBACK / MENSAJES CENTRADOS (ÉXITO / ERROR)     -->
+<!-- ================================================================= -->
+<div id="modalFeedbackS1" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden p-4">
+  <div class="bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant max-w-md w-full p-6 md:p-8 flex flex-col items-center text-center gap-4 animate-fade-in">
+    <div id="modalFeedbackIcon" class="w-16 h-16 rounded-full flex items-center justify-center text-3xl">
+      <!-- Icono dinámico -->
+    </div>
+    <h4 id="modalFeedbackTitulo" class="font-bold text-xl text-primary"></h4>
+    <p id="modalFeedbackMensaje" class="text-sm text-on-surface leading-relaxed"></p>
+    <div class="pt-2 w-full">
+      <button type="button" id="modalFeedbackBtnCerrar" class="w-full btn-action btn-solid-orange py-2.5 rounded-lg font-bold text-sm">
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- MODAL POP-UP 3: BLOQUEO POR REGLA DE 15 DÍAS                     -->
+<!-- ================================================================= -->
+<div id="modal-bloqueo-15dias" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md hidden p-4">
+  <div class="bg-surface-container-lowest rounded-2xl shadow-2xl border border-red-200 max-w-lg w-full p-6 md:p-8 flex flex-col items-center text-center gap-5 animate-fade-in">
+    <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-600 text-3xl shadow-inner">
+      <i class="fas fa-ban"></i>
+    </div>
+    <div>
+      <h4 class="font-extrabold text-xl text-primary mb-1">Creación de Solicitudes Bloqueada</h4>
+      <span class="inline-block px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold uppercase tracking-wider border border-red-200">Regla de 15 Días de Inactividad</span>
+    </div>
+
+    <p class="text-sm text-on-surface leading-relaxed text-left bg-surface-bright p-4 rounded-xl border border-outline-variant">
+      No puedes crear nuevas solicitudes de viáticos debido a que tienes solicitudes pendientes de liquidar con más de 15 días de antigüedad. Por favor solventa o liquida tus solicitudes pendientes en 'Cierre de solicitudes' o 'Solicitudes rechazadas' antes de continuar.
+    </p>
+
+    <div id="lista-solicitudes-bloqueantes" class="w-full text-left max-h-36 overflow-y-auto text-xs text-on-surface-variant flex flex-col gap-1 border-t border-outline-variant pt-2">
+      <!-- IDs de solicitudes bloqueantes -->
+    </div>
+
+    <div class="w-full pt-2">
+      <button type="button" id="btn-bloqueo-entendido" onclick="navegarSubmenu('view-inicio')" class="w-full btn-action btn-solid-navy py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-md">
+        <i class="fas fa-home"></i>
+        <span>Entendido (Volver al Inicio)</span>
+      </button>
+    </div>
+  </div>
+</div>

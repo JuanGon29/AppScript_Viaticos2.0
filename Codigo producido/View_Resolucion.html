@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resolución de Viáticos - <?= idSolicitud ?></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #001f5c;
+      --primary-dark: #000c2f;
+      --primary-light: #1a3a7e;
+      --accent: #ff5722;
+      --accent-hover: #f4511e;
+      --success: #2e7d32;
+      --success-light: #e8f5e9;
+      --danger: #c62828;
+      --danger-light: #ffebee;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 16px 48px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header Corporativo */
+    .header-card {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: #ffffff;
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+    .header-card::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(255, 87, 34, 0.25) 0%, rgba(255, 87, 34, 0) 70%);
+      border-radius: 50%;
+    }
+    .brand-tag {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .header-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    .header-subtitle {
+      font-size: 13px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge-id {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* Bento Card Principal */
+    .main-card {
+      background-color: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    /* Monto y Presupuesto Header */
+    .amount-banner {
+      background-color: #f8fafc;
+      padding: 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .amount-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .amount-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .amount-currency {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Badges de Presupuesto */
+    .badge-presupuesto {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 20px;
+    }
+    .badge-presupuesto.dentro {
+      background-color: var(--success-light);
+      color: var(--success);
+      border: 1px solid #c8e6c9;
+    }
+    .badge-presupuesto.fuera {
+      background-color: var(--danger-light);
+      color: var(--danger);
+      border: 1px solid #ffcdd2;
+    }
+
+    /* Detalle de Datos */
+    .details-grid {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 580px) {
+      .details-grid { grid-template-columns: 1fr; }
+    }
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+    .detail-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .detail-full {
+      grid-column: 1 / -1;
+    }
+
+    .motivo-box {
+      margin: 0 24px 24px 24px;
+      background-color: #f8fafc;
+      border-left: 4px solid var(--primary);
+      border-radius: 4px 8px 8px 4px;
+      padding: 14px 16px;
+    }
+    .motivo-box-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .motivo-box-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #334155;
+    }
+
+    /* Formulario de Resolución */
+    .resolution-form {
+      padding: 24px;
+      background-color: #ffffff;
+      border-top: 1px solid var(--border);
+    }
+    .section-heading {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Selector de Acción */
+    .action-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .action-btn-option {
+      border: 2px solid var(--border);
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .action-btn-option:hover {
+      border-color: #cbd5e1;
+      background-color: #f8fafc;
+    }
+    .action-btn-option.selected.aprobar {
+      border-color: var(--success);
+      background-color: var(--success-light);
+      color: var(--success);
+    }
+    .action-btn-option.selected.rechazar {
+      border-color: var(--danger);
+      background-color: var(--danger-light);
+      color: var(--danger);
+    }
+
+    /* Campo de Comentarios */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .form-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background-color: #ffffff;
+      outline: none;
+      transition: border-color 0.2s ease;
+      resize: vertical;
+      min-height: 80px;
+    }
+    .form-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 31, 92, 0.1);
+    }
+
+    /* Botón Submit */
+    .btn-submit {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      background-color: var(--primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0, 31, 92, 0.2);
+    }
+    .btn-submit:hover:not(:disabled) {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Estado Bloqueado / Ya Resuelto */
+    .locked-card {
+      padding: 32px 24px;
+      text-align: center;
+      background-color: #ffffff;
+    }
+    .locked-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px auto;
+      font-size: 24px;
+    }
+    .locked-icon.aprobado { background-color: var(--success-light); color: var(--success); }
+    .locked-icon.rechazado { background-color: var(--danger-light); color: var(--danger); }
+    .locked-icon.neutral { background-color: #f1f5f9; color: var(--text-muted); }
+    .locked-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .locked-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 440px;
+      margin: 0 auto 20px auto;
+      line-height: 1.5;
+    }
+
+    /* Bitácora en Resolución */
+    .history-box {
+      margin-top: 20px;
+      text-align: left;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 16px;
+    }
+    .history-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .history-item {
+      font-size: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #edf2f7;
+      display: flex;
+      justify-content: space-between;
+      color: #475569;
+    }
+    .history-item:last-child { border-bottom: none; }
+
+    /* Estado de Carga / Spinner */
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid #ffffff;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Encabezado Corporativo -->
+    <div class="header-card">
+      <span class="brand-tag">Banco Integral • Viáticos 2.0</span>
+      <h1 class="header-title">Resolución de Solicitud de Viático</h1>
+      <div class="header-subtitle">
+        <span class="badge-id"><?= idSolicitud ?></span>
+        <span>Autorización Nivel <b><?= nivel ?></b></span>
+      </div>
+    </div>
+
+    <!-- Contenedor Principal / Tarjeta de Datos -->
+    <div class="main-card" id="cardContenedor">
+      
+      <!-- Placeholder de carga inicial -->
+      <div id="loadingIndicator" style="padding: 48px; text-align: center;">
+        <div class="spinner" style="border-color: #cbd5e1; border-top-color: var(--primary); width: 32px; height: 32px; margin-bottom: 12px;"></div>
+        <p style="color: var(--text-muted); font-size: 14px;">Consultando expediente de viáticos...</p>
+      </div>
+
+      <!-- Contenido renderizado dinámicamente -->
+      <div id="solicitudContent" style="display: none;">
+        
+        <!-- Banner de Monto -->
+        <div class="amount-banner">
+          <div class="amount-label">Monto Solicitado</div>
+          <div class="amount-value" id="dispMonto">$0.00 <span class="amount-currency">USD</span></div>
+          <div id="dispPresupuestoBadge"></div>
+        </div>
+
+        <!-- Grid de Datos Informativos (Sin Datos Bancarios) -->
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Solicitante</span>
+            <span class="detail-value" id="dispSolicitante">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Cargo / Plaza</span>
+            <span class="detail-value" id="dispCargo">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Gerencia / C.Costo</span>
+            <span class="detail-value" id="dispGerencia">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Agencia</span>
+            <span class="detail-value" id="dispAgencia">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Tipo de Viático</span>
+            <span class="detail-value" id="dispTipoViatico">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Duración y Fechas</span>
+            <span class="detail-value" id="dispFechas">-</span>
+          </div>
+          <div class="detail-item detail-full">
+            <span class="detail-label">Clasificación</span>
+            <span class="detail-value" id="dispClasificacion">-</span>
+          </div>
+        </div>
+
+        <!-- Motivo y Justificación -->
+        <div class="motivo-box">
+          <div class="motivo-box-title">Motivo de la Solicitud</div>
+          <p class="motivo-box-text" id="dispMotivo">-</p>
+        </div>
+
+        <!-- SECCIÓN 1: Formulario Interactivo (Si está PENDIENTE) -->
+        <div class="resolution-form" id="formResolucionArea">
+          <h3 class="section-heading">Emitir Resolución</h3>
+          
+          <!-- Selector Aprobar / Rechazar -->
+          <div class="action-selector">
+            <div class="action-btn-option aprobar" id="btnOptAprobar" onclick="seleccionarAccion('APROBADO')">
+              ✓ Aprobar Solicitud
+            </div>
+            <div class="action-btn-option rechazar" id="btnOptRechazar" onclick="seleccionarAccion('RECHAZADO')">
+              ✕ Rechazar Solicitud
+            </div>
+          </div>
+
+          <!-- Comentarios -->
+          <div class="form-group">
+            <label class="form-label" for="txtComentario" id="lblComentario">
+              Comentarios u Observaciones (Opcional):
+            </label>
+            <textarea 
+              class="form-textarea" 
+              id="txtComentario" 
+              placeholder="Ingrese alguna observación relevante sobre esta solicitud..."></textarea>
+          </div>
+
+          <!-- Botón de Confirmación -->
+          <button class="btn-submit" id="btnConfirmar" onclick="enviarResolucionFinal()">
+            <span id="btnText">Confirmar Decisión</span>
+          </button>
+        </div>
+
+        <!-- SECCIÓN 2: Pantalla de Bloqueo (Si ya fue RESUELTO) -->
+        <div class="locked-card" id="lockedStateArea" style="display: none;">
+          <div class="locked-icon neutral" id="lockedIcon">🔒</div>
+          <h3 class="locked-title" id="lockedTitle">Expediente Resuelto</h3>
+          <p class="locked-desc" id="lockedDesc">Esta solicitud ya ha sido procesada previamente.</p>
+          
+          <div class="history-box" id="historyContainer" style="display: none;">
+            <div class="history-title">Historial de Resoluciones Registradas</div>
+            <div id="historyList"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="page-footer">
+      Sistema Institucional de Viáticos • Banco Integral S.A.
+    </div>
+
+  </div>
+
+  <script>
+    // Variables globales inyectadas desde Google Apps Script
+    var ID_SOLICITUD = "<?= idSolicitud ?>";
+    var ACCION_INICIAL = "<?= accionInicial ?>";
+    var NIVEL_AUTORIZADOR = parseInt("<?= nivel ?>") || 1;
+    var accionSeleccionada = ACCION_INICIAL === "RECHAZADO" ? "RECHAZADO" : "APROBADO";
+
+    document.addEventListener("DOMContentLoaded", function() {
+      cargarDetalleSolicitud();
+    });
+
+    function seleccionarAccion(accion) {
+      accionSeleccionada = accion;
+      var btnAprobar = document.getElementById("btnOptAprobar");
+      var btnRechazar = document.getElementById("btnOptRechazar");
+      var btnConfirmar = document.getElementById("btnConfirmar");
+      var lblComentario = document.getElementById("lblComentario");
+
+      if (accion === "APROBADO") {
+        btnAprobar.classList.add("selected");
+        btnRechazar.classList.remove("selected");
+        btnConfirmar.style.backgroundColor = "var(--success)";
+        btnConfirmar.innerHTML = "✓ Confirmar Aprobación";
+        lblComentario.innerText = "Comentarios u Observaciones (Opcional):";
+      } else {
+        btnRechazar.classList.add("selected");
+        btnAprobar.classList.remove("selected");
+        btnConfirmar.style.backgroundColor = "var(--danger)";
+        btnConfirmar.innerHTML = "✕ Confirmar Rechazo";
+        lblComentario.innerText = "Motivo del Rechazo (Obligatorio):";
+      }
+    }
+
+    function cargarDetalleSolicitud() {
+      google.script.run
+        .withSuccessHandler(renderizarDatos)
+        .withFailureHandler(function(err) {
+          document.getElementById("loadingIndicator").innerHTML = 
+            '<p style="color: var(--danger); font-weight: 600;">Error al cargar el expediente: ' + err.toString() + '</p>';
+        })
+        .obtenerDetalleSolicitudParaResolucion(ID_SOLICITUD);
+    }
+
+    function renderizarDatos(res) {
+      document.getElementById("loadingIndicator").style.display = "none";
+      document.getElementById("solicitudContent").style.display = "block";
+
+      if (!res || res.status !== 'OK') {
+        mostrarEstadoBloqueado("Expediente No Encontrado", res ? res.mensaje : "No se encontró el registro.", "neutral");
+        return;
+      }
+
+      // Población de datos
+      document.getElementById("dispMonto").innerHTML = '$' + res.monto.toFixed(2) + ' <span class="amount-currency">USD</span>';
+      
+      var badgeBadge = document.getElementById("dispPresupuestoBadge");
+      if (res.dentroPresupuesto === "Si") {
+        badgeBadge.innerHTML = '<span class="badge-presupuesto dentro">✓ Dentro de Presupuesto</span>';
+      } else {
+        badgeBadge.innerHTML = '<span class="badge-presupuesto fuera">⚠ Fuera de Presupuesto</span>';
+      }
+
+      document.getElementById("dispSolicitante").innerText = res.nombreSolicitante || "Colaborador";
+      document.getElementById("dispCargo").innerText = res.cargoSolicitante || "Plaza no especificada";
+      document.getElementById("dispGerencia").innerText = (res.gerencia || "") + " • " + (res.centroCosto || "");
+      document.getElementById("dispAgencia").innerText = res.agencia || "Oficina Central";
+      document.getElementById("dispTipoViatico").innerText = res.tipoViatico + (res.horaEvento ? " (" + res.horaEvento + ")" : "");
+      document.getElementById("dispFechas").innerText = res.duracionActividad + " (" + res.fechaInicio + (res.fechaFin !== res.fechaInicio ? " al " + res.fechaFin : "") + ")";
+      document.getElementById("dispClasificacion").innerText = res.clasificacionSolicitud || "Anticipo";
+      document.getElementById("dispMotivo").innerText = res.motivoViatico || "Sin observaciones adicionales.";
+
+      // Verificar si ya fue resuelta
+      if (res.yaResuelto) {
+        var esAprobada = (res.estadoSolicitud === "AUTORIZADO");
+        mostrarEstadoBloqueado(
+          esAprobada ? "Solicitud Ya Autorizada" : "Solicitud Ya Rechazada",
+          "Esta solicitud ya fue resuelta previamente. Estado actual: " + res.estadoSolicitud + ".",
+          esAprobada ? "aprobado" : "rechazado",
+          res.datosAutorizacion
+        );
+      } else {
+        seleccionarAccion(accionSeleccionada);
+      }
+    }
+
+    function mostrarEstadoBloqueado(titulo, desc, tipo, bitacora) {
+      document.getElementById("formResolucionArea").style.display = "none";
+      var lockedArea = document.getElementById("lockedStateArea");
+      lockedArea.style.display = "block";
+
+      document.getElementById("lockedTitle").innerText = titulo;
+      document.getElementById("lockedDesc").innerText = desc;
+
+      var icon = document.getElementById("lockedIcon");
+      icon.className = "locked-icon " + tipo;
+      icon.innerText = tipo === "aprobado" ? "✓" : tipo === "rechazado" ? "✕" : "🔒";
+
+      if (bitacora && bitacora.length > 0) {
+        var histContainer = document.getElementById("historyContainer");
+        var histList = document.getElementById("historyList");
+        histList.innerHTML = "";
+        bitacora.forEach(function(item) {
+          var div = document.createElement("div");
+          div.className = "history-item";
+          div.innerHTML = "<span><b>" + (item.nombre || "Autorizador") + "</b> (" + (item.resolucion || "") + ")</span><span>" + (item.fecha || "") + "</span>";
+          histList.appendChild(div);
+        });
+        histContainer.style.display = "block";
+      }
+    }
+
+    function enviarResolucionFinal() {
+      var comentario = (document.getElementById("txtComentario").value || "").trim();
+
+      if (accionSeleccionada === "RECHAZADO" && !comentario) {
+        alert("Por favor, ingrese el motivo del rechazo en el campo de observaciones.");
+        document.getElementById("txtComentario").focus();
+        return;
+      }
+
+      var btn = document.getElementById("btnConfirmar");
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Registrando resolución...';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.status === 'OK') {
+            mostrarEstadoBloqueado(
+              accionSeleccionada === "APROBADO" ? "¡Solicitud Autorizada Exitosamente!" : "Solicitud Rechazada",
+              "Su resolución ha sido registrada en el sistema oficial de Banco Integral.",
+              accionSeleccionada === "APROBADO" ? "aprobado" : "rechazado"
+            );
+          } else {
+            alert(res ? res.mensaje : "Error al procesar la resolución.");
+            btn.disabled = false;
+            btn.innerHTML = "Reintentar";
+          }
+        })
+        .withFailureHandler(function(err) {
+          alert("Error de comunicación: " + err.toString());
+          btn.disabled = false;
+          btn.innerHTML = "Reintentar";
+        })
+        .procesarResolucionWeb(ID_SOLICITUD, accionSeleccionada, NIVEL_AUTORIZADOR, comentario);
+    }
+  </script>
+</body>
+</html>

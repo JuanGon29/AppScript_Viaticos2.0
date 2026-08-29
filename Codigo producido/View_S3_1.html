@@ -1,0 +1,432 @@
+<!-- ===================================================================== -->
+<!-- SUB-VISTA: View_S3_1.html (DETALLE Y LIQUIDACIÓN S3.1)                -->
+<!-- ===================================================================== -->
+<div id="view-s3-1-cierre" class="vista-oculta flex flex-col gap-lg w-full">
+
+  <!-- Mensajes flotantes de Alerta / Éxito -->
+  <div id="s3-1-alert-box" class="hidden w-full max-w-4xl mx-auto p-4 rounded-lg text-white font-bold text-center shadow-lg transition-opacity duration-300 z-50">
+    <span id="s3-1-alert-text">Mensaje</span>
+  </div>
+
+  <!-- Encabezado con ID de Expediente y Estado -->
+  <div class="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-outline-variant">
+    <div class="flex items-center gap-3">
+      <button onclick="navegarSubmenu('view-s3-cierre')" class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container text-on-surface transition-colors cursor-pointer" title="Regresar a Cierre de Solicitudes">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div>
+        <h2 class="text-2xl font-extrabold text-primary flex items-center gap-2">
+          <i class="fas fa-receipt text-2xl text-secondary-container"></i>
+          Liquidación y Cierre de Solicitud
+        </h2>
+        <p class="font-body-sm text-xs text-on-surface-variant">Expediente: <b id="s3-1-id-badge" class="text-primary font-bold text-sm">SOL-XXXX-XXXX</b> • Rendición de Cuentas y Comprobantes</p>
+      </div>
+    </div>
+    <div id="s3-1-status-badge">
+      <!-- Badge dinámico de estado -->
+    </div>
+  </div>
+
+  <!-- Contenedor del Formulario Estructurado -->
+  <div class="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant overflow-hidden flex flex-col">
+    
+    <!-- SECCIÓN 1: INFORMACIÓN DEL SOLICITANTE (Solo Lectura) -->
+    <div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+        <i class="fas fa-info-circle mr-2 text-primary"></i> Información del Solicitante
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-user-circle text-primary"></i> Nombre
+          </label>
+          <input id="s3-1-sol-nombre" class="w-full p-2.5 rounded border border-gray-300 bg-white text-sm font-normal text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-envelope text-primary"></i> Correo
+          </label>
+          <input id="s3-1-sol-correo" class="w-full p-2.5 rounded border border-gray-300 bg-white text-sm font-normal text-on-surface pointer-events-none" readonly type="email" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-id-badge text-primary"></i> Cargo
+          </label>
+          <input id="s3-1-sol-cargo" class="w-full p-2.5 rounded border border-gray-300 bg-white text-sm font-normal text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-sitemap text-primary"></i> Gerencia
+          </label>
+          <input id="s3-1-sol-gerencia" class="w-full p-2.5 rounded border border-gray-300 bg-white text-sm font-normal text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-building text-primary"></i> Centro de Costo
+          </label>
+          <input id="s3-1-sol-cc" class="w-full p-2.5 rounded border border-gray-300 bg-white text-sm font-normal text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-map-marked-alt text-primary"></i> Agencia
+          </label>
+          <input id="s3-1-sol-agencia" class="w-full p-2.5 rounded border border-gray-300 bg-white text-sm font-normal text-on-surface pointer-events-none" readonly type="text" value="">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: DETALLE DE GASTOS / VIÁTICO (Solo Lectura con Spans de Texto) -->
+    <div class="w-full bg-surface-bright p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+        <i class="fas fa-list mr-2 text-primary"></i> Detalle de Gastos
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+        
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-plane-departure text-primary"></i> Tipo de Viático
+          </label>
+          <span id="s3-1-viatico-tipo" class="font-body-md text-on-surface py-1 font-semibold text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col" id="s3-1-hora-container">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-clock text-primary"></i> Hora del Evento
+          </label>
+          <span id="s3-1-viatico-hora" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-calendar-plus text-primary"></i> Fecha Inicio
+          </label>
+          <span id="s3-1-viatico-fecha-ini" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-calendar-check text-primary"></i> Fecha Fin
+          </label>
+          <span id="s3-1-viatico-fecha-fin" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-hourglass-half text-primary"></i> Duración
+          </label>
+          <span id="s3-1-viatico-duracion" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-tag text-primary"></i> Tipo Solicitud
+          </label>
+          <span id="s3-1-viatico-tipo-sol" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-user-check text-primary"></i> Destinatario
+          </label>
+          <span id="s3-1-viatico-destinatario" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-dollar-sign text-primary"></i> Monto Pagado
+          </label>
+          <span id="s3-1-viatico-monto" class="font-body-md font-bold text-primary py-1 text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-bookmark text-primary"></i> Clasificación
+          </label>
+          <span id="s3-1-viatico-clasificacion" class="font-body-md text-on-surface py-1 font-medium text-sm block">-</span>
+        </div>
+
+        <div class="flex flex-col sm:col-span-2 lg:col-span-3">
+          <label class="font-bold text-xs text-on-surface-variant mb-1 flex items-center gap-1.5">
+            <i class="fas fa-comment-dots text-primary"></i> Motivo de la Solicitud
+          </label>
+          <span id="s3-1-motivo" class="font-body-md text-on-surface py-1 leading-relaxed font-normal text-sm block">-</span>
+        </div>
+
+      </div>
+
+      <!-- Tabla de Destinatarios y Pagos / Detalle Bancario -->
+      <div class="flex flex-col mt-2">
+        <div class="flex items-center justify-between mb-2">
+          <label class="font-bold text-sm text-primary flex items-center gap-1.5">
+            <i class="fas fa-users text-secondary-container"></i> Destinatarios y Pagos (Cuenta Bancaria de Desembolso)
+          </label>
+          <div class="flex items-center gap-1.5 font-normal text-xs text-on-surface-variant">
+            <span>¿Información editada?:</span>
+            <span id="s3-1-es-editado-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">Normal</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto border border-outline-variant rounded-lg bg-surface">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-surface-container text-primary font-bold text-xs">
+              <tr>
+                <th class="p-3 border-b border-outline-variant">Destinatario</th>
+                <th class="p-3 border-b border-outline-variant">Monto ($)</th>
+                <th class="p-3 border-b border-outline-variant">Banco</th>
+                <th class="p-3 border-b border-outline-variant">Tipo de cuenta</th>
+                <th class="p-3 border-b border-outline-variant">No. Cuenta</th>
+              </tr>
+            </thead>
+            <tbody id="s3-1-tabla-destinatarios" class="text-xs">
+              <tr class="hover:bg-surface-container-low transition-colors">
+                <td class="p-3 font-semibold text-on-surface" id="s3-1-tb-destinatario">-</td>
+                <td class="p-3 font-bold text-primary" id="s3-1-tb-monto">-</td>
+                <td class="p-3 text-on-surface" id="s3-1-banco">-</td>
+                <td class="p-3 text-on-surface" id="s3-1-tipo-cuenta">-</td>
+                <td class="p-3 font-mono font-medium text-on-surface" id="s3-1-num-cuenta">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SECCIÓN 3: INFORMACIÓN DE LA SOLICITUD Y ARCHIVOS (Solo Lectura) -->
+    <div class="w-full bg-[#E2E8F0] p-6 md:p-8 border-b border-outline-variant flex flex-col gap-6">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+        <i class="fas fa-folder-open mr-2 text-primary"></i> Información de la Solicitud y Archivos
+      </h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1">ID Solicitud</label>
+          <span id="s3-1-info-id" class="font-bold text-lg text-primary">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1">Monto Total</label>
+          <span id="s3-1-info-monto" class="font-bold text-lg text-emerald-700">$0.00</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1">Fecha de Ingreso</label>
+          <span id="s3-1-info-fecha-creacion" class="font-semibold text-on-surface text-sm">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1">Rubro Contable Base</label>
+          <span id="s3-1-info-rubro" class="font-semibold text-on-surface text-sm">-</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-on-surface-variant mb-1">Clasificación Solicitud</label>
+          <span id="s3-1-info-clasificacion" class="font-semibold text-on-surface text-sm">-</span>
+        </div>
+
+      </div>
+
+      <!-- Archivos Adjuntos Históricos -->
+      <div class="flex flex-col mt-2" id="s3-1-archivos-wrapper">
+        <label class="font-bold text-xs text-on-surface-variant mb-2 flex items-center gap-1.5">
+          <i class="fas fa-paperclip text-primary"></i> Comprobantes y Archivos Adjuntos Registrados
+        </label>
+        <div id="s3-1-archivos-lista" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- Chips de archivos adjuntos -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SECCIÓN 4: INFORMACIÓN DE AUTORIZACIONES (Bitácora Histórica) -->
+    <div class="w-full bg-surface-bright p-6 md:p-8 border-b border-outline-variant flex flex-col gap-4">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+        <i class="fas fa-comments mr-2 text-primary"></i> Información Autorización
+      </h3>
+      
+      <div class="overflow-x-auto border border-outline-variant rounded-lg bg-surface">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+          <thead class="bg-surface-container text-primary font-bold text-xs">
+            <tr>
+              <th class="py-2.5 px-4 uppercase text-center w-1/4 border-b border-outline-variant">Autorizador / Nivel</th>
+              <th class="py-2.5 px-4 uppercase text-center w-1/5 border-b border-outline-variant">Fecha</th>
+              <th class="py-2.5 px-4 uppercase text-center w-1/5 border-b border-outline-variant">Resolución</th>
+              <th class="py-2.5 px-4 uppercase text-center w-2/5 border-b border-outline-variant">Comentarios</th>
+            </tr>
+          </thead>
+          <tbody id="s3-1-tabla-autorizaciones" class="divide-y divide-outline-variant text-xs">
+            <!-- Filas dinámicas -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 5: INFORMACIÓN DE PROVISIÓN (Compras) -->
+    <div class="w-full bg-surface-bright p-6 md:p-8 border-b border-outline-variant flex flex-col gap-4">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+        <i class="fas fa-receipt mr-2 text-primary"></i> Información Provisión de Pago (Compras)
+      </h3>
+      
+      <div class="overflow-x-auto border border-outline-variant rounded-lg bg-surface">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-surface-container text-primary font-bold text-xs">
+            <tr>
+              <th class="py-2.5 px-4 uppercase text-center w-1/3 border-b border-outline-variant">Nombre Provisión</th>
+              <th class="py-2.5 px-4 uppercase text-center w-1/4 border-b border-outline-variant">Fecha Provisión</th>
+              <th class="py-2.5 px-4 uppercase text-center w-5/12 border-b border-outline-variant">Comentario Provisión</th>
+            </tr>
+          </thead>
+          <tbody class="text-xs">
+            <tr>
+              <td class="py-3 px-4 text-center font-semibold text-on-surface" id="s3-1-prov-nombre">-</td>
+              <td class="py-3 px-4 text-center text-on-surface-variant" id="s3-1-prov-fecha">-</td>
+              <td class="py-3 px-4 text-left text-on-surface leading-relaxed" id="s3-1-prov-comentario">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 6: INFORMACIÓN DE PROCESAMIENTO (Tesorería) -->
+    <div class="w-full bg-surface-bright p-6 md:p-8 border-b border-outline-variant flex flex-col gap-4">
+      <h3 class="text-lg font-bold text-primary border-b-2 border-outline-variant pb-2 flex items-center">
+        <i class="fas fa-university mr-2 text-primary"></i> Información Procesamiento de Pago (Tesorería)
+      </h3>
+      
+      <div class="overflow-x-auto border border-outline-variant rounded-lg bg-surface">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-surface-container text-primary font-bold text-xs">
+            <tr>
+              <th class="py-2.5 px-4 uppercase text-center w-1/3 border-b border-outline-variant">Nombre Procesamiento</th>
+              <th class="py-2.5 px-4 uppercase text-center w-1/4 border-b border-outline-variant">Fecha Procesamiento</th>
+              <th class="py-2.5 px-4 uppercase text-center w-5/12 border-b border-outline-variant">Comentario Procesamiento</th>
+            </tr>
+          </thead>
+          <tbody class="text-xs">
+            <tr>
+              <td class="py-3 px-4 text-center font-semibold text-on-surface" id="s3-1-proc-nombre">-</td>
+              <td class="py-3 px-4 text-center text-on-surface-variant" id="s3-1-proc-fecha">-</td>
+              <td class="py-3 px-4 text-left text-on-surface leading-relaxed" id="s3-1-proc-comentario">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 7: ACCIONES DE CIERRE (Editable, desplegable al presionar 'Liquidar Viático / Responder') -->
+    <div id="s3-1-seccion-responder" class="hidden w-full bg-surface-container-low p-6 md:p-8 flex flex-col gap-6 border-t-2 border-secondary-container">
+      <div class="flex items-center justify-between border-b pb-2 border-outline-variant">
+        <h3 class="text-lg font-bold text-secondary-container flex items-center gap-2">
+          <i class="fas fa-tasks mr-2 text-secondary-container"></i> Acciones de Cierre y Rendición de Cuentas
+        </h3>
+        <span class="text-xs font-semibold text-on-surface-variant bg-surface px-2.5 py-1 rounded border border-outline-variant">Liquidación de Gastos</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Tipo de Cierre Dropdown -->
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-primary uppercase mb-1" for="s3-1-tipo-cierre-select">
+            Tipo de Cierre de Solicitud <span class="text-error font-bold">*</span>
+          </label>
+          <select id="s3-1-tipo-cierre-select" class="w-full h-11 px-3 border-2 border-outline-variant rounded-lg bg-surface focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none text-sm font-semibold text-on-surface transition-colors" onchange="handleCambioTipoCierreS3_1(this.value)">
+            <option value="">Seleccione el tipo de cierre...</option>
+            <option value="Solo cierre">Solo cierre (Gasto total justificado con facturas)</option>
+            <option value="Reintegro y cierre">Reintegro y cierre (Sobrante devuelto a la institución)</option>
+          </select>
+          <span class="text-[11px] text-on-surface-variant mt-1">Seleccione si devuelve excedente bancario o solo presenta facturas completas.</span>
+        </div>
+
+        <!-- Archivos / Facturas de Liquidación -->
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-primary uppercase mb-1">
+            Agregar Facturas y Comprobantes de Liquidación <span class="text-error font-bold">*</span>
+          </label>
+          <input id="s3-1-archivo-input" type="file" multiple accept=".pdf,.png,.jpg,.jpeg" class="w-full text-xs text-on-surface file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-on-primary hover:file:bg-primary-container file:cursor-pointer" onchange="handleArchivosLiquidacionS3_1(this)">
+          <div id="s3-1-archivos-previews" class="flex flex-wrap gap-1.5 mt-2"></div>
+          <span class="text-[10px] text-on-surface-variant mt-0.5">Suba facturas, comprobantes de gastos o ficha de depósito si aplica reintegro.</span>
+        </div>
+
+      </div>
+
+      <!-- Campos Condicionales para 'Reintegro y cierre' -->
+      <div id="s3-1-campos-reintegro" class="hidden border border-secondary-container/50 bg-surface rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-primary uppercase mb-1" for="s3-1-monto-reintegro-input">
+            Monto a Reintegrar <span class="text-error font-bold">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-on-surface-variant font-bold text-sm">$</span>
+            <input id="s3-1-monto-reintegro-input" type="number" step="0.01" min="0.01" placeholder="0.00" class="w-full h-10 pl-8 pr-3 border border-outline-variant rounded bg-surface focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none text-sm font-bold text-primary">
+          </div>
+          <span class="text-[10px] text-on-surface-variant mt-1">Monto en dólares ($ USD) devuelto a la cuenta bancaria de la empresa.</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="font-bold text-xs text-primary uppercase mb-1" for="s3-1-fecha-reintegro-input">
+            Fecha de Reintegro <span class="text-error font-bold">*</span>
+          </label>
+          <input id="s3-1-fecha-reintegro-input" type="date" class="w-full h-10 px-3 border border-outline-variant rounded bg-surface focus:border-secondary-container focus:ring-1 focus:ring-secondary-container outline-none text-sm text-on-surface">
+          <span class="text-[10px] text-on-surface-variant mt-1">Fecha en la que realizó la transferencia o depósito del sobrante.</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Botones de Acción Inferiores -->
+  <div class="flex flex-wrap items-center justify-between gap-4 pt-2 pb-8">
+    
+    <div class="flex items-center gap-3">
+      <button onclick="navegarSubmenu('view-s3-cierre')" class="border border-outline-variant hover:bg-surface-container text-on-surface rounded-full px-6 py-2.5 font-bold text-sm flex items-center gap-2 bg-white transition-colors cursor-pointer shadow-sm">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Regresar
+      </button>
+      <button id="s3-1-btn-imprimir" onclick="window.print()" class="border border-outline-variant hover:bg-surface-container text-on-surface rounded-full px-5 py-2.5 font-bold text-sm flex items-center gap-2 bg-white transition-colors cursor-pointer shadow-sm">
+        <span class="material-symbols-outlined text-base">print</span>
+        Imprimir
+      </button>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Botón Inicial 'Responder' -->
+      <button id="s3-1-btn-responder" onclick="activarSeccionResponderS3_1()" class="bg-primary hover:bg-primary-container text-on-primary rounded-full px-8 py-2.5 font-bold text-sm flex items-center gap-2 transition-colors shadow-md cursor-pointer">
+        <i class="fas fa-reply"></i>
+        Liquidar Viático
+      </button>
+
+      <!-- Botón 'Guardar' (Visible al responder) -->
+      <button id="s3-1-btn-guardar" onclick="abrirModalConfirmarCierreS3_1()" class="hidden bg-secondary-container hover:bg-secondary text-on-secondary rounded-full px-8 py-2.5 font-bold text-sm flex items-center gap-2 transition-colors shadow-md cursor-pointer">
+        <span class="material-symbols-outlined text-base">send</span>
+        Enviar Liquidación
+      </button>
+    </div>
+
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN DE CIERRE -->
+  <div id="s3-1-modal-confirmar" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-surface rounded-xl max-w-md w-full p-6 shadow-2xl border border-outline-variant flex flex-col gap-4 animate-fade-in">
+      <div class="flex items-center gap-3 text-secondary-container">
+        <span class="material-symbols-outlined text-3xl">help</span>
+        <h3 class="font-headline-sm text-lg font-bold text-primary">Confirmar Liquidación</h3>
+      </div>
+      <p id="s3-1-modal-confirmar-text" class="text-sm text-on-surface-variant leading-relaxed">
+        ¿Está seguro que desea enviar la liquidación de cuentas de esta solicitud para revisión por el área de Compras?
+      </p>
+      <div class="flex justify-end gap-3 mt-2">
+        <button onclick="cerrarModalConfirmarCierreS3_1()" class="px-4 py-2 border border-outline-variant rounded-lg text-sm font-medium hover:bg-surface-container transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button id="s3-1-btn-modal-ejecutar" onclick="confirmarGuardarCierreS3_1()" class="px-5 py-2 bg-secondary-container hover:bg-secondary text-on-secondary rounded-lg text-sm font-bold shadow-sm transition-colors cursor-pointer flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">check</span>
+          Confirmar y Enviar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
